@@ -6,11 +6,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const fileInput = document.getElementById('fileInput');
     const statusText = document.getElementById('uploadStatus');
 
-    // 1. Fetch existing PDFs from GitHub directly
+    // 1. Fetch existing PDFs from our backend to avoid GitHub rate limits
     async function loadFiles() {
         try {
-            // Using public GitHub API to list repo contents
-            const response = await fetch('https://api.github.com/repos/abduIwahid/fa24-bai/contents');
+            // Using our Vercel backend to list repo contents
+            const response = await fetch('/api/files');
             const data = await response.json();
             
             if (response.ok) {
