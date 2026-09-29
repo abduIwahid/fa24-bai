@@ -69,3 +69,43 @@ a:hover {
     background-color: var(--accent);
     color: var(--bg-color);
 }
+
+.upload-section {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background-color: #f9fafb;
+    border: 2px dashed var(--border-color);
+    border-radius: 8px;
+}
+
+input[type="file"] {
+    margin-bottom: 1rem;
+    width: 100%;
+}
+
+button {
+    background-color: var(--accent);
+    color: var(--card-bg);
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 4px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    width: 100%;
+}
+
+button:hover {
+    opacity: 0.9;
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+#uploadStatus {
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
