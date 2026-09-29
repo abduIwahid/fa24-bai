@@ -1,1 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FA24 - BAI Documents</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --text-color: #f8fafc;
+            --card-bg: #1e293b;
+            --accent: #3b82f6;
+            --hover: #60a5fa;
+        }
 
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            padding: 2.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            margin-top: 0;
+            margin-bottom: 2rem;
+            font-size: 1.8rem;
+            color: var(--text-color);
+            border-bottom: 2px solid #334155;
+            padding-bottom: 1rem;
+        }
+
+        .links-grid {
+            display: grid;
+            gap: 1rem;
+        }
+
+        a {
+            display: inline-block;
+            background-color: var(--accent);
+            color: white;
+            text-decoration: none;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.2s ease;
+        }
+
+        a:hover {
+            background-color: var(--hover);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📚 Document Repository</h1>
+        <div class="links-grid">
+            <a href="PAILM.pdf" target="_blank">📄 View PAILM.pdf</a>
+            <a href="OSLM.pdf" target="_blank">📄 View OSLM.pdf</a>
+        </div>
+    </div>
+</body>
+</html>
