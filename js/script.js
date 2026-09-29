@@ -24,7 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         const a = document.createElement('a');
                         a.href = file.name; // Relative path works perfectly
                         a.target = '_blank';
-                        a.textContent = `📄 View ${file.name}`;
+                        a.textContent = `${file.name}`;
                         linksContainer.appendChild(a);
                     });
                 }
