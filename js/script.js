@@ -311,7 +311,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     <div class="resources-list">
                         ${resourcesHtml}
                     </div>
-                    <button class="action-btn" style="width: 100%; margin-top: 10px; padding: 10px; background: #eee; border: none; font-weight: bold; cursor: pointer; border-radius: 6px;" onclick="window.openCourse('${courseData.info.code}', '${courseData.info.name.replace(/'/g, "\\'")}')">View Course Details</button>
+                    <button class="action-btn" style="width: 100%; margin-top: 10px; padding: 10px; background: #e0e0e0; color: #111; border: none; font-weight: bold; cursor: pointer; border-radius: 6px;" onclick="window.openCourse('${courseData.info.code}', '${courseData.info.name.replace(/'/g, "\\'")}')">View Course Details</button>
                 `;
                 coursesContainer.appendChild(courseEl);
             });
@@ -435,6 +435,22 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     loadFiles();
+
+    // Pull-to-refresh logic
+    let touchStartY = 0;
+    document.addEventListener('touchstart', e => {
+        if (window.scrollY === 0) touchStartY = e.touches[0].clientY;
+    }, {passive: true});
+
+    document.addEventListener('touchend', e => {
+        if (window.scrollY === 0 && touchStartY > 0) {
+            let touchEndY = e.changedTouches[0].clientY;
+            if (touchEndY - touchStartY > 100) {
+                coursesContainer.innerHTML = '<p class="loading-text">Refreshing...</p>';
+                loadFiles();
+            }
+        }
+    });
 
     // Event Listeners for Search & Filter
     searchInput.addEventListener('input', (e) => {
