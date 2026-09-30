@@ -28,6 +28,28 @@ document.addEventListener("DOMContentLoaded", () => {
     let searchQuery = '';
     let currentAiFile = null;
 
+    const navigationBar = document.getElementById('navigationBar');
+    const backBtn = document.getElementById('backBtn');
+    const currentPath = document.getElementById('currentPath');
+    const controlsSection = document.getElementById('controlsSection');
+
+    let currentView = 'home'; // 'home', 'course', 'folder'
+    let selectedCourseCode = null;
+    let selectedCourseName = null;
+    let selectedFolder = null;
+
+    backBtn.addEventListener('click', () => {
+        if (currentView === 'folder') {
+            currentView = 'course';
+            selectedFolder = null;
+        } else if (currentView === 'course') {
+            currentView = 'home';
+            selectedCourseCode = null;
+            selectedCourseName = null;
+        }
+        renderCourses();
+    });
+
     // Admin State
     let adminPass = sessionStorage.getItem('adminPass') || null;
 
@@ -227,47 +249,139 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     };
 
+    window.openCourse = (code, name) => {
+        currentView = 'course';
+        selectedCourseCode = code;
+        selectedCourseName = name;
+        renderCourses();
+    };
+
+    window.openFolder = (folderName) => {
+        currentView = 'folder';
+        selectedFolder = folderName;
+        renderCourses();
+    };
+
     const renderCourses = () => {
-        const filteredFiles = allFiles.filter(file => {
-            const matchesSearch = file.name.toLowerCase().includes(searchQuery);
-            const matchesFilter = currentFilter === 'All' || file.resourceType === currentFilter;
-            return matchesSearch && matchesFilter;
-        });
+        if (currentView === 'home') {
+            navigationBar.style.display = 'none';
+            controlsSection.style.display = 'block';
+            quickAccessContainer.style.display = recents.length ? 'block' : 'none';
 
-        if (filteredFiles.length === 0) {
-            coursesContainer.innerHTML = '<div class="no-results">No resources found.</div>';
-            return;
-        }
+            const filteredFiles = allFiles.filter(file => {
+                const matchesSearch = file.name.toLowerCase().includes(searchQuery);
+                const matchesFilter = currentFilter === 'All' || file.resourceType === currentFilter;
+                return matchesSearch && matchesFilter;
+            });
 
-        const coursesMap = {};
-        filteredFiles.forEach(file => {
-            if (!coursesMap[file.course.code]) {
-                coursesMap[file.course.code] = { info: file.course, resources: [] };
+            if (filteredFiles.length === 0) {
+                coursesContainer.innerHTML = '<div class="no-results">No resources found.</div>';
+                return;
             }
-            coursesMap[file.course.code].resources.push(file);
-        });
 
-        coursesContainer.innerHTML = '';
-        Object.values(coursesMap).forEach(courseData => {
-            const courseEl = document.createElement('div');
-            courseEl.className = 'course-card';
+            const coursesMap = {};
+            filteredFiles.forEach(file => {
+                if (!coursesMap[file.course.code]) {
+                    coursesMap[file.course.code] = { info: file.course, resources: [], folderTypes: new Set() };
+                }
+                coursesMap[file.course.code].resources.push(file);
+                coursesMap[file.course.code].folderTypes.add(file.resourceType);
+            });
+
+            coursesContainer.innerHTML = '';
+            Object.values(coursesMap).forEach(courseData => {
+                const courseEl = document.createElement('div');
+                courseEl.className = 'course-card';
+                
+                const mainResources = courseData.resources.filter(r => r.resourceType === 'CDF' || r.resourceType === 'Lab Manual');
+                let resourcesHtml = mainResources.map(res => createResourceHtml(res)).join('');
+                
+                if (mainResources.length === 0 && courseData.resources.length > 0) {
+                    resourcesHtml = `<p style="font-size: 0.9rem; color: #666; margin-bottom: 10px;">(Only specific resources are directly visible here)</p>`;
+                }
+
+                courseEl.innerHTML = `
+                    <div class="course-header" style="cursor: pointer;" onclick="window.openCourse('${courseData.info.code}', '${courseData.info.name.replace(/'/g, "\\'")}')">
+                        <div class="course-icon">${courseData.info.icon}</div>
+                        <div class="course-info">
+                            <h2>${courseData.info.name}</h2>
+                            <p class="course-code">${courseData.info.code} • ${courseData.folderTypes.size} Folder(s)</p>
+                        </div>
+                    </div>
+                    <div class="resources-list">
+                        ${resourcesHtml}
+                    </div>
+                    <button class="action-btn" style="width: 100%; margin-top: 10px; padding: 10px; background: #eee; border: none; font-weight: bold; cursor: pointer; border-radius: 6px;" onclick="window.openCourse('${courseData.info.code}', '${courseData.info.name.replace(/'/g, "\\'")}')">View Course Details</button>
+                `;
+                coursesContainer.appendChild(courseEl);
+            });
+        } 
+        else if (currentView === 'course') {
+            navigationBar.style.display = 'flex';
+            controlsSection.style.display = 'none';
+            quickAccessContainer.style.display = 'none';
+            currentPath.textContent = selectedCourseName;
+
+            const courseFiles = allFiles.filter(f => f.course.code === selectedCourseCode);
+            const folderTypes = new Set(courseFiles.map(f => f.resourceType));
             
-            let resourcesHtml = courseData.resources.map(res => createResourceHtml(res)).join('');
+            coursesContainer.innerHTML = '';
+            
+            if (folderTypes.size === 0) {
+                coursesContainer.innerHTML = '<div class="no-results">No folders found in this course.</div>';
+                return;
+            }
 
-            courseEl.innerHTML = `
-                <div class="course-header">
-                    <div class="course-icon">${courseData.info.icon}</div>
+            folderTypes.forEach(folder => {
+                const folderFiles = courseFiles.filter(f => f.resourceType === folder);
+                const folderCard = document.createElement('div');
+                folderCard.className = 'course-card';
+                folderCard.style.cursor = 'pointer';
+                folderCard.onclick = () => window.openFolder(folder);
+                folderCard.innerHTML = `
+                    <div class="course-header">
+                        <div class="course-icon">📁</div>
+                        <div class="course-info">
+                            <h2>${folder}</h2>
+                            <p class="course-code">${folderFiles.length} item(s)</p>
+                        </div>
+                    </div>
+                `;
+                coursesContainer.appendChild(folderCard);
+            });
+        }
+        else if (currentView === 'folder') {
+            navigationBar.style.display = 'flex';
+            controlsSection.style.display = 'none';
+            quickAccessContainer.style.display = 'none';
+            currentPath.textContent = `${selectedCourseName} > ${selectedFolder}`;
+
+            const folderFiles = allFiles.filter(f => f.course.code === selectedCourseCode && f.resourceType === selectedFolder);
+            
+            coursesContainer.innerHTML = '';
+            
+            if (folderFiles.length === 0) {
+                coursesContainer.innerHTML = '<div class="no-results">Folder is empty.</div>';
+                return;
+            }
+
+            const folderContainer = document.createElement('div');
+            folderContainer.className = 'course-card';
+            folderContainer.style.width = '100%';
+            folderContainer.innerHTML = `
+                <div class="course-header" style="border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 15px;">
+                    <div class="course-icon">📁</div>
                     <div class="course-info">
-                        <h2>${courseData.info.name}</h2>
-                        <p class="course-code">${courseData.info.code} • ${courseData.resources.length} Resource(s)</p>
+                        <h2>${selectedFolder}</h2>
+                        <p class="course-code">${folderFiles.length} item(s)</p>
                     </div>
                 </div>
                 <div class="resources-list">
-                    ${resourcesHtml}
+                    ${folderFiles.map(res => createResourceHtml(res)).join('')}
                 </div>
             `;
-            coursesContainer.appendChild(courseEl);
-        });
+            coursesContainer.appendChild(folderContainer);
+        }
     };
 
     // Load Files

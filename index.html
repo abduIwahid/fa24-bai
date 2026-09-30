@@ -29,7 +29,12 @@
             <p id="uploadStatus"></p>
         </div>
 
-        <div class="controls-section">
+        <div id="navigationBar" style="display: none; align-items: center; gap: 10px; margin-bottom: 1.5rem; background: var(--card-bg); padding: 1rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+            <button id="backBtn" class="action-btn" style="background:var(--primary-color); color:white; border:none; cursor:pointer;">&larr; Back</button>
+            <h2 id="currentPath" style="margin: 0; font-size: 1.2rem; color: var(--text-color);"></h2>
+        </div>
+
+        <div class="controls-section" id="controlsSection">
             <input type="text" id="searchInput" placeholder="Search courses, manuals, CDFs...">
             <div class="filters" id="filtersContainer">
                 <button class="filter-chip active" data-filter="All">All</button>
