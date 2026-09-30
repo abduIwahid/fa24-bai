@@ -28,11 +28,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Load LocalState
     let favorites = JSON.parse(localStorage.getItem('favs')) || [];
-    let recents = JSON.parse(localStorage.getItem('recents')) || [];
+    let recents = []; // In-memory only, clears on page refresh
 
     const saveState = () => {
         localStorage.setItem('favs', JSON.stringify(favorites));
-        localStorage.setItem('recents', JSON.stringify(recents));
     };
 
     const addRecent = (filename) => {
