@@ -27,7 +27,7 @@ export default async function handler(req, res) {
         
         // Map the tree array back to the expected [{name: ...}] format
         const pdfs = data.tree
-            .filter(item => item.type === 'blob' && item.path.endsWith('.pdf'))
+            .filter(item => item.type === 'blob' && item.path.match(/\.(pdf|pptx|ppt)$/i))
             .map(item => ({ name: item.path }));
 
         return res.status(200).json(pdfs);

@@ -67,6 +67,8 @@ document.addEventListener("DOMContentLoaded", () => {
         if (lowerName.includes('krr') || lowerName.includes('kr&r') || lowerName.includes('aic372')) return { name: 'Knowledge Rep. & Reasoning', code: 'AIC372', icon: 'KRR' };
         if (lowerName.includes('os') || lowerName.includes('csc322')) return { name: 'Operating Systems', code: 'CSC322', icon: 'OS' };
         if (lowerName.includes('stat') || lowerName.includes('mth262')) return { name: 'Probability & Statistics', code: 'MTH262', icon: 'STAT' };
+        if (lowerName.includes('daa') || lowerName.includes('algorithm')) return { name: 'Design and Analysis of Algorithms', code: 'DAA', icon: 'ALG' };
+        if (lowerName.includes('web')) return { name: 'Web Engineering', code: 'WEB', icon: 'WEB' };
         return { name: 'Other Resources', code: 'VAR', icon: 'DOC' };
     };
 
@@ -82,7 +84,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const getCleanName = (filepath) => {
         let filename = filepath.split('/').pop();
-        let clean = filename.replace('.pdf', '');
+        let clean = filename.replace(/\.(pdf|pptx|ppt)$/i, '');
         clean = clean.replace(/_/g, ' ');
         return clean;
     };
@@ -275,7 +277,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const data = await response.json();
             
             if (response.ok) {
-                const pdfs = data.filter(file => file.name.endsWith('.pdf'));
+                const pdfs = data.filter(file => file.name.match(/\.(pdf|pptx|ppt)$/i));
                 
                 allFiles = pdfs.map(file => {
                     const courseInfo = getCourseInfo(file.name);
@@ -344,8 +346,8 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        if (!file.name.endsWith('.pdf')) {
-            statusText.textContent = "Only PDF files are allowed.";
+        if (!file.name.match(/\.(pdf|pptx|ppt)$/i)) {
+            statusText.textContent = "Only PDF and PPTX/PPT files are allowed.";
             statusText.style.color = "red";
             return;
         }
