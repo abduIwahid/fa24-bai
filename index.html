@@ -9,19 +9,34 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#004741">
     <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="container">
-        <img src="logo.png" alt="FA24-BAI Logo" class="app-logo">
-        <h1>📚 Course Resources</h1>
-        <div class="upload-section">
+        <div class="header">
+            <img src="logo.png" alt="FA24-BAI Logo" class="app-logo">
+            <h1>5th Semester Study Hub</h1>
+        </div>
+
+        <div class="upload-section" id="uploadSection">
+            <h3 class="section-title">Upload Resource</h3>
             <input type="file" id="fileInput" accept="application/pdf">
             <button id="uploadBtn">Upload to GitHub</button>
             <p id="uploadStatus"></p>
         </div>
 
-        <div class="links-grid" id="linksContainer">
-            <p>Loading documents...</p>
+        <div class="controls-section">
+            <input type="text" id="searchInput" placeholder="🔍 Search courses, manuals, CDFs...">
+            <div class="filters" id="filtersContainer">
+                <button class="filter-chip active" data-filter="All">All</button>
+                <button class="filter-chip" data-filter="CDF">CDF</button>
+                <button class="filter-chip" data-filter="Lab Manual">Lab Manual</button>
+                <button class="filter-chip" data-filter="Syllabus">Syllabus</button>
+            </div>
+        </div>
+
+        <div class="courses-grid" id="coursesContainer">
+            <p class="loading-text">Loading hub...</p>
         </div>
     </div>
     <script src="js/script.js"></script>
