@@ -87,9 +87,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     <div class="resource-type-badge">${res.resourceType}</div>
                 </div>
                 <div class="resource-actions">
-                    <button class="action-btn fav ${isFav ? 'active' : ''}" onclick="window.toggleFav('${res.rawName}')">Fav</button>
                     <a href="${res.rawName}" target="_blank" class="action-btn view" onclick="window.trackView('${res.rawName}')">View</a>
-                    <button class="action-btn ai-btn" onclick="window.openAI('${res.rawName}')">Ask AI</button>
                     <a href="${res.rawName}" download class="action-btn download">Download</a>
                 </div>
             </div>
