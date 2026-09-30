@@ -450,3 +450,22 @@ button:disabled {
     width: auto;
     padding: 0.8rem 1.5rem;
 }
+
+.admin-btn {
+    background: transparent;
+    border: 1px solid var(--text-color);
+    color: var(--text-color);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    margin-top: 1rem;
+    transition: background 0.2s;
+}
+.admin-btn:hover {
+    background: rgba(0, 71, 65, 0.1);
+}
+
+.delete-btn:hover {
+    opacity: 0.8;
+}

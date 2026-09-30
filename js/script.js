@@ -1,15 +1,15 @@
 document.addEventListener("DOMContentLoaded", () => {
     document.body.classList.add("loaded");
     
-    // Elements
-    const coursesContainer = document.getElementById('coursesContainer');
-    const uploadBtn = document.getElementById('uploadBtn');
     const fileInput = document.getElementById('fileInput');
     const folderInput = document.getElementById('folderInput');
     const folderOptions = document.getElementById('folderOptions');
     const statusText = document.getElementById('uploadStatus');
     const searchInput = document.getElementById('searchInput');
     const filterChips = document.querySelectorAll('.filter-chip');
+    const adminLoginBtn = document.getElementById('adminLoginBtn');
+    const adminWelcome = document.getElementById('adminWelcome');
+    const uploadSection = document.getElementById('uploadSection');
     
     const quickAccessContainer = document.getElementById('quickAccessContainer');
     const quickAccessList = document.getElementById('quickAccessList');
@@ -28,8 +28,29 @@ document.addEventListener("DOMContentLoaded", () => {
     let searchQuery = '';
     let currentAiFile = null;
 
+    // Admin State
+    let adminPass = sessionStorage.getItem('adminPass') || null;
+
+    const updateAdminUI = () => {
+        if (adminPass) {
+            adminLoginBtn.style.display = 'none';
+            adminWelcome.style.display = 'block';
+            uploadSection.style.display = 'block';
+            renderCourses();
+            renderQuickAccess();
+        }
+    };
+    
+    adminLoginBtn.addEventListener('click', () => {
+        const pass = prompt("Enter Admin Password:");
+        if (pass) {
+            adminPass = pass;
+            sessionStorage.setItem('adminPass', pass);
+            updateAdminUI();
+        }
+    });
+
     // Load LocalState
-    let favorites = JSON.parse(localStorage.getItem('favs')) || [];
     let recents = []; // In-memory only, clears on page refresh
 
     const saveState = () => {
@@ -93,15 +114,39 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div class="resource-actions">
                     <a href="${res.rawName}" target="_blank" class="action-btn view" onclick="window.trackView('${res.rawName}')">View</a>
                     <a href="${res.rawName}" download class="action-btn download">Download</a>
+                    ${adminPass ? `<button class="action-btn delete-btn" onclick="window.deleteFile('${res.rawName}')" style="background:#ff4444; color:white; border:none; margin-left: auto;">Delete</button>` : ''}
                 </div>
             </div>
         `;
     };
 
-    window.toggleFav = (filename) => toggleFavorite(filename);
     window.trackView = (filename) => addRecent(filename);
     
-    // --- AI LOGIC ---
+    window.deleteFile = async (filename) => {
+        if (!confirm(`Are you sure you want to permanently delete ${filename}?`)) return;
+        
+        try {
+            const response = await fetch('/api/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename, password: adminPass })
+            });
+            if (response.ok) {
+                alert("File deleted successfully!");
+                loadFiles();
+            } else {
+                const data = await response.json();
+                alert(`Error: ${data.message}`);
+                if (response.status === 401) {
+                    sessionStorage.removeItem('adminPass');
+                    adminPass = null;
+                    location.reload();
+                }
+            }
+        } catch(e) {
+            alert("Delete failed.");
+        }
+    };
     window.openAI = (filename) => {
         currentAiFile = allFiles.find(f => f.rawName === filename);
         if(!currentAiFile) return;
@@ -281,6 +326,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     });
                 }
                 
+                updateAdminUI();
                 renderCourses();
                 renderQuickAccess();
             } else {
@@ -323,8 +369,10 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        const password = prompt("Enter Admin Password to upload:");
-        if (password === null) return; // User cancelled
+        if (!adminPass) {
+            alert("Please login as Admin first.");
+            return;
+        }
 
         uploadBtn.disabled = true;
         statusText.textContent = "Uploading... Please wait.";
@@ -340,7 +388,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     body: JSON.stringify({ 
                         filename: file.name, 
                         contentBase64: base64data, 
-                        password: password,
+                        password: adminPass,
                         folder: folderInput ? folderInput.value : ''
                     })
                 });
