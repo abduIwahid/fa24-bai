@@ -53,26 +53,10 @@ document.addEventListener("DOMContentLoaded", () => {
     // Load LocalState
     let recents = []; // In-memory only, clears on page refresh
 
-    const saveState = () => {
-        localStorage.setItem('favs', JSON.stringify(favorites));
-    };
-
     const addRecent = (filename) => {
         recents = recents.filter(f => f !== filename);
         recents.unshift(filename);
         if (recents.length > 3) recents.pop();
-        saveState();
-        renderQuickAccess();
-    };
-
-    const toggleFavorite = (filename) => {
-        if (favorites.includes(filename)) {
-            favorites = favorites.filter(f => f !== filename);
-        } else {
-            favorites.push(filename);
-        }
-        saveState();
-        renderCourses();
         renderQuickAccess();
     };
 
@@ -104,7 +88,6 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     const createResourceHtml = (res) => {
-        const isFav = favorites.includes(res.rawName);
         return `
             <div class="resource-item">
                 <div>
@@ -245,7 +228,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const renderCourses = () => {
         const filteredFiles = allFiles.filter(file => {
-            if (currentFilter === 'Favorites') return favorites.includes(file.rawName);
             const matchesSearch = file.name.toLowerCase().includes(searchQuery);
             const matchesFilter = currentFilter === 'All' || file.resourceType === currentFilter;
             return matchesSearch && matchesFilter;
