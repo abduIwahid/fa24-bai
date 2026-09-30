@@ -19,7 +19,8 @@ export default async function handler(req, res) {
     
     try {
         // 1. Get the file's SHA (required by GitHub API to delete)
-        const getUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(filename)}`;
+        const encodedPath = filename.split('/').map(encodeURIComponent).join('/');
+        const getUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${encodedPath}`;
         const getRes = await fetch(getUrl, {
             headers: { 
                 'Authorization': `Bearer ${GITHUB_TOKEN}`, 
