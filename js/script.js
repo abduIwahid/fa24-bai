@@ -303,6 +303,9 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
+        const password = prompt("Enter Admin Password to upload:");
+        if (password === null) return; // User cancelled
+
         uploadBtn.disabled = true;
         statusText.textContent = "Uploading... Please wait.";
         statusText.style.color = "var(--text-color)";
@@ -314,7 +317,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 const response = await fetch('/api/upload', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ filename: file.name, contentBase64: base64data })
+                    body: JSON.stringify({ filename: file.name, contentBase64: base64data, password: password })
                 });
 
                 if (response.ok) {

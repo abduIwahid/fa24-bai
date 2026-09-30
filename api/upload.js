@@ -3,8 +3,14 @@ export default async function handler(req, res) {
         return res.status(405).json({ message: 'Method Not Allowed' });
     }
 
-    const { filename, contentBase64 } = req.body;
+    const { filename, contentBase64, password } = req.body;
     
+    // Security check
+    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+    if (ADMIN_PASSWORD && password !== ADMIN_PASSWORD) {
+        return res.status(401).json({ message: 'Unauthorized: Invalid Admin Password' });
+    }
+
     if (!filename || !contentBase64) {
         return res.status(400).json({ message: 'Missing filename or content' });
     }
