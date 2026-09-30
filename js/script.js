@@ -62,8 +62,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Course mapping logic
     const getCourseInfo = (filepath) => {
-        const filename = filepath.split('/').pop();
-        const lowerName = filename.toLowerCase();
+        const lowerName = filepath.toLowerCase();
         if (lowerName.includes('pfai') || lowerName.includes('ai270') || lowerName.includes('aic270')) return { name: 'Artificial Intelligence', code: 'AIC270', icon: 'AI' };
         if (lowerName.includes('krr') || lowerName.includes('kr&r') || lowerName.includes('aic372')) return { name: 'Knowledge Rep. & Reasoning', code: 'AIC372', icon: 'KRR' };
         if (lowerName.includes('os') || lowerName.includes('csc322')) return { name: 'Operating Systems', code: 'CSC322', icon: 'OS' };
@@ -72,11 +71,12 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     const getResourceType = (filepath) => {
-        const filename = filepath.split('/').pop();
-        const lowerName = filename.toLowerCase();
+        const lowerName = filepath.toLowerCase();
         if (lowerName.includes('cdf')) return 'CDF';
         if (lowerName.includes('lab manual')) return 'Lab Manual';
         if (lowerName.includes('syllabus')) return 'Syllabus';
+        if (lowerName.includes('lecture')) return 'Lectures';
+        if (lowerName.includes('assignment')) return 'Assignments';
         return 'Other';
     };
 
