@@ -29,16 +29,50 @@
             <input type="text" id="searchInput" placeholder="🔍 Search courses, manuals, CDFs...">
             <div class="filters" id="filtersContainer">
                 <button class="filter-chip active" data-filter="All">All</button>
+                <button class="filter-chip" data-filter="Favorites">⭐ Favorites</button>
                 <button class="filter-chip" data-filter="CDF">CDF</button>
                 <button class="filter-chip" data-filter="Lab Manual">Lab Manual</button>
                 <button class="filter-chip" data-filter="Syllabus">Syllabus</button>
             </div>
         </div>
 
+        <div id="quickAccessContainer" style="display: none; margin-bottom: 2rem;">
+            <h3 class="section-title">🕒 Recently Viewed</h3>
+            <div class="resources-list" id="quickAccessList"></div>
+        </div>
+
         <div class="courses-grid" id="coursesContainer">
             <p class="loading-text">Loading hub...</p>
         </div>
     </div>
+
+    <!-- AI Assistant Modal -->
+    <div class="modal-overlay" id="aiModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h3 id="aiModalTitle">🤖 AI Assistant</h3>
+                    <p id="aiModalSubtitle" style="margin:0; font-size:0.8rem; color:#666;"></p>
+                </div>
+                <button class="close-btn" id="aiCloseBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="ai-quick-actions">
+                    <button class="ai-action-btn" data-action="summarize">📝 Summarize</button>
+                    <button class="ai-action-btn" data-action="quiz">🎯 Generate Quiz</button>
+                    <button class="ai-action-btn" data-action="viva">🧪 Viva Questions</button>
+                </div>
+                <div class="chat-container" id="chatContainer">
+                    <div class="chat-message ai">Hi! I'm your AI study assistant. Ask me anything about this document, or use the quick actions above.</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <input type="text" id="aiInput" placeholder="Ask a question...">
+                <button id="aiSendBtn">Send</button>
+            </div>
+        </div>
+    </div>
+
     <script src="js/script.js"></script>
 </body>
 </html>
