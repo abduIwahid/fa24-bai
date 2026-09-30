@@ -112,6 +112,14 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     const createResourceHtml = (res) => {
+        let viewUrl = res.rawName;
+        if (viewUrl.match(/\.(pptx|ppt|docx|doc)$/i)) {
+            // Encode the path segments properly for the raw github URL
+            const encodedPath = res.rawName.split('/').map(encodeURIComponent).join('/');
+            const rawGithubUrl = 'https://raw.githubusercontent.com/abduIwahid/fa24-bai/main/' + encodedPath;
+            viewUrl = 'https://view.officeapps.live.com/op/view.aspx?src=' + encodeURIComponent(rawGithubUrl);
+        }
+
         return `
             <div class="resource-item">
                 <div>
@@ -119,8 +127,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     <div class="resource-type-badge">${res.resourceType}</div>
                 </div>
                 <div class="resource-actions">
-                    <a href="${res.rawName}" target="_blank" class="action-btn view" onclick="window.trackView('${res.rawName}')">View</a>
-                    ${adminPass ? `<button class="action-btn delete-btn" onclick="window.deleteFile('${res.rawName}')" style="background:#ff4444; color:white; border:none; margin-left: auto;">Delete</button>` : ''}
+                    <a href="${viewUrl}" target="_blank" class="action-btn view" onclick="window.trackView('${res.rawName.replace(/'/g, "\\'")}')">View</a>
+                    ${adminPass ? `<button class="action-btn delete-btn" onclick="window.deleteFile('${res.rawName.replace(/'/g, "\\'")}')" style="background:#ff4444; color:white; border:none; margin-left: auto;">Delete</button>` : ''}
                 </div>
             </div>
         `;
