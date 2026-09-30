@@ -34,7 +34,7 @@ body.loaded {
 
 .container {
     background-color: transparent;
-    max-width: 600px;
+    max-width: 1000px;
     width: 100%;
 }
 
@@ -170,8 +170,8 @@ button:disabled {
 
 /* Course Cards */
 .courses-grid {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     gap: 1.5rem;
 }
 
@@ -237,6 +237,7 @@ button:disabled {
     border-radius: 8px;
     border: 1px solid #e0e6e5;
     gap: 1rem;
+    flex-wrap: wrap;
 }
 
 .resource-name {
@@ -468,4 +469,34 @@ button:disabled {
 
 .delete-btn:hover {
     opacity: 0.8;
+}
+
+/* Responsive Media Queries */
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+    .courses-grid {
+        grid-template-columns: 1fr;
+    }
+    .resource-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.8rem;
+    }
+    .resource-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+    .action-btn {
+        flex: 1;
+        justify-content: center;
+    }
+    .header h1 {
+        font-size: 1.5rem;
+    }
+    .app-logo {
+        width: 60px;
+        height: 60px;
+    }
 }
