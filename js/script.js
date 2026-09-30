@@ -264,7 +264,9 @@ document.addEventListener("DOMContentLoaded", () => {
         renderCourses();
     };
 
-    window.openFolder = (folderName) => {
+    window.openFolder = (folderName, courseCode = null, courseName = null) => {
+        if (courseCode) selectedCourseCode = courseCode;
+        if (courseName) selectedCourseName = courseName;
         currentView = 'folder';
         selectedFolder = folderName;
         renderCourses();
@@ -304,7 +306,25 @@ document.addEventListener("DOMContentLoaded", () => {
                 const mainResources = courseData.resources.filter(r => r.resourceType === 'CDF' || r.resourceType === 'Lab Manual');
                 let resourcesHtml = mainResources.map(res => createResourceHtml(res)).join('');
                 
-                if (mainResources.length === 0 && courseData.resources.length > 0) {
+                if (courseData.folderTypes.has('Lectures')) {
+                    const lectureCount = courseData.resources.filter(r => r.resourceType === 'Lectures').length;
+                    resourcesHtml += `
+                        <div class="resource-item" style="cursor: pointer; background: #fafafa; border: 1px dashed #ccc;" onclick="window.openFolder('Lectures', '${courseData.info.code}', '${courseData.info.name.replace(/'/g, "\\'")}')">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <span style="font-size: 1.5rem;">📁</span>
+                                <div>
+                                    <div class="resource-name">Lectures</div>
+                                    <div style="font-size: 0.8rem; color: #666;">${lectureCount} item(s)</div>
+                                </div>
+                            </div>
+                            <div class="resource-actions">
+                                <span style="color: var(--primary-color); font-weight: bold; font-size: 0.9rem;">Open Folder &rarr;</span>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                if (mainResources.length === 0 && !courseData.folderTypes.has('Lectures') && courseData.resources.length > 0) {
                     resourcesHtml = `<p style="font-size: 0.9rem; color: #666; margin-bottom: 10px;">(Only specific resources are directly visible here)</p>`;
                 }
 

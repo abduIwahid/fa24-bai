@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=0.75">
@@ -11,26 +12,34 @@
     <link rel="stylesheet" href="css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
+
 <body>
     <div class="container">
         <div class="header">
             <img src="logo.jpeg" alt="FA24-BAI Logo" class="app-logo">
-            <h1>5th Semester Study Hub</h1>
+            <h1>Study Hub</h1>
             <button id="adminLoginBtn" class="admin-btn">Admin Login</button>
-            <div id="adminWelcome" style="display: none; color: var(--text-color); font-weight: bold; text-align: center; margin-top: 10px;">Welcome Admin, Abdul Wahid!</div>
+            <div id="adminWelcome"
+                style="display: none; color: var(--text-color); font-weight: bold; text-align: center; margin-top: 10px;">
+                Welcome Admin, Abdul Wahid!</div>
         </div>
 
         <div class="upload-section" id="uploadSection" style="display: none;">
             <h3 class="section-title">Upload Resource</h3>
-            <input type="text" id="folderInput" placeholder="Folder (e.g. 5th Semester) - Optional" list="folderOptions" style="margin-bottom: 0.5rem; display: block; width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 8px;">
+            <input type="text" id="folderInput" placeholder="Folder (e.g. 5th Semester) - Optional" list="folderOptions"
+                style="margin-bottom: 0.5rem; display: block; width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 8px;">
             <datalist id="folderOptions"></datalist>
-            <input type="file" id="fileInput" accept="application/pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+            <input type="file" id="fileInput"
+                accept="application/pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
             <button id="uploadBtn">Upload to GitHub</button>
             <p id="uploadStatus"></p>
         </div>
 
-        <div id="navigationBar" style="display: none; align-items: center; gap: 10px; margin-bottom: 1.5rem; background: var(--card-bg); padding: 1rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
-            <button id="backBtn" class="action-btn" style="background: #333; color: white; border: none; padding: 8px 12px; cursor: pointer; border-radius: 6px;">&larr; Back</button>
+        <div id="navigationBar"
+            style="display: none; align-items: center; gap: 10px; margin-bottom: 1.5rem; background: var(--card-bg); padding: 1rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+            <button id="backBtn" class="action-btn"
+                style="background: #333; color: white; border: none; padding: 8px 12px; cursor: pointer; border-radius: 6px;">&larr;
+                Back</button>
             <h2 id="currentPath" style="margin: 0; font-size: 1.2rem; color: var(--text-color);"></h2>
         </div>
 
@@ -73,7 +82,8 @@
                     <button class="ai-action-btn" data-action="viva">Viva Questions</button>
                 </div>
                 <div class="chat-container" id="chatContainer">
-                    <div class="chat-message ai">Hi! I'm your AI study assistant. Ask me anything about this document, or use the quick actions above.</div>
+                    <div class="chat-message ai">Hi! I'm your AI study assistant. Ask me anything about this document,
+                        or use the quick actions above.</div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -85,4 +95,5 @@
 
     <script src="js/script.js"></script>
 </body>
+
 </html>
