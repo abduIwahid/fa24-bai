@@ -84,7 +84,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const getCleanName = (filepath) => {
         let filename = filepath.split('/').pop();
-        let clean = filename.replace(/\.(pdf|pptx|ppt)$/i, '');
+        let clean = filename.replace(/\.(pdf|pptx|ppt|doc|docx)$/i, '');
         clean = clean.replace(/_/g, ' ');
         return clean;
     };
@@ -277,7 +277,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const data = await response.json();
             
             if (response.ok) {
-                const pdfs = data.filter(file => file.name.match(/\.(pdf|pptx|ppt)$/i));
+                const pdfs = data.filter(file => file.name.match(/\.(pdf|pptx|ppt|doc|docx)$/i));
                 
                 allFiles = pdfs.map(file => {
                     const courseInfo = getCourseInfo(file.name);
@@ -346,8 +346,8 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        if (!file.name.match(/\.(pdf|pptx|ppt)$/i)) {
-            statusText.textContent = "Only PDF and PPTX/PPT files are allowed.";
+        if (!file.name.match(/\.(pdf|pptx|ppt|doc|docx)$/i)) {
+            statusText.textContent = "Only PDF, PPTX/PPT, and DOCX/DOC files are allowed.";
             statusText.style.color = "red";
             return;
         }
