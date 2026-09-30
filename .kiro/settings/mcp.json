@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "excel-j": {
+      "command": "c:\\Users\\toshiba\\.antigravity-ide\\extensions\\excel-j.excel-j-0.0.8-universal\\bin\\ExcelJ.McpServer.exe",
+      "disabled": false
+    }
+  }
+}
