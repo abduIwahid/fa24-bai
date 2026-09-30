@@ -1,5 +1,5 @@
 import pdf from 'pdf-parse';
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
@@ -17,7 +17,6 @@ export default async function handler(req, res) {
         // 1. Fetch the PDF from GitHub
         const owner = 'abduIwahid';
         const repo = 'fa24-bai';
-        // Use raw.githubusercontent to download the actual PDF binary
         const url = `https://raw.githubusercontent.com/${owner}/${repo}/main/${encodeURIComponent(filename)}`;
         
         let pdfText = "";
@@ -33,7 +32,6 @@ export default async function handler(req, res) {
             return res.status(500).json({ reply: 'Failed to read the PDF document.' });
         }
 
-        // Limit text to avoid hitting token limits (roughly 50k characters)
         const truncatedText = pdfText.substring(0, 50000); 
 
         // 2. Prepare the AI Prompt
@@ -49,13 +47,12 @@ export default async function handler(req, res) {
         }
 
         // 3. Call Gemini API
-        const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: finalPrompt,
-        });
-
-        return res.status(200).json({ reply: response.text });
+        const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const result = await model.generateContent(finalPrompt);
+        const response = await result.response;
+        
+        return res.status(200).json({ reply: response.text() });
     } catch (error) {
         console.error("AI Error:", error);
         return res.status(500).json({ reply: 'AI generation failed. Please try again later.' });
