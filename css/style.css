@@ -275,12 +275,13 @@ button:disabled {
 }
 
 .action-btn.view {
-    background-color: var(--accent-light);
-    color: var(--accent);
-    border: 1px solid transparent;
+    background-color: var(--accent);
+    color: var(--card-bg);
+    border: 1px solid var(--accent);
 }
 .action-btn.view:hover {
-    background-color: var(--border-color);
+    background-color: transparent;
+    color: var(--accent);
 }
 
 .action-btn.download {
