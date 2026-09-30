@@ -6,7 +6,6 @@ export default async function handler(req, res) {
     const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
     const owner = 'abduIwahid';
     const repo = 'fa24-bai';
-    const url = `https://api.github.com/repos/${owner}/${repo}/contents`;
 
     try {
         const headers = { 'User-Agent': 'Vercel-Upload-App' };
@@ -16,7 +15,8 @@ export default async function handler(req, res) {
             headers['Authorization'] = `Bearer ${GITHUB_TOKEN}`;
         }
 
-        const response = await fetch(url, { headers });
+        const treeUrl = `https://api.github.com/repos/${owner}/${repo}/git/trees/main?recursive=1`;
+        const response = await fetch(treeUrl, { headers });
         
         if (!response.ok) {
             const err = await response.json();
@@ -24,7 +24,13 @@ export default async function handler(req, res) {
         }
 
         const data = await response.json();
-        return res.status(200).json(data);
+        
+        // Map the tree array back to the expected [{name: ...}] format
+        const pdfs = data.tree
+            .filter(item => item.type === 'blob' && item.path.endsWith('.pdf'))
+            .map(item => ({ name: item.path }));
+
+        return res.status(200).json(pdfs);
     } catch (error) {
         console.error("Fetch error:", error);
         return res.status(500).json({ message: 'Internal Server Error' });

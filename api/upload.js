@@ -3,7 +3,7 @@ export default async function handler(req, res) {
         return res.status(405).json({ message: 'Method Not Allowed' });
     }
 
-    const { filename, contentBase64, password } = req.body;
+    const { filename, contentBase64, password, folder } = req.body;
     
     // Security check
     const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
@@ -22,7 +22,13 @@ export default async function handler(req, res) {
 
     const owner = 'abduIwahid';
     const repo = 'fa24-bai';
-    const path = filename; 
+    
+    let path = filename;
+    if (folder && folder.trim() !== '') {
+        const cleanFolder = folder.replace(/^\/+|\/+$/g, '');
+        path = `${cleanFolder}/${filename}`;
+    }
+
     const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
 
     try {

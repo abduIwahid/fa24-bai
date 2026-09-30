@@ -5,6 +5,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const coursesContainer = document.getElementById('coursesContainer');
     const uploadBtn = document.getElementById('uploadBtn');
     const fileInput = document.getElementById('fileInput');
+    const folderInput = document.getElementById('folderInput');
+    const folderOptions = document.getElementById('folderOptions');
     const statusText = document.getElementById('uploadStatus');
     const searchInput = document.getElementById('searchInput');
     const filterChips = document.querySelectorAll('.filter-chip');
@@ -54,7 +56,8 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     // Course mapping logic
-    const getCourseInfo = (filename) => {
+    const getCourseInfo = (filepath) => {
+        const filename = filepath.split('/').pop();
         const lowerName = filename.toLowerCase();
         if (lowerName.includes('pfai') || lowerName.includes('ai270') || lowerName.includes('aic270')) return { name: 'Artificial Intelligence', code: 'AIC270', icon: 'AI' };
         if (lowerName.includes('krr') || lowerName.includes('kr&r') || lowerName.includes('aic372')) return { name: 'Knowledge Rep. & Reasoning', code: 'AIC372', icon: 'KRR' };
@@ -63,7 +66,8 @@ document.addEventListener("DOMContentLoaded", () => {
         return { name: 'Other Resources', code: 'VAR', icon: 'DOC' };
     };
 
-    const getResourceType = (filename) => {
+    const getResourceType = (filepath) => {
+        const filename = filepath.split('/').pop();
         const lowerName = filename.toLowerCase();
         if (lowerName.includes('cdf')) return 'CDF';
         if (lowerName.includes('lab manual')) return 'Lab Manual';
@@ -71,7 +75,8 @@ document.addEventListener("DOMContentLoaded", () => {
         return 'Other';
     };
 
-    const getCleanName = (filename) => {
+    const getCleanName = (filepath) => {
+        let filename = filepath.split('/').pop();
         let clean = filename.replace('.pdf', '');
         clean = clean.replace(/_/g, ' ');
         return clean;
@@ -258,6 +263,24 @@ document.addEventListener("DOMContentLoaded", () => {
                     };
                 });
                 
+                // Extract unique folders
+                const folders = new Set();
+                allFiles.forEach(file => {
+                    if (file.rawName.includes('/')) {
+                        const folder = file.rawName.substring(0, file.rawName.lastIndexOf('/'));
+                        folders.add(folder);
+                    }
+                });
+                
+                if(folderOptions) {
+                    folderOptions.innerHTML = '';
+                    folders.forEach(folder => {
+                        const option = document.createElement('option');
+                        option.value = folder;
+                        folderOptions.appendChild(option);
+                    });
+                }
+                
                 renderCourses();
                 renderQuickAccess();
             } else {
@@ -314,7 +337,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 const response = await fetch('/api/upload', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ filename: file.name, contentBase64: base64data, password: password })
+                    body: JSON.stringify({ 
+                        filename: file.name, 
+                        contentBase64: base64data, 
+                        password: password,
+                        folder: folderInput ? folderInput.value : ''
+                    })
                 });
 
                 if (response.ok) {
