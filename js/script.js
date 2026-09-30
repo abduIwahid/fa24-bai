@@ -57,11 +57,11 @@ document.addEventListener("DOMContentLoaded", () => {
     // Course mapping logic
     const getCourseInfo = (filename) => {
         const lowerName = filename.toLowerCase();
-        if (lowerName.includes('pfai') || lowerName.includes('ai270') || lowerName.includes('aic270')) return { name: 'Artificial Intelligence', code: 'AIC270', icon: '🧠' };
-        if (lowerName.includes('krr') || lowerName.includes('kr&r') || lowerName.includes('aic372')) return { name: 'Knowledge Rep. & Reasoning', code: 'AIC372', icon: '🤖' };
-        if (lowerName.includes('os') || lowerName.includes('csc322')) return { name: 'Operating Systems', code: 'CSC322', icon: '💻' };
-        if (lowerName.includes('stat') || lowerName.includes('mth262')) return { name: 'Probability & Statistics', code: 'MTH262', icon: '📐' };
-        return { name: 'Other Resources', code: 'VAR', icon: '📁' };
+        if (lowerName.includes('pfai') || lowerName.includes('ai270') || lowerName.includes('aic270')) return { name: 'Artificial Intelligence', code: 'AIC270', icon: 'AI' };
+        if (lowerName.includes('krr') || lowerName.includes('kr&r') || lowerName.includes('aic372')) return { name: 'Knowledge Rep. & Reasoning', code: 'AIC372', icon: 'KRR' };
+        if (lowerName.includes('os') || lowerName.includes('csc322')) return { name: 'Operating Systems', code: 'CSC322', icon: 'OS' };
+        if (lowerName.includes('stat') || lowerName.includes('mth262')) return { name: 'Probability & Statistics', code: 'MTH262', icon: 'STAT' };
+        return { name: 'Other Resources', code: 'VAR', icon: 'DOC' };
     };
 
     const getResourceType = (filename) => {
@@ -87,10 +87,10 @@ document.addEventListener("DOMContentLoaded", () => {
                     <div class="resource-type-badge">${res.resourceType}</div>
                 </div>
                 <div class="resource-actions">
-                    <button class="action-btn fav ${isFav ? 'active' : ''}" onclick="window.toggleFav('${res.rawName}')">⭐</button>
-                    <a href="${res.rawName}" target="_blank" class="action-btn view" onclick="window.trackView('${res.rawName}')">👁 View</a>
-                    <button class="action-btn ai-btn" onclick="window.openAI('${res.rawName}')">✨ Ask AI</button>
-                    <a href="${res.rawName}" download class="action-btn download">⬇ D/L</a>
+                    <button class="action-btn fav ${isFav ? 'active' : ''}" onclick="window.toggleFav('${res.rawName}')">Fav</button>
+                    <a href="${res.rawName}" target="_blank" class="action-btn view" onclick="window.trackView('${res.rawName}')">View</a>
+                    <button class="action-btn ai-btn" onclick="window.openAI('${res.rawName}')">Ask AI</button>
+                    <a href="${res.rawName}" download class="action-btn download">Download</a>
                 </div>
             </div>
         `;
