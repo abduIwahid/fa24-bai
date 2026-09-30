@@ -96,7 +96,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 </div>
                 <div class="resource-actions">
                     <a href="${res.rawName}" target="_blank" class="action-btn view" onclick="window.trackView('${res.rawName}')">View</a>
-                    <a href="${res.rawName}" download class="action-btn download">Download</a>
                     ${adminPass ? `<button class="action-btn delete-btn" onclick="window.deleteFile('${res.rawName}')" style="background:#ff4444; color:white; border:none; margin-left: auto;">Delete</button>` : ''}
                 </div>
             </div>
