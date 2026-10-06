@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
     document.body.classList.add("loaded");
-    
+
     const fileInput = document.getElementById('fileInput');
     const folderInput = document.getElementById('folderInput');
     const folderOptions = document.getElementById('folderOptions');
@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const adminLoginBtn = document.getElementById('adminLoginBtn');
     const adminWelcome = document.getElementById('adminWelcome');
     const uploadSection = document.getElementById('uploadSection');
-    
+
     const quickAccessContainer = document.getElementById('quickAccessContainer');
     const quickAccessList = document.getElementById('quickAccessList');
 
@@ -75,7 +75,7 @@ document.addEventListener("DOMContentLoaded", () => {
             renderQuickAccess();
         }
     };
-    
+
     const openAdminLoginModal = () => {
         adminLoginModal.classList.add('active');
         adminPasswordInput.focus();
@@ -110,9 +110,9 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     adminLoginBtn.addEventListener('click', openAdminLoginModal);
-    
+
     adminCloseBtn.addEventListener('click', closeAdminLoginModal);
-    
+
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && adminLoginModal.classList.contains('active')) {
             closeAdminLoginModal();
@@ -259,10 +259,10 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     window.trackView = (filename) => addRecent(filename);
-    
+
     window.deleteFile = async (filename) => {
         if (!confirm(`Are you sure you want to permanently delete ${filename}?`)) return;
-        
+
         try {
             const response = await fetch('/api/delete', {
                 method: 'POST',
@@ -281,13 +281,13 @@ document.addEventListener("DOMContentLoaded", () => {
                     location.reload();
                 }
             }
-        } catch(e) {
+        } catch (e) {
             alert("Delete failed.");
         }
     };
     window.openAI = (filename) => {
         currentAiFile = allFiles.find(f => f.rawName === filename);
-        if(!currentAiFile) return;
+        if (!currentAiFile) return;
         aiModalSubtitle.textContent = currentAiFile.cleanName;
         chatContainer.innerHTML = '<div class="chat-message ai">Hi! I\'m your AI study assistant. Ask me anything about this document, or use the quick actions above.</div>';
         aiModal.classList.add('active');
@@ -309,9 +309,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const handleAiRequest = async (prompt, action = 'chat') => {
         if (!currentAiFile) return;
-        
+
         if (action === 'chat' && !prompt) return;
-        
+
         if (action === 'chat') {
             addChatMessage(prompt, 'user');
             aiInput.value = '';
@@ -340,13 +340,13 @@ document.addEventListener("DOMContentLoaded", () => {
             });
             const data = await response.json();
             document.getElementById(`typing-${typingId}`).remove();
-            
+
             if (response.ok) {
                 addChatMessage(data.reply, 'ai');
             } else {
                 addChatMessage("Sorry, there was an error processing your request.", 'ai');
             }
-        } catch(e) {
+        } catch (e) {
             document.getElementById(`typing-${typingId}`).remove();
             addChatMessage("Network error. Please try again.", 'ai');
         }
@@ -372,10 +372,10 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         quickAccessContainer.style.display = 'block';
         quickAccessList.innerHTML = '';
-        
+
         recents.forEach(filename => {
             const file = allFiles.find(f => f.rawName === filename);
-            if(file) {
+            if (file) {
                 quickAccessList.innerHTML += createResourceHtml(file);
             }
         });
@@ -426,23 +426,23 @@ document.addEventListener("DOMContentLoaded", () => {
             Object.values(coursesMap).forEach(courseData => {
                 const courseEl = document.createElement('div');
                 courseEl.className = 'course-card';
-                
+
                 const mainResources = courseData.resources.filter(r => r.resourceType === 'CDF' || r.resourceType === 'Lab Manual');
                 let resourcesHtml = mainResources.map(res => createResourceHtml(res)).join('');
-                
+
                 if (courseData.folderTypes.has('Lectures')) {
                     const lectureCount = courseData.resources.filter(r => r.resourceType === 'Lectures').length;
                     resourcesHtml += `
                         <div class="resource-item" style="cursor: pointer; background: #fafafa; border: 1px dashed #ccc;" onclick="window.openFolder('Lectures', '${courseData.info.code}', '${courseData.info.name.replace(/'/g, "\\'")}')">
                             <div style="display: flex; align-items: center; gap: 10px;">
-                                <span style="font-size: 1.5rem;">📁</span>
+                                <span style="font-size: 1.4rem; color: var(--accent); display:flex; align-items:center;"><i class="bi bi-folder-fill"></i></span>
                                 <div>
                                     <div class="resource-name">Lectures</div>
                                     <div style="font-size: 0.8rem; color: #666;">${lectureCount} item(s)</div>
                                 </div>
                             </div>
                             <div class="resource-actions">
-                                <span style="color: var(--primary-color); font-weight: bold; font-size: 0.9rem;">Open Folder &rarr;</span>
+                                <span style="color: var(--accent); font-weight: bold; font-size: 0.9rem;">Open &rarr;</span>
                             </div>
                         </div>
                     `;
@@ -466,7 +466,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 `;
                 coursesContainer.appendChild(courseEl);
             });
-        } 
+        }
         else if (currentView === 'course') {
             navigationBar.style.display = 'flex';
             controlsSection.style.display = 'none';
@@ -475,9 +475,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const courseFiles = allFiles.filter(f => f.course.code === selectedCourseCode);
             const folderTypes = new Set(courseFiles.map(f => f.resourceType));
-            
+
             coursesContainer.innerHTML = '';
-            
+
             if (folderTypes.size === 0) {
                 coursesContainer.innerHTML = '<div class="no-results">No folders found in this course.</div>';
                 return;
@@ -489,8 +489,23 @@ document.addEventListener("DOMContentLoaded", () => {
                 folderCard.className = 'course-card';
                 folderCard.style.cursor = 'pointer';
                 folderCard.onclick = () => window.openFolder(folder);
+
+                // Pick an icon per folder type
+                const folderIcons = {
+                    'Lectures':    'bi-camera-video-fill',
+                    'Lab Manual':  'bi-journal-code',
+                    'CDF':         'bi-file-earmark-text-fill',
+                    'Syllabus':    'bi-list-task',
+                    'Assignments': 'bi-pencil-square',
+                    'Other':       'bi-folder-fill',
+                };
+                const iconClass = folderIcons[folder] || 'bi-folder-fill';
+
                 folderCard.innerHTML = `
                     <div class="course-header">
+                        <div class="course-icon" style="display:flex;align-items:center;justify-content:center;">
+                            <i class="bi ${iconClass}" style="font-size:1.8rem; color:var(--accent);"></i>
+                        </div>
                         <div class="course-info">
                             <h2>${folder}</h2>
                             <p class="course-code">${folderFiles.length} item(s)</p>
@@ -507,9 +522,9 @@ document.addEventListener("DOMContentLoaded", () => {
             currentPath.textContent = `${selectedCourseName} > ${selectedFolder}`;
 
             const folderFiles = allFiles.filter(f => f.course.code === selectedCourseCode && f.resourceType === selectedFolder);
-            
+
             coursesContainer.innerHTML = '';
-            
+
             if (folderFiles.length === 0) {
                 coursesContainer.innerHTML = '<div class="no-results">Folder is empty.</div>';
                 return;
@@ -538,10 +553,10 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
             const response = await fetch('/api/files');
             const data = await response.json();
-            
+
             if (response.ok) {
                 const pdfs = data.filter(file => file.name.match(/\.(pdf|pptx|ppt|doc|docx)$/i));
-                
+
                 allFiles = pdfs.map(file => {
                     const courseInfo = getCourseInfo(file.name);
                     const rType = getResourceType(file.name);
@@ -553,7 +568,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         cleanName: getCleanName(file.name)
                     };
                 });
-                
+
                 // Extract unique folders
                 const folders = new Set();
                 allFiles.forEach(file => {
@@ -562,8 +577,8 @@ document.addEventListener("DOMContentLoaded", () => {
                         folders.add(folder);
                     }
                 });
-                
-                if(folderOptions) {
+
+                if (folderOptions) {
                     folderOptions.innerHTML = '';
                     folders.forEach(folder => {
                         const option = document.createElement('option');
@@ -571,7 +586,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         folderOptions.appendChild(option);
                     });
                 }
-                
+
                 updateAdminUI();
                 renderCourses();
                 renderQuickAccess();
@@ -589,7 +604,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let touchStartY = 0;
     document.addEventListener('touchstart', e => {
         if (window.scrollY === 0) touchStartY = e.touches[0].clientY;
-    }, {passive: true});
+    }, { passive: true });
 
     document.addEventListener('touchend', e => {
         if (window.scrollY === 0 && touchStartY > 0) {
@@ -638,7 +653,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         uploadBtn.disabled = true;
         uploadStatus.textContent = "Uploading... Please wait.";
-uploadStatus.style.color = "var(--text-color)";
+        uploadStatus.style.color = "var(--text-color)";
 
 
         const reader = new FileReader();
@@ -648,9 +663,9 @@ uploadStatus.style.color = "var(--text-color)";
                 const response = await fetch('/api/upload', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        filename: file.name, 
-                        contentBase64: base64data, 
+                    body: JSON.stringify({
+                        filename: file.name,
+                        contentBase64: base64data,
                         password: adminPass,
                         folder: folderInput ? folderInput.value : ''
                     })
@@ -664,7 +679,7 @@ uploadStatus.style.color = "var(--text-color)";
                 } else {
                     const result = await response.json();
                     uploadStatus.textContent = `Error: ${result.message}`;
-uploadStatus.style.color = "red";
+                    uploadStatus.style.color = "red";
 
                 }
             } catch (error) {
@@ -679,10 +694,10 @@ uploadStatus.style.color = "red";
 
     // === Favicon Bar Logic ===
     const navItems = {
-        home:    document.getElementById('navHome'),
-        search:  document.getElementById('navSearch'),
-        upload:  document.getElementById('navUpload'),
-        notice:  document.getElementById('navNotice'),
+        home: document.getElementById('navHome'),
+        search: document.getElementById('navSearch'),
+        upload: document.getElementById('navUpload'),
+        notice: document.getElementById('navNotice'),
         courses: document.getElementById('navCourses'),
     };
 
@@ -757,16 +772,16 @@ uploadStatus.style.color = "red";
     };
 
     // === Notices System ===
-    const noticesModal      = document.getElementById('noticesModal');
-    const noticesCloseBtn   = document.getElementById('noticesCloseBtn');
-    const noticesList       = document.getElementById('noticesList');
-    const noticesFooter     = document.getElementById('noticesFooter');
-    const noticeInput       = document.getElementById('noticeInput');
-    const postNoticeBtn     = document.getElementById('postNoticeBtn');
-    const noticeBadge       = document.getElementById('noticeBadge');
+    const noticesModal = document.getElementById('noticesModal');
+    const noticesCloseBtn = document.getElementById('noticesCloseBtn');
+    const noticesList = document.getElementById('noticesList');
+    const noticesFooter = document.getElementById('noticesFooter');
+    const noticeInput = document.getElementById('noticeInput');
+    const postNoticeBtn = document.getElementById('postNoticeBtn');
+    const noticeBadge = document.getElementById('noticeBadge');
 
-    const NOTICES_KEY     = 'fa24bai_notices';
-    const SEEN_KEY        = 'fa24bai_notices_seen';
+    const NOTICES_KEY = 'fa24bai_notices';
+    const SEEN_KEY = 'fa24bai_notices_seen';
 
     const getNotices = () => JSON.parse(localStorage.getItem(NOTICES_KEY) || '[]');
     const saveNotices = (arr) => localStorage.setItem(NOTICES_KEY, JSON.stringify(arr));
@@ -876,13 +891,13 @@ uploadStatus.style.color = "red";
     const promptAdminPassword = () => {
         return new Promise((resolve) => {
             openAdminLoginModal();
-            
+
             // Override form submission to resolve promise
             const originalSubmit = adminLoginForm.onsubmit;
             adminLoginForm.onsubmit = async (e) => {
                 e.preventDefault();
                 const pass = adminPasswordInput.value.trim();
-                
+
                 if (!pass) {
                     showLoginError('Password cannot be empty');
                     resolve(null);
@@ -934,7 +949,7 @@ uploadStatus.style.color = "red";
             font-weight: 500;
         `;
         document.body.appendChild(notification);
-        
+
         setTimeout(() => {
             notification.style.animation = 'slideUp 0.3s ease-out forwards';
             setTimeout(() => notification.remove(), 300);
