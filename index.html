@@ -31,7 +31,7 @@
             <datalist id="folderOptions"></datalist>
             <input type="file" id="fileInput"
                 accept="application/pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
-            <button id="uploadBtn">Upload to GitHub</button>
+            <button id="uploadBtn">Upload</button>
             <p id="uploadStatus"></p>
         </div>
 
@@ -64,35 +64,6 @@
             <p class="loading-text">Loading hub...</p>
         </div>
     </div>
-
-    <!-- AI Assistant Modal -->
-    <div class="modal-overlay" id="aiModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div>
-                    <h3 id="aiModalTitle">AI Assistant</h3>
-                    <p id="aiModalSubtitle" style="margin:0; font-size:0.8rem; color:#666;"></p>
-                </div>
-                <button class="close-btn" id="aiCloseBtn">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="ai-quick-actions">
-                    <button class="ai-action-btn" data-action="summarize">Summarize</button>
-                    <button class="ai-action-btn" data-action="quiz">Generate Quiz</button>
-                    <button class="ai-action-btn" data-action="viva">Viva Questions</button>
-                </div>
-                <div class="chat-container" id="chatContainer">
-                    <div class="chat-message ai">Hi! I'm your AI study assistant. Ask me anything about this document,
-                        or use the quick actions above.</div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <input type="text" id="aiInput" placeholder="Ask a question...">
-                <button id="aiSendBtn">Send</button>
-            </div>
-        </div>
-    </div>
-
     <script src="js/script.js"></script>
 </body>
 
