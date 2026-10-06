@@ -460,7 +460,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 courseEl.innerHTML = `
                     <div class="course-header" style="cursor: pointer;" onclick="window.openCourse('${courseData.info.code}', '${courseData.info.name.replace(/'/g, "\\'")}')">
-                        <div class="course-icon">${courseData.info.icon}</div>
                         <div class="course-info">
                             <h2>${courseData.info.name}</h2>
                             <p class="course-code">${courseData.folderTypes.size} Folder(s)</p>
@@ -498,7 +497,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 folderCard.onclick = () => window.openFolder(folder);
                 folderCard.innerHTML = `
                     <div class="course-header">
-                        <div class="course-icon">📁</div>
                         <div class="course-info">
                             <h2>${folder}</h2>
                             <p class="course-code">${folderFiles.length} item(s)</p>
@@ -528,7 +526,6 @@ document.addEventListener("DOMContentLoaded", () => {
             folderContainer.style.width = '100%';
             folderContainer.innerHTML = `
                 <div class="course-header" style="border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 15px;">
-                    <div class="course-icon">📁</div>
                     <div class="course-info">
                         <h2>${selectedFolder}</h2>
                         <p class="course-code">${folderFiles.length} item(s)</p>
