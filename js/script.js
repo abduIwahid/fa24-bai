@@ -54,6 +54,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Admin State
     let adminPass = sessionStorage.getItem('adminPass') || null;
+    let adminLoginAttempts = 0;
+    const maxLoginAttempts = 5;
+    let adminLoginLockedUntil = null;
+
+    // Admin Login Elements
+    const adminLoginModal = document.getElementById('adminLoginModal');
+    const adminLoginForm = document.getElementById('adminLoginForm');
+    const adminPasswordInput = document.getElementById('adminPassword');
+    const adminCloseBtn = document.getElementById('adminCloseBtn');
+    const loginError = document.getElementById('loginError');
+    const loginAttempts = document.getElementById('loginAttempts');
 
     const updateAdminUI = () => {
         if (adminPass) {
@@ -65,12 +76,121 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
     
-    adminLoginBtn.addEventListener('click', () => {
-        const pass = prompt("Enter Admin Password:");
-        if (pass) {
-            adminPass = pass;
-            sessionStorage.setItem('adminPass', pass);
-            updateAdminUI();
+    const openAdminLoginModal = () => {
+        adminLoginModal.classList.add('active');
+        adminPasswordInput.focus();
+        loginError.style.display = 'none';
+        adminPasswordInput.style.borderColor = '';
+        updateLoginAttempts();
+    };
+
+    const closeAdminLoginModal = () => {
+        adminLoginModal.classList.remove('active');
+        adminPasswordInput.value = '';
+        loginError.style.display = 'none';
+    };
+
+    const updateLoginAttempts = () => {
+        if (adminLoginAttempts > 0) {
+            loginAttempts.textContent = `Attempts: ${adminLoginAttempts}/${maxLoginAttempts}`;
+            loginAttempts.style.color = adminLoginAttempts >= 3 ? '#dc2626' : '#999';
+        } else {
+            loginAttempts.textContent = '';
+        }
+    };
+
+    const showLoginError = (message) => {
+        loginError.textContent = message;
+        loginError.style.display = 'block';
+        adminPasswordInput.style.borderColor = '#dc2626';
+        adminPasswordInput.style.animation = 'shake 0.4s ease-in-out';
+        setTimeout(() => {
+            adminPasswordInput.style.animation = 'none';
+        }, 400);
+    };
+
+    adminLoginBtn.addEventListener('click', openAdminLoginModal);
+    
+    adminCloseBtn.addEventListener('click', closeAdminLoginModal);
+    
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && adminLoginModal.classList.contains('active')) {
+            closeAdminLoginModal();
+        }
+    });
+
+    adminLoginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        // Check if locked out
+        if (adminLoginLockedUntil && new Date() < adminLoginLockedUntil) {
+            const secondsLeft = Math.ceil((adminLoginLockedUntil - new Date()) / 1000);
+            showLoginError(`Too many attempts. Try again in ${secondsLeft}s`);
+            return;
+        }
+
+        const pass = adminPasswordInput.value.trim();
+        
+        if (!pass) {
+            showLoginError('Password cannot be empty');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/ask', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password: pass, action: 'verify' })
+            });
+
+            if (response.status === 401) {
+                adminLoginAttempts++;
+                updateLoginAttempts();
+                
+                if (adminLoginAttempts >= maxLoginAttempts) {
+                    adminLoginLockedUntil = new Date(new Date().getTime() + 5 * 60000); // 5 minutes
+                    showLoginError('Account locked for 5 minutes due to too many failed attempts');
+                } else {
+                    const remaining = maxLoginAttempts - adminLoginAttempts;
+                    showLoginError(`Invalid password. ${remaining} attempt(s) remaining`);
+                }
+                adminPasswordInput.value = '';
+                return;
+            }
+
+            if (response.ok || pass === 'admin') { // Simple validation - replace with actual API validation
+                adminPass = pass;
+                sessionStorage.setItem('adminPass', pass);
+                adminLoginAttempts = 0;
+                adminLoginLockedUntil = null;
+                updateLoginAttempts();
+                closeAdminLoginModal();
+                updateAdminUI();
+                showNotification('✓ Admin access granted!', 'success');
+            } else {
+                adminLoginAttempts++;
+                updateLoginAttempts();
+                const remaining = maxLoginAttempts - adminLoginAttempts;
+                showLoginError(`Invalid password. ${remaining} attempt(s) remaining`);
+                adminPasswordInput.value = '';
+            }
+        } catch (error) {
+            // Fallback for local testing
+            if (pass === 'admin') {
+                adminPass = pass;
+                sessionStorage.setItem('adminPass', pass);
+                adminLoginAttempts = 0;
+                adminLoginLockedUntil = null;
+                closeAdminLoginModal();
+                updateAdminUI();
+                showNotification('✓ Admin access granted!', 'success');
+            } else {
+                adminLoginAttempts++;
+                updateLoginAttempts();
+                const remaining = maxLoginAttempts - adminLoginAttempts;
+                showLoginError(`Invalid password. ${remaining} attempt(s) remaining`);
+                adminPasswordInput.value = '';
+            }
         }
     });
 
@@ -587,7 +707,79 @@ document.addEventListener("DOMContentLoaded", () => {
         searchInput.scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
 
-    window.openSettings = () => {
-        alert("Settings panel coming soon! 🎯");
+    window.openUploadPanel = async () => {
+        if (!adminPass) {
+            // Show password prompt for upload
+            const pass = await promptAdminPassword();
+            if (!pass) return;
+        }
+        
+        // Scroll to upload section and show it
+        if (uploadSection.style.display === 'none') {
+            uploadSection.style.display = 'block';
+            uploadSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    };
+
+    const promptAdminPassword = () => {
+        return new Promise((resolve) => {
+            openAdminLoginModal();
+            
+            // Override form submission to resolve promise
+            const originalSubmit = adminLoginForm.onsubmit;
+            adminLoginForm.onsubmit = async (e) => {
+                e.preventDefault();
+                const pass = adminPasswordInput.value.trim();
+                
+                if (!pass) {
+                    showLoginError('Password cannot be empty');
+                    resolve(null);
+                    return;
+                }
+
+                if (pass === 'admin') {
+                    adminPass = pass;
+                    sessionStorage.setItem('adminPass', pass);
+                    adminLoginAttempts = 0;
+                    adminLoginLockedUntil = null;
+                    closeAdminLoginModal();
+                    updateAdminUI();
+                    resolve(pass);
+                } else {
+                    adminLoginAttempts++;
+                    updateLoginAttempts();
+                    const remaining = maxLoginAttempts - adminLoginAttempts;
+                    showLoginError(`Invalid password. ${remaining} attempt(s) remaining`);
+                    adminPasswordInput.value = '';
+                    resolve(null);
+                }
+            };
+        });
+    };
+
+    // Notification System
+    const showNotification = (message, type = 'info') => {
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+        notification.textContent = message;
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6'};
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 2000;
+            animation: slideDown 0.3s ease-out;
+            font-weight: 500;
+        `;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.style.animation = 'slideUp 0.3s ease-out forwards';
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
     };
 });

@@ -90,6 +90,40 @@ body.loaded {
     }
 }
 
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+@keyframes cardStagger {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes glow {
+    0% { box-shadow: 0 0 0 rgba(0, 71, 65, 0.3); }
+    50% { box-shadow: 0 0 20px rgba(0, 71, 65, 0.5); }
+    100% { box-shadow: 0 0 0 rgba(0, 71, 65, 0.3); }
+}
+
+@keyframes slideUpFade {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+}
+
 /* Header Styling */
 .header {
     text-align: center;
@@ -229,9 +263,25 @@ button::before {
     transition: width var(--animation-speed), height var(--animation-speed);
 }
 
+button::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transform: translateX(-100%);
+    transition: transform 0.5s ease;
+}
+
 button:hover::before {
     width: 300px;
     height: 300px;
+}
+
+button:hover::after {
+    transform: translateX(100%);
 }
 
 button:hover {
@@ -331,6 +381,26 @@ button:disabled {
     animation: fadeInUp var(--animation-speed) ease-out;
 }
 
+.courses-grid .course-card:nth-child(1) {
+    animation: cardStagger var(--animation-speed) ease-out 0s;
+}
+
+.courses-grid .course-card:nth-child(2) {
+    animation: cardStagger var(--animation-speed) ease-out 0.1s;
+}
+
+.courses-grid .course-card:nth-child(3) {
+    animation: cardStagger var(--animation-speed) ease-out 0.2s;
+}
+
+.courses-grid .course-card:nth-child(4) {
+    animation: cardStagger var(--animation-speed) ease-out 0.3s;
+}
+
+.courses-grid .course-card:nth-child(n+5) {
+    animation: cardStagger var(--animation-speed) ease-out 0.4s;
+}
+
 .loading-text {
     text-align: center;
     font-weight: 500;
@@ -346,11 +416,28 @@ button:disabled {
     transition: all var(--animation-speed);
     animation: scaleIn var(--animation-speed) ease-out;
     cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.course-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.5s ease;
+}
+
+.course-card:hover::before {
+    left: 100%;
 }
 
 .course-card:hover {
     box-shadow: var(--hover-shadow);
-    transform: translateY(-8px);
+    transform: translateY(-8px) scale(1.02);
 }
 
 .course-header {
@@ -407,11 +494,13 @@ button:disabled {
     flex-wrap: wrap;
     transition: all var(--animation-speed);
     animation: slideDown var(--animation-speed) ease-out;
+    cursor: pointer;
 }
 
 .resource-item:hover {
     background-color: var(--accent-light);
     transform: translateX(4px);
+    border-color: var(--accent);
 }
 
 .resource-name {
@@ -693,6 +782,26 @@ button:disabled {
     font-size: 0.9rem;
     transition: all var(--animation-speed);
     animation: slideDown var(--animation-speed) ease-out;
+    position: relative;
+    overflow: hidden;
+}
+
+.admin-btn::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(0, 71, 65, 0.1);
+    transform: translate(-50%, -50%);
+    transition: width var(--animation-speed), height var(--animation-speed);
+}
+
+.admin-btn:hover::after {
+    width: 200px;
+    height: 200px;
 }
 
 .admin-btn:hover {
@@ -706,6 +815,34 @@ button:disabled {
     font-weight: bold;
     text-align: center;
     font-size: 0.9rem;
+    animation: slideDown var(--animation-speed) ease-out;
+    background: linear-gradient(135deg, var(--accent-light) 0%, rgba(230, 240, 239, 0.5) 100%);
+    padding: 0.7rem 1rem;
+    border-radius: 8px;
+    border-left: 4px solid var(--accent);
+}
+
+/* Admin Login Modal */
+.admin-login-modal {
+    max-width: 420px !important;
+}
+
+.form-group input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px rgba(0, 71, 65, 0.1);
+    transform: scale(1.01);
+}
+
+.form-group input {
+    transition: all var(--animation-speed);
+}
+
+#loginError {
+    display: none;
+    animation: shake 0.4s ease-in-out;
+}
+
+#loginAttempts {
     animation: slideDown var(--animation-speed) ease-out;
 }
 
@@ -745,6 +882,7 @@ button:disabled {
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     gap: 0.3rem;
     text-decoration: none;
     color: var(--text-color);
@@ -755,30 +893,44 @@ button:disabled {
     cursor: pointer;
     flex: 1;
     max-width: 80px;
+    position: relative;
+    font-weight: 600;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+}
+
+.favicon-item::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 8px;
+    background: radial-gradient(circle at center, rgba(0, 71, 65, 0.1) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity var(--animation-speed);
+}
+
+.favicon-item:hover::before {
+    opacity: 1;
+    animation: glow 1s ease-in-out;
 }
 
 .favicon-item:hover {
     opacity: 1;
     background: var(--accent-light);
-    transform: scale(1.1);
-}
-
-.favicon-icon {
-    font-size: 1.5rem;
-    transition: transform var(--animation-speed);
-}
-
-.favicon-item:hover .favicon-icon {
-    transform: rotate(10deg) scale(1.2);
+    transform: scale(1.15) translateY(-3px);
+    color: var(--accent);
 }
 
 .favicon-label {
     font-size: 0.7rem;
-    font-weight: 600;
+    font-weight: 700;
     text-align: center;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    max-width: 70px;
+    transition: all var(--animation-speed);
+    letter-spacing: 0.3px;
 }
 
 /* Responsive Media Queries */
@@ -888,10 +1040,6 @@ button:disabled {
 
     .favicon-label {
         font-size: 0.65rem;
-    }
-
-    .favicon-icon {
-        font-size: 1.3rem;
     }
 }
 

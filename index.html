@@ -33,6 +33,31 @@
             </div>
         </div>
 
+    <!-- Admin Login Modal -->
+    <div class="modal-overlay" id="adminLoginModal">
+        <div class="modal-content admin-login-modal">
+            <div class="modal-header">
+                <div>
+                    <h3>Admin Login</h3>
+                    <p style="margin:0; font-size:0.85rem; color:#999;">Secure Access</p>
+                </div>
+                <button class="close-btn" id="adminCloseBtn" aria-label="Close login">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="adminLoginForm" style="display: flex; flex-direction: column; gap: 1.2rem;">
+                    <div class="form-group">
+                        <label for="adminPassword" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-color);">Password</label>
+                        <input type="password" id="adminPassword" placeholder="Enter admin password" 
+                            style="width: 100%; padding: 0.9rem 1rem; border: 2px solid var(--border-color); border-radius: 8px; font-size: 1rem; font-family: 'Inter', sans-serif; transition: all 0.3s;">
+                        <div id="loginError" style="display: none; color: #dc2626; font-size: 0.9rem; margin-top: 0.5rem; font-weight: 500; animation: slideDown 0.3s ease-out;"></div>
+                    </div>
+                    <button type="submit" style="width: 100%; padding: 0.9rem; background: var(--accent); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s;">Login</button>
+                </form>
+                <div id="loginAttempts" style="text-align: center; font-size: 0.85rem; color: #999; margin-top: 1rem;"></div>
+            </div>
+        </div>
+    </div>
+
         <div class="upload-section" id="uploadSection" style="display: none;">
             <h3 class="section-title">Upload Resource</h3>
             <input type="text" id="folderInput" placeholder="Folder (e.g. 5th Semester) - Optional" list="folderOptions"
@@ -105,20 +130,16 @@
     <!-- Bottom Favicon Navigation Bar -->
     <nav class="favicon-bar" id="faviconBar" aria-label="Quick navigation">
         <a href="#" class="favicon-item" title="Home" onclick="window.scrollToHome(); return false;" aria-label="Go to home">
-            <span class="favicon-icon">🏠</span>
-            <span class="favicon-label">Home</span>
+            <span class="favicon-label">HOME</span>
         </a>
         <a href="#" class="favicon-item" title="Recent" onclick="window.scrollToRecent(); return false;" aria-label="View recent items">
-            <span class="favicon-icon">📚</span>
-            <span class="favicon-label">Recent</span>
+            <span class="favicon-label">RECENT</span>
         </a>
         <a href="#" class="favicon-item" title="Search" onclick="window.focusSearch(); return false;" aria-label="Focus search">
-            <span class="favicon-icon">🔍</span>
-            <span class="favicon-label">Search</span>
+            <span class="favicon-label">SEARCH</span>
         </a>
-        <a href="#" class="favicon-item" title="Settings" onclick="window.openSettings(); return false;" aria-label="Open settings">
-            <span class="favicon-icon">⚙️</span>
-            <span class="favicon-label">Settings</span>
+        <a href="#" class="favicon-item" title="Upload" onclick="window.openUploadPanel(); return false;" aria-label="Upload content">
+            <span class="favicon-label">UPLOAD</span>
         </a>
     </nav>
 
