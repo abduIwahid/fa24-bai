@@ -10,10 +10,13 @@
     --animation-speed: 0.3s;
 }
 
-/* === Zoom: 75% on mobile, 100% on PC === */
+/* === Fluid base font: 75% on mobile, 100% on PC — scales with browser zoom === */
+html {
+    font-size: 100%; /* 16px baseline — browser zoom multiplies this automatically */
+}
 @media (max-width: 768px) {
     html {
-        zoom: 0.75;
+        font-size: 75%; /* 12px baseline on mobile = 75% of desktop */
     }
 }
 
@@ -34,7 +37,7 @@ body {
     align-items: flex-start;
     min-height: 100vh;
     margin: 0;
-    padding: 20px 20px 120px 20px;
+    padding: 1.25rem 1.25rem 7.5rem 1.25rem; /* rem so it scales with zoom */
     opacity: 0;
     transition: opacity var(--animation-speed) ease-in-out;
     box-sizing: border-box;
@@ -868,10 +871,12 @@ button:disabled {
     display: flex;
     justify-content: space-around;
     align-items: center;
-    padding: 0.5rem 0;
+    padding: 0.4rem 0;
     z-index: 100;
     box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
     animation: slideUp var(--animation-speed) ease-out;
+    /* Scale the bar with browser zoom via font-size inheritance */
+    font-size: 1rem;
 }
 
 @keyframes slideUp {
@@ -890,27 +895,32 @@ button:disabled {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 0.3rem;
+    gap: 0.2rem;
     text-decoration: none;
     color: var(--text-color);
-    opacity: 0.7;
+    opacity: 0.6;
     transition: all var(--animation-speed);
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
+    padding: 0.4rem 0.6rem;
+    border-radius: 10px;
     cursor: pointer;
     flex: 1;
-    max-width: 80px;
     position: relative;
     font-weight: 600;
-    font-size: 0.75rem;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
+}
+
+.favicon-icon {
+    font-size: 1.3rem;
+    line-height: 1;
+    transition: transform var(--animation-speed);
+    display: block;
 }
 
 .favicon-item::before {
     content: '';
     position: absolute;
     inset: 0;
-    border-radius: 8px;
+    border-radius: 10px;
     background: radial-gradient(circle at center, rgba(0, 71, 65, 0.1) 0%, transparent 70%);
     opacity: 0;
     transition: opacity var(--animation-speed);
@@ -918,26 +928,48 @@ button:disabled {
 
 .favicon-item:hover::before {
     opacity: 1;
-    animation: glow 1s ease-in-out;
 }
 
 .favicon-item:hover {
     opacity: 1;
     background: var(--accent-light);
-    transform: scale(1.15) translateY(-3px);
     color: var(--accent);
 }
 
+.favicon-item:hover .favicon-icon {
+    transform: scale(1.2) translateY(-2px);
+}
+
+/* Active tab state */
+.favicon-item.active {
+    opacity: 1;
+    color: var(--accent);
+    background: var(--accent-light);
+}
+
+.favicon-item.active .favicon-icon {
+    transform: scale(1.15);
+}
+
+.favicon-item.active::after {
+    content: '';
+    position: absolute;
+    bottom: -0.1rem;
+    left: 25%;
+    width: 50%;
+    height: 3px;
+    background: var(--accent);
+    border-radius: 2px 2px 0 0;
+}
+
 .favicon-label {
-    font-size: 0.7rem;
+    font-size: 0.6rem;
     font-weight: 700;
     text-align: center;
-    overflow: hidden;
-    text-overflow: ellipsis;
     white-space: nowrap;
-    max-width: 70px;
     transition: all var(--animation-speed);
-    letter-spacing: 0.3px;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
 }
 
 /* Responsive Media Queries */
@@ -962,8 +994,9 @@ button:disabled {
 }
 
 @media (max-width: 768px) {
+    /* body padding in rem so it scales with the 75% font-size base */
     body {
-        padding: 15px 15px 140px 15px;
+        padding: 0.9rem 0.9rem 9rem 0.9rem;
     }
 
     .container {
@@ -1033,20 +1066,7 @@ button:disabled {
     }
 
     #searchInput {
-        font-size: 16px; /* Prevents zoom on iOS */
-    }
-
-    .favicon-bar {
-        padding: 0.4rem 0;
-    }
-
-    .favicon-item {
-        max-width: 60px;
-        padding: 0.4rem 0.5rem;
-    }
-
-    .favicon-label {
-        font-size: 0.65rem;
+        font-size: 1rem;
     }
 }
 

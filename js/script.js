@@ -677,8 +677,21 @@ uploadStatus.style.color = "red";
         reader.readAsDataURL(file);
     });
 
-    // Favicon Bar Functions
+    // === Favicon Bar Logic ===
+    const navItems = {
+        home:   document.getElementById('navHome'),
+        recent: document.getElementById('navRecent'),
+        search: document.getElementById('navSearch'),
+        upload: document.getElementById('navUpload'),
+    };
+
+    const setActiveNav = (key) => {
+        Object.values(navItems).forEach(el => el && el.classList.remove('active'));
+        if (navItems[key]) navItems[key].classList.add('active');
+    };
+
     window.scrollToHome = () => {
+        setActiveNav('home');
         if (currentView !== 'home') {
             currentView = 'home';
             selectedCourseCode = null;
@@ -690,27 +703,61 @@ uploadStatus.style.color = "red";
     };
 
     window.scrollToRecent = () => {
-        if (quickAccessContainer.style.display !== 'none') {
-            quickAccessContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        setActiveNav('recent');
+        if (currentView !== 'home') {
+            currentView = 'home';
+            selectedCourseCode = null;
+            selectedCourseName = null;
+            selectedFolder = null;
+            renderCourses();
+        }
+        if (quickAccessContainer && quickAccessContainer.style.display !== 'none') {
+            setTimeout(() => {
+                quickAccessContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+        } else {
+            showNotification('No recently viewed files yet. Open a file first!', 'info');
+            setActiveNav('home');
         }
     };
 
     window.focusSearch = () => {
-        searchInput.focus();
-        searchInput.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        setActiveNav('search');
+        if (currentView !== 'home') {
+            currentView = 'home';
+            selectedCourseCode = null;
+            selectedCourseName = null;
+            selectedFolder = null;
+            renderCourses();
+        }
+        setTimeout(() => {
+            searchInput.focus();
+            searchInput.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
     };
 
     window.openUploadPanel = async () => {
+        setActiveNav('upload');
         if (!adminPass) {
-            // Show password prompt for upload
             const pass = await promptAdminPassword();
-            if (!pass) return;
+            if (!pass) {
+                setActiveNav('home');
+                return;
+            }
         }
-        
-        // Scroll to upload section and show it
-        if (uploadSection.style.display === 'none') {
+        // Ensure home view is active so upload section is visible
+        if (currentView !== 'home') {
+            currentView = 'home';
+            selectedCourseCode = null;
+            selectedCourseName = null;
+            selectedFolder = null;
+            renderCourses();
+        }
+        if (uploadSection) {
             uploadSection.style.display = 'block';
-            uploadSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            setTimeout(() => {
+                uploadSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
         }
     };
 
