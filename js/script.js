@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const fileInput = document.getElementById('fileInput');
     const folderInput = document.getElementById('folderInput');
     const folderOptions = document.getElementById('folderOptions');
-    const statusText = document.getElementById('uploadStatus');
+    const uploadStatus = document.getElementById('uploadStatus');
     const searchInput = document.getElementById('searchInput');
     const filterChips = document.querySelectorAll('.filter-chip');
     const adminLoginBtn = document.getElementById('adminLoginBtn');
@@ -121,7 +121,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     adminLoginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        
+
         // Check if locked out
         if (adminLoginLockedUntil && new Date() < adminLoginLockedUntil) {
             const secondsLeft = Math.ceil((adminLoginLockedUntil - new Date()) / 1000);
@@ -130,11 +130,36 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         const pass = adminPasswordInput.value.trim();
-        
+
         if (!pass) {
             showLoginError('Password cannot be empty');
             return;
         }
+
+        const grantAccess = () => {
+            adminPass = pass;
+            sessionStorage.setItem('adminPass', pass);
+            adminLoginAttempts = 0;
+            adminLoginLockedUntil = null;
+            updateLoginAttempts();
+            closeAdminLoginModal();
+            updateAdminUI();
+            showNotification('✓ Admin access granted!', 'success');
+        };
+
+        const denyAccess = () => {
+            adminLoginAttempts++;
+            updateLoginAttempts();
+            if (adminLoginAttempts >= maxLoginAttempts) {
+                adminLoginLockedUntil = new Date(new Date().getTime() + 5 * 60000);
+                showLoginError('Account locked for 5 minutes due to too many failed attempts');
+            } else {
+                const remaining = maxLoginAttempts - adminLoginAttempts;
+                showLoginError(`❌ Wrong password. ${remaining} attempt(s) remaining`);
+            }
+            adminPasswordInput.value = '';
+            adminPasswordInput.focus();
+        };
 
         try {
             const response = await fetch('/api/ask', {
@@ -143,53 +168,22 @@ document.addEventListener("DOMContentLoaded", () => {
                 body: JSON.stringify({ password: pass, action: 'verify' })
             });
 
-            if (response.status === 401) {
-                adminLoginAttempts++;
-                updateLoginAttempts();
-                
-                if (adminLoginAttempts >= maxLoginAttempts) {
-                    adminLoginLockedUntil = new Date(new Date().getTime() + 5 * 60000); // 5 minutes
-                    showLoginError('Account locked for 5 minutes due to too many failed attempts');
-                } else {
-                    const remaining = maxLoginAttempts - adminLoginAttempts;
-                    showLoginError(`Invalid password. ${remaining} attempt(s) remaining`);
-                }
-                adminPasswordInput.value = '';
-                return;
-            }
-
-            if (response.ok || pass === 'admin') { // Simple validation - replace with actual API validation
-                adminPass = pass;
-                sessionStorage.setItem('adminPass', pass);
-                adminLoginAttempts = 0;
-                adminLoginLockedUntil = null;
-                updateLoginAttempts();
-                closeAdminLoginModal();
-                updateAdminUI();
-                showNotification('✓ Admin access granted!', 'success');
+            if (response.status === 200) {
+                grantAccess();
             } else {
-                adminLoginAttempts++;
-                updateLoginAttempts();
-                const remaining = maxLoginAttempts - adminLoginAttempts;
-                showLoginError(`Invalid password. ${remaining} attempt(s) remaining`);
-                adminPasswordInput.value = '';
+                // API returned an error — fallback to local check
+                if (pass === 'admin@fa24bai') {
+                    grantAccess();
+                } else {
+                    denyAccess();
+                }
             }
         } catch (error) {
-            // Fallback for local testing
-            if (pass === 'admin') {
-                adminPass = pass;
-                sessionStorage.setItem('adminPass', pass);
-                adminLoginAttempts = 0;
-                adminLoginLockedUntil = null;
-                closeAdminLoginModal();
-                updateAdminUI();
-                showNotification('✓ Admin access granted!', 'success');
+            // No server / local mode — validate against hardcoded password
+            if (pass === 'admin@fa24bai') {
+                grantAccess();
             } else {
-                adminLoginAttempts++;
-                updateLoginAttempts();
-                const remaining = maxLoginAttempts - adminLoginAttempts;
-                showLoginError(`Invalid password. ${remaining} attempt(s) remaining`);
-                adminPasswordInput.value = '';
+                denyAccess();
             }
         }
     });
@@ -626,14 +620,14 @@ document.addEventListener("DOMContentLoaded", () => {
     uploadBtn.addEventListener('click', async () => {
         const file = fileInput.files[0];
         if (!file) {
-            statusText.textContent = "Please select a file first.";
-            statusText.style.color = "red";
+            uploadStatus.textContent = "Please select a file first.";
+            uploadStatus.style.color = "red";
             return;
         }
 
         if (!file.name.match(/\.(pdf|pptx|ppt|doc|docx)$/i)) {
-            statusText.textContent = "Only PDF, PPTX/PPT, and DOCX/DOC files are allowed.";
-            statusText.style.color = "red";
+            uploadStatus.textContent = "Only PDF, PPTX/PPT, and DOCX/DOC files are allowed.";
+            uploadStatus.style.color = "red";
             return;
         }
 
@@ -643,8 +637,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         uploadBtn.disabled = true;
-        statusText.textContent = "Uploading... Please wait.";
-        statusText.style.color = "var(--text-color)";
+        uploadStatus.textContent = "Uploading... Please wait.";
+uploadStatus.style.color = "var(--text-color)";
+
 
         const reader = new FileReader();
         reader.onload = async (e) => {
@@ -662,18 +657,19 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
 
                 if (response.ok) {
-                    statusText.textContent = "Upload successful! Refreshing list...";
-                    statusText.style.color = "green";
+                    uploadStatus.textContent = "Upload successful! Refreshing list...";
+                    uploadStatus.style.color = "green";
                     fileInput.value = "";
                     setTimeout(loadFiles, 2000);
                 } else {
                     const result = await response.json();
-                    statusText.textContent = `Error: ${result.message}`;
-                    statusText.style.color = "red";
+                    uploadStatus.textContent = `Error: ${result.message}`;
+uploadStatus.style.color = "red";
+
                 }
             } catch (error) {
-                statusText.textContent = "Upload failed. Server error.";
-                statusText.style.color = "red";
+                uploadStatus.textContent = "Upload failed. Server error.";
+                uploadStatus.style.color = "red";
             } finally {
                 uploadBtn.disabled = false;
             }
@@ -734,7 +730,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     return;
                 }
 
-                if (pass === 'admin') {
+                if (pass === 'admin@fa24bai') {
                     adminPass = pass;
                     sessionStorage.setItem('adminPass', pass);
                     adminLoginAttempts = 0;
@@ -745,9 +741,15 @@ document.addEventListener("DOMContentLoaded", () => {
                 } else {
                     adminLoginAttempts++;
                     updateLoginAttempts();
-                    const remaining = maxLoginAttempts - adminLoginAttempts;
-                    showLoginError(`Invalid password. ${remaining} attempt(s) remaining`);
+                    if (adminLoginAttempts >= maxLoginAttempts) {
+                        adminLoginLockedUntil = new Date(new Date().getTime() + 5 * 60000);
+                        showLoginError('Account locked for 5 minutes due to too many failed attempts');
+                    } else {
+                        const remaining = maxLoginAttempts - adminLoginAttempts;
+                        showLoginError(`❌ Wrong password. ${remaining} attempt(s) remaining`);
+                    }
                     adminPasswordInput.value = '';
+                    adminPasswordInput.focus();
                     resolve(null);
                 }
             };

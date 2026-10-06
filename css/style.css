@@ -10,6 +10,13 @@
     --animation-speed: 0.3s;
 }
 
+/* === Zoom: 75% on mobile, 100% on PC === */
+@media (max-width: 768px) {
+    html {
+        zoom: 0.75;
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
         animation-duration: 0.01ms !important;
