@@ -910,10 +910,14 @@ button:disabled {
 }
 
 .favicon-icon {
-    font-size: 1.3rem;
+    font-size: 1.4rem;
     line-height: 1;
     transition: transform var(--animation-speed);
     display: block;
+    /* Ensure Bootstrap Icon font renders correctly */
+    font-family: "bootstrap-icons" !important;
+    font-style: normal;
+    -webkit-font-smoothing: antialiased;
 }
 
 .favicon-item::before {

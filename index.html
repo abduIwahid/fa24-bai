@@ -11,6 +11,7 @@
     <meta name="theme-color" content="#004741">
     <link rel="stylesheet" href="css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 </head>
 
 <body>
@@ -130,19 +131,19 @@
     <!-- Bottom Favicon Navigation Bar -->
     <nav class="favicon-bar" id="faviconBar" aria-label="Quick navigation">
         <a href="#" class="favicon-item active" id="navHome" title="Home" onclick="window.scrollToHome(); return false;" aria-label="Go to home">
-            <span class="favicon-icon">🏠</span>
+            <i class="bi bi-house-fill favicon-icon"></i>
             <span class="favicon-label">HOME</span>
         </a>
         <a href="#" class="favicon-item" id="navRecent" title="Recent" onclick="window.scrollToRecent(); return false;" aria-label="View recent items">
-            <span class="favicon-icon">🕒</span>
+            <i class="bi bi-clock-history favicon-icon"></i>
             <span class="favicon-label">RECENT</span>
         </a>
         <a href="#" class="favicon-item" id="navSearch" title="Search" onclick="window.focusSearch(); return false;" aria-label="Focus search">
-            <span class="favicon-icon">🔍</span>
+            <i class="bi bi-search favicon-icon"></i>
             <span class="favicon-label">SEARCH</span>
         </a>
         <a href="#" class="favicon-item" id="navUpload" title="Upload" onclick="window.openUploadPanel(); return false;" aria-label="Upload content">
-            <span class="favicon-icon">📤</span>
+            <i class="bi bi-cloud-upload favicon-icon"></i>
             <span class="favicon-label">UPLOAD</span>
         </a>
     </nav>
