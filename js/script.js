@@ -215,12 +215,12 @@ document.addEventListener("DOMContentLoaded", () => {
     // Course mapping logic
     const getCourseInfo = (filepath) => {
         const lowerName = filepath.toLowerCase();
-        if (lowerName.includes('pfai') || lowerName.includes('ai270') || lowerName.includes('aic270')) return { name: 'Artificial Intelligence', code: 'AIC270', icon: 'AI' };
+        if (lowerName.includes('pfai') || lowerName.includes('ai270') || lowerName.includes('aic270')) return { name: 'Programming for Artificial Intelligence', code: 'AIC270', icon: 'AI' };
         if (lowerName.includes('krr') || lowerName.includes('kr&r') || lowerName.includes('aic372')) return { name: 'Knowledge Rep. & Reasoning', code: 'AIC372', icon: 'KRR' };
         if (lowerName.includes('os') || lowerName.includes('csc322')) return { name: 'Operating Systems', code: 'CSC322', icon: 'OS' };
         if (lowerName.includes('stat') || lowerName.includes('mth262')) return { name: 'Probability & Statistics', code: 'MTH262', icon: 'STAT' };
         if (lowerName.includes('daa') || lowerName.includes('algorithm')) return { name: 'Design and Analysis of Algorithms', code: 'DAA', icon: 'ALG' };
-        if (lowerName.includes('web')) return { name: 'Web Engineering', code: 'WEB', icon: 'WEB' };
+        if (lowerName.includes('web')) return { name: 'Web Technologies', code: 'WEB', icon: 'WEB' };
         return { name: 'Other Resources', code: 'VAR', icon: 'DOC' };
     };
 
@@ -463,7 +463,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         <div class="course-icon">${courseData.info.icon}</div>
                         <div class="course-info">
                             <h2>${courseData.info.name}</h2>
-                            <p class="course-code">${courseData.info.code} • ${courseData.folderTypes.size} Folder(s)</p>
+                            <p class="course-code">${courseData.folderTypes.size} Folder(s)</p>
                         </div>
                     </div>
                     <div class="resources-list">
