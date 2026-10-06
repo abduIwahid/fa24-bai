@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=0.75">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FA24-BAI</title>
     <link rel="icon" href="logo.jpeg" type="image/jpeg">
     <link rel="apple-touch-icon" href="logo.jpeg">
@@ -16,12 +16,21 @@
 <body>
     <div class="container">
         <div class="header">
-            <img src="logo.jpeg" alt="FA24-BAI Logo" class="app-logo">
-            <h1>Study Hub</h1>
-            <button id="adminLoginBtn" class="admin-btn">Admin Login</button>
-            <div id="adminWelcome"
-                style="display: none; color: var(--text-color); font-weight: bold; text-align: center; margin-top: 10px;">
-                Welcome Admin, Abdul Wahid!</div>
+            <div class="header-content">
+                <div class="header-left">
+                    <img src="logo.jpeg" alt="FA24-BAI Logo" class="app-logo" aria-label="Application Logo">
+                    <div class="header-text">
+                        <h1>Study Hub</h1>
+                        <p class="header-subtitle">Your Learning Companion</p>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <button id="adminLoginBtn" class="admin-btn" aria-label="Admin Login">Admin Login</button>
+                    <div id="adminWelcome" class="admin-welcome" role="status" aria-live="polite">
+                        Welcome Admin, Abdul Wahid!
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="upload-section" id="uploadSection" style="display: none;">
@@ -31,7 +40,7 @@
             <datalist id="folderOptions"></datalist>
             <input type="file" id="fileInput"
                 accept="application/pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
-            <button id="uploadBtn">Upload</button>
+            <button id="uploadBtn">Upload to GitHub</button>
             <p id="uploadStatus"></p>
         </div>
 
@@ -64,6 +73,55 @@
             <p class="loading-text">Loading hub...</p>
         </div>
     </div>
+
+    <!-- AI Assistant Modal -->
+    <div class="modal-overlay" id="aiModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h3 id="aiModalTitle">AI Assistant</h3>
+                    <p id="aiModalSubtitle" style="margin:0; font-size:0.8rem; color:#666;"></p>
+                </div>
+                <button class="close-btn" id="aiCloseBtn" aria-label="Close modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="ai-quick-actions">
+                    <button class="ai-action-btn" data-action="summarize">Summarize</button>
+                    <button class="ai-action-btn" data-action="quiz">Generate Quiz</button>
+                    <button class="ai-action-btn" data-action="viva">Viva Questions</button>
+                </div>
+                <div class="chat-container" id="chatContainer">
+                    <div class="chat-message ai">Hi! I'm your AI study assistant. Ask me anything about this document,
+                        or use the quick actions above.</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <input type="text" id="aiInput" placeholder="Ask a question..." aria-label="AI input">
+                <button id="aiSendBtn" aria-label="Send message">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Favicon Navigation Bar -->
+    <nav class="favicon-bar" id="faviconBar" aria-label="Quick navigation">
+        <a href="#" class="favicon-item" title="Home" onclick="window.scrollToHome(); return false;" aria-label="Go to home">
+            <span class="favicon-icon">🏠</span>
+            <span class="favicon-label">Home</span>
+        </a>
+        <a href="#" class="favicon-item" title="Recent" onclick="window.scrollToRecent(); return false;" aria-label="View recent items">
+            <span class="favicon-icon">📚</span>
+            <span class="favicon-label">Recent</span>
+        </a>
+        <a href="#" class="favicon-item" title="Search" onclick="window.focusSearch(); return false;" aria-label="Focus search">
+            <span class="favicon-icon">🔍</span>
+            <span class="favicon-label">Search</span>
+        </a>
+        <a href="#" class="favicon-item" title="Settings" onclick="window.openSettings(); return false;" aria-label="Open settings">
+            <span class="favicon-icon">⚙️</span>
+            <span class="favicon-label">Settings</span>
+        </a>
+    </nav>
+
     <script src="js/script.js"></script>
 </body>
 

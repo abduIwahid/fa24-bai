@@ -32,6 +32,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const backBtn = document.getElementById('backBtn');
     const currentPath = document.getElementById('currentPath');
     const controlsSection = document.getElementById('controlsSection');
+    const coursesContainer = document.getElementById('coursesContainer');
+    const uploadBtn = document.getElementById('uploadBtn');
 
     let currentView = 'home'; // 'home', 'course', 'folder'
     let selectedCourseCode = null;
@@ -69,6 +71,14 @@ document.addEventListener("DOMContentLoaded", () => {
             adminPass = pass;
             sessionStorage.setItem('adminPass', pass);
             updateAdminUI();
+        }
+    });
+
+    // Close modal with Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && aiModal.classList.contains('active')) {
+            aiModal.classList.remove('active');
+            document.body.style.overflow = 'auto';
         }
     });
 
@@ -553,4 +563,31 @@ document.addEventListener("DOMContentLoaded", () => {
         };
         reader.readAsDataURL(file);
     });
+
+    // Favicon Bar Functions
+    window.scrollToHome = () => {
+        if (currentView !== 'home') {
+            currentView = 'home';
+            selectedCourseCode = null;
+            selectedCourseName = null;
+            selectedFolder = null;
+            renderCourses();
+        }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    window.scrollToRecent = () => {
+        if (quickAccessContainer.style.display !== 'none') {
+            quickAccessContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    };
+
+    window.focusSearch = () => {
+        searchInput.focus();
+        searchInput.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+
+    window.openSettings = () => {
+        alert("Settings panel coming soon! 🎯");
+    };
 });
