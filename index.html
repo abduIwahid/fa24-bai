@@ -48,7 +48,7 @@
                 <form id="adminLoginForm" style="display: flex; flex-direction: column; gap: 1.2rem;">
                     <div class="form-group">
                         <label for="adminPassword" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-color);">Password</label>
-                        <input type="password" id="adminPassword" placeholder="Enter admin password" 
+                        <input type="password" id="adminPassword" placeholder="Enter admin password"
                             style="width: 100%; padding: 0.9rem 1rem; border: 2px solid var(--border-color); border-radius: 8px; font-size: 1rem; font-family: 'Inter', sans-serif; transition: all 0.3s;">
                         <div id="loginError" style="display: none; color: #dc2626; font-size: 0.9rem; margin-top: 0.5rem; font-weight: 500; animation: slideDown 0.3s ease-out;"></div>
                     </div>
@@ -128,23 +128,53 @@
         </div>
     </div>
 
+    <!-- Notices Modal -->
+    <div class="modal-overlay" id="noticesModal">
+        <div class="modal-content notices-modal">
+            <div class="modal-header">
+                <div>
+                    <h3><i class="bi bi-megaphone-fill" style="margin-right:0.4rem;color:var(--accent);"></i>Notices</h3>
+                    <p style="margin:0; font-size:0.85rem; color:#999;">Class announcements</p>
+                </div>
+                <button class="close-btn" id="noticesCloseBtn" aria-label="Close notices">&times;</button>
+            </div>
+            <div class="modal-body" id="noticesBody">
+                <div id="noticesList"></div>
+            </div>
+            <div class="modal-footer notices-post-footer" id="noticesFooter" style="display:none;">
+                <textarea id="noticeInput" placeholder="Write an announcement..." rows="3"
+                    style="width:100%; padding:0.8rem; border:2px solid var(--border-color); border-radius:8px; font-family:'Inter',sans-serif; font-size:0.95rem; resize:vertical; outline:none; transition:border-color 0.3s;"></textarea>
+                <button id="postNoticeBtn" style="width:100%;">
+                    <i class="bi bi-send-fill" style="margin-right:0.4rem;"></i>Post Announcement
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Bottom Favicon Navigation Bar -->
     <nav class="favicon-bar" id="faviconBar" aria-label="Quick navigation">
         <a href="#" class="favicon-item active" id="navHome" title="Home" onclick="window.scrollToHome(); return false;" aria-label="Go to home">
             <i class="bi bi-house-fill favicon-icon"></i>
             <span class="favicon-label">HOME</span>
         </a>
-        <a href="#" class="favicon-item" id="navRecent" title="Recent" onclick="window.scrollToRecent(); return false;" aria-label="View recent items">
-            <i class="bi bi-clock-history favicon-icon"></i>
-            <span class="favicon-label">RECENT</span>
-        </a>
         <a href="#" class="favicon-item" id="navSearch" title="Search" onclick="window.focusSearch(); return false;" aria-label="Focus search">
             <i class="bi bi-search favicon-icon"></i>
             <span class="favicon-label">SEARCH</span>
         </a>
-        <a href="#" class="favicon-item" id="navUpload" title="Upload" onclick="window.openUploadPanel(); return false;" aria-label="Upload content">
-            <i class="bi bi-cloud-upload favicon-icon"></i>
+        <a href="#" class="favicon-item nav-upload" id="navUpload" title="Upload" onclick="window.openUploadPanel(); return false;" aria-label="Upload content">
+            <span class="upload-pill"><i class="bi bi-plus-lg"></i></span>
             <span class="favicon-label">UPLOAD</span>
+        </a>
+        <a href="#" class="favicon-item" id="navNotice" title="Notices" onclick="window.openNotices(); return false;" aria-label="View notices">
+            <span class="notice-icon-wrap">
+                <i class="bi bi-megaphone-fill favicon-icon"></i>
+                <span class="notice-badge" id="noticeBadge" style="display:none;"></span>
+            </span>
+            <span class="favicon-label">NOTICES</span>
+        </a>
+        <a href="#" class="favicon-item" id="navCourses" title="Courses" onclick="window.scrollToCourses(); return false;" aria-label="Browse courses">
+            <i class="bi bi-journal-bookmark-fill favicon-icon"></i>
+            <span class="favicon-label">COURSES</span>
         </a>
     </nav>
 

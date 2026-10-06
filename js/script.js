@@ -679,10 +679,11 @@ uploadStatus.style.color = "red";
 
     // === Favicon Bar Logic ===
     const navItems = {
-        home:   document.getElementById('navHome'),
-        recent: document.getElementById('navRecent'),
-        search: document.getElementById('navSearch'),
-        upload: document.getElementById('navUpload'),
+        home:    document.getElementById('navHome'),
+        search:  document.getElementById('navSearch'),
+        upload:  document.getElementById('navUpload'),
+        notice:  document.getElementById('navNotice'),
+        courses: document.getElementById('navCourses'),
     };
 
     const setActiveNav = (key) => {
@@ -700,25 +701,6 @@ uploadStatus.style.color = "red";
             renderCourses();
         }
         window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
-
-    window.scrollToRecent = () => {
-        setActiveNav('recent');
-        if (currentView !== 'home') {
-            currentView = 'home';
-            selectedCourseCode = null;
-            selectedCourseName = null;
-            selectedFolder = null;
-            renderCourses();
-        }
-        if (quickAccessContainer && quickAccessContainer.style.display !== 'none') {
-            setTimeout(() => {
-                quickAccessContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 100);
-        } else {
-            showNotification('No recently viewed files yet. Open a file first!', 'info');
-            setActiveNav('home');
-        }
     };
 
     window.focusSearch = () => {
@@ -745,7 +727,6 @@ uploadStatus.style.color = "red";
                 return;
             }
         }
-        // Ensure home view is active so upload section is visible
         if (currentView !== 'home') {
             currentView = 'home';
             selectedCourseCode = null;
@@ -760,6 +741,137 @@ uploadStatus.style.color = "red";
             }, 100);
         }
     };
+
+    window.scrollToCourses = () => {
+        setActiveNav('courses');
+        if (currentView !== 'home') {
+            currentView = 'home';
+            selectedCourseCode = null;
+            selectedCourseName = null;
+            selectedFolder = null;
+            renderCourses();
+        }
+        setTimeout(() => {
+            coursesContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+    };
+
+    // === Notices System ===
+    const noticesModal      = document.getElementById('noticesModal');
+    const noticesCloseBtn   = document.getElementById('noticesCloseBtn');
+    const noticesList       = document.getElementById('noticesList');
+    const noticesFooter     = document.getElementById('noticesFooter');
+    const noticeInput       = document.getElementById('noticeInput');
+    const postNoticeBtn     = document.getElementById('postNoticeBtn');
+    const noticeBadge       = document.getElementById('noticeBadge');
+
+    const NOTICES_KEY     = 'fa24bai_notices';
+    const SEEN_KEY        = 'fa24bai_notices_seen';
+
+    const getNotices = () => JSON.parse(localStorage.getItem(NOTICES_KEY) || '[]');
+    const saveNotices = (arr) => localStorage.setItem(NOTICES_KEY, JSON.stringify(arr));
+
+    const updateNoticeBadge = () => {
+        const notices = getNotices();
+        const seenCount = parseInt(localStorage.getItem(SEEN_KEY) || '0', 10);
+        const unseen = notices.length - seenCount;
+        if (unseen > 0) {
+            noticeBadge.style.display = 'block';
+            noticeBadge.title = `${unseen} new notice(s)`;
+        } else {
+            noticeBadge.style.display = 'none';
+        }
+    };
+
+    const renderNotices = () => {
+        const notices = getNotices();
+        if (notices.length === 0) {
+            noticesList.innerHTML = `
+                <div class="notice-empty">
+                    <i class="bi bi-megaphone"></i>
+                    <p>No announcements yet.</p>
+                </div>`;
+            return;
+        }
+        noticesList.innerHTML = notices.slice().reverse().map((n, revIdx) => {
+            const realIdx = notices.length - 1 - revIdx;
+            const deleteBtn = adminPass
+                ? `<button class="notice-card-delete" onclick="window.deleteNotice(${realIdx})">
+                       <i class="bi bi-trash3"></i> Delete
+                   </button>`
+                : '';
+            return `
+                <div class="notice-card">
+                    <div style="font-size:0.95rem; line-height:1.5;">${n.text.replace(/\n/g, '<br>')}</div>
+                    <div class="notice-card-meta">
+                        <span><i class="bi bi-clock" style="margin-right:0.2rem;"></i>${n.date}</span>
+                        ${deleteBtn}
+                    </div>
+                </div>`;
+        }).join('');
+    };
+
+    window.deleteNotice = (idx) => {
+        if (!adminPass) return;
+        const notices = getNotices();
+        notices.splice(idx, 1);
+        saveNotices(notices);
+        // Adjust seen count
+        const seen = Math.min(parseInt(localStorage.getItem(SEEN_KEY) || '0', 10), notices.length);
+        localStorage.setItem(SEEN_KEY, seen);
+        renderNotices();
+        updateNoticeBadge();
+    };
+
+    window.openNotices = () => {
+        setActiveNav('notice');
+        // Mark all as seen
+        const notices = getNotices();
+        localStorage.setItem(SEEN_KEY, notices.length);
+        updateNoticeBadge();
+        // Show admin post form if logged in
+        if (noticesFooter) noticesFooter.style.display = adminPass ? 'flex' : 'none';
+        renderNotices();
+        noticesModal.classList.add('active');
+    };
+
+    if (noticesCloseBtn) {
+        noticesCloseBtn.addEventListener('click', () => {
+            noticesModal.classList.remove('active');
+            setActiveNav('home');
+        });
+    }
+
+    if (postNoticeBtn) {
+        postNoticeBtn.addEventListener('click', () => {
+            const text = noticeInput.value.trim();
+            if (!text) return;
+            const notices = getNotices();
+            notices.push({
+                text,
+                date: new Date().toLocaleString('en-PK', { dateStyle: 'medium', timeStyle: 'short' })
+            });
+            saveNotices(notices);
+            // New notice counts as seen by admin
+            localStorage.setItem(SEEN_KEY, notices.length);
+            noticeInput.value = '';
+            renderNotices();
+            updateNoticeBadge();
+            showNotification('✓ Announcement posted!', 'success');
+        });
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && noticesModal && noticesModal.classList.contains('active')) {
+            noticesModal.classList.remove('active');
+            setActiveNav('home');
+        }
+    });
+
+    // Init badge on load
+    updateNoticeBadge();
+
+
 
     const promptAdminPassword = () => {
         return new Promise((resolve) => {
