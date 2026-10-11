@@ -18,7 +18,7 @@
     <div class="container">
         <div class="header">
             <div class="header-content">
-                <div class="header-left">
+                <div class="header-left" style="cursor: pointer;" onclick="window.scrollToHome();" title="Go to Home">
                     <img src="logo.jpeg" alt="FA24-BAI Logo" class="app-logo" aria-label="Application Logo">
                     <div class="header-text">
                         <h1>Study Hub</h1>
@@ -78,36 +78,113 @@
             <p id="uploadStatus"></p>
         </div>
 
-        <div id="navigationBar" class="nav-breadcrumbs-bar" style="display: none;">
-            <button id="backBtn" class="action-btn back-btn" aria-label="Go back">
-                <i class="bi bi-arrow-left"></i> Back
-            </button>
-            <div class="current-path-wrap">
-                <i class="bi bi-folder2-open path-icon"></i>
-                <h2 id="currentPath"></h2>
+        <!-- Landing Page View (Home) -->
+        <section id="landingSection" class="view-section">
+            <div class="landing-hero">
+                <div class="hero-badge">
+                    <i class="bi bi-mortarboard-fill"></i> FA24-BAI Academic Portal
+                </div>
+                <h2 class="hero-title">Your Centralized Study Hub</h2>
+                <p class="hero-desc">
+                    Access course syllabi, lab manuals, CDFs, and lecture materials for the 5th Semester Artificial Intelligence cohort, powered by an integrated AI study companion.
+                </p>
+                <div class="hero-actions">
+                    <button type="button" class="action-btn hero-primary-btn" onclick="window.scrollToCourses();">
+                        <i class="bi bi-journal-bookmark-fill"></i> Explore Courses
+                    </button>
+                    <button type="button" class="action-btn hero-secondary-btn" onclick="window.focusSearch();">
+                        <i class="bi bi-search"></i> Search Materials
+                    </button>
+                </div>
             </div>
-        </div>
 
-        <div class="controls-section" id="controlsSection">
-            <input type="text" id="searchInput" placeholder="Search courses, manuals, CDFs...">
-            <div class="filters" id="filtersContainer">
-                <button class="filter-chip active" data-filter="All">All</button>
-                <button class="filter-chip" data-filter="CDF">CDF</button>
-                <button class="filter-chip" data-filter="Lab Manual">Lab Manual</button>
-                <button class="filter-chip" data-filter="Syllabus">Syllabus</button>
-                <button class="filter-chip" data-filter="Lectures">Lectures</button>
-                <button class="filter-chip" data-filter="Assignments">Assignments</button>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number">6</div>
+                    <div class="stat-label">Core Courses</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">5th</div>
+                    <div class="stat-label">Semester Cohort</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">AI</div>
+                    <div class="stat-label">Study Companion</div>
+                </div>
             </div>
-        </div>
 
-        <div id="quickAccessContainer" style="display: none; margin-bottom: 2rem;">
-            <h3 class="section-title">Recently Viewed</h3>
-            <div class="resources-list" id="quickAccessList"></div>
-        </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="bi bi-folder-check"></i></div>
+                    <h3>Organized Courseware</h3>
+                    <p>Official course documents categorized by course code, with direct downloads and Office online previews.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="bi bi-robot"></i></div>
+                    <h3>AI Assistant</h3>
+                    <p>Generate high-yield summaries, 5-question review quizzes, and common viva questions for any document.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="bi bi-megaphone-fill"></i></div>
+                    <h3>Class Notices</h3>
+                    <p>Check vital class announcements and academic deadlines directly from the cohort notification board.</p>
+                </div>
+            </div>
 
-        <div class="courses-grid" id="coursesContainer">
-            <p class="loading-text">Loading hub...</p>
-        </div>
+            <div class="landing-section-header">
+                <h3>Semester Courses</h3>
+                <button type="button" class="view-all-link" onclick="window.scrollToCourses();">View All Courses &rarr;</button>
+            </div>
+            <div class="courses-grid" id="landingCoursesGrid">
+                <!-- Courses preview loaded dynamically -->
+            </div>
+
+            <div id="quickAccessContainer" style="display: none; margin-top: 2rem;">
+                <h3 class="section-title">Recently Viewed</h3>
+                <div class="resources-list" id="quickAccessList"></div>
+            </div>
+        </section>
+
+        <!-- Dedicated Search View -->
+        <section id="searchSection" class="view-section" style="display: none;">
+            <div class="search-view-header">
+                <h2>Search Materials</h2>
+                <p>Quickly find lectures, manuals, CDFs, and assignments across all courses.</p>
+            </div>
+            <div class="controls-section" id="controlsSection">
+                <div class="search-input-wrap">
+                    <i class="bi bi-search search-input-icon"></i>
+                    <input type="text" id="searchInput" placeholder="Search courses, manuals, CDFs..." autocomplete="off">
+                </div>
+                <div class="filters" id="filtersContainer">
+                    <button type="button" class="filter-chip active" data-filter="All">All</button>
+                    <button type="button" class="filter-chip" data-filter="CDF">CDF</button>
+                    <button type="button" class="filter-chip" data-filter="Lab Manual">Lab Manual</button>
+                    <button type="button" class="filter-chip" data-filter="Syllabus">Syllabus</button>
+                    <button type="button" class="filter-chip" data-filter="Lectures">Lectures</button>
+                    <button type="button" class="filter-chip" data-filter="Assignments">Assignments</button>
+                </div>
+            </div>
+            <div class="search-results-info" id="searchResultsInfo"></div>
+            <div class="folder-resources-grid" id="searchResultsContainer"></div>
+        </section>
+
+        <!-- Courses Explorer View -->
+        <section id="coursesSection" class="view-section" style="display: none;">
+            <div id="navigationBar" class="nav-breadcrumbs-bar" style="display: none;">
+                <button id="backBtn" class="action-btn back-btn" aria-label="Go back">
+                    <i class="bi bi-arrow-left"></i> Back
+                </button>
+                <div class="current-path-wrap">
+                    <i class="bi bi-folder2-open path-icon"></i>
+                    <h2 id="currentPath"></h2>
+                </div>
+            </div>
+
+            <div class="courses-grid" id="coursesContainer">
+                <p class="loading-text">Loading hub...</p>
+            </div>
+        </section>
 
         <footer class="app-footer">
             <div class="footer-links">

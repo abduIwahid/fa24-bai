@@ -1592,4 +1592,255 @@ button:disabled {
     opacity: 0.85;
 }
 
+/* === Landing Page & View Switching Styles === */
+.view-section {
+    animation: fadeIn var(--animation-speed) ease-out;
+}
+
+.landing-hero {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 2.25rem 1.75rem;
+    text-align: center;
+    box-shadow: var(--shadow);
+    margin-bottom: 1.5rem;
+}
+
+.hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: var(--accent-light);
+    color: var(--accent);
+    padding: 0.35rem 0.75rem;
+    border-radius: 4px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+}
+
+.hero-title {
+    font-size: 1.85rem;
+    font-weight: 700;
+    color: var(--text-color);
+    margin: 0.25rem 0 0.65rem 0;
+    line-height: 1.25;
+}
+
+.hero-desc {
+    max-width: 650px;
+    margin: 0 auto 1.5rem auto;
+    color: #555;
+    line-height: 1.6;
+    font-size: 0.98rem;
+}
+
+.hero-actions {
+    display: flex;
+    gap: 0.85rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.hero-primary-btn {
+    padding: 0.75rem 1.4rem;
+    font-size: 0.95rem;
+    border-radius: 6px;
+    width: auto;
+    background: var(--accent);
+    color: white;
+    border: 1px solid var(--accent);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.hero-secondary-btn {
+    padding: 0.75rem 1.4rem;
+    font-size: 0.95rem;
+    border-radius: 6px;
+    width: auto;
+    background: var(--card-bg);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.hero-secondary-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.stat-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1.25rem 1rem;
+    text-align: center;
+    box-shadow: var(--shadow);
+}
+
+.stat-number {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1.1;
+}
+
+.stat-label {
+    font-size: 0.78rem;
+    color: #666;
+    font-weight: 500;
+    margin-top: 0.35rem;
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.feature-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1.35rem;
+    box-shadow: var(--shadow);
+}
+
+.feature-icon {
+    font-size: 1.6rem;
+    color: var(--accent);
+    margin-bottom: 0.75rem;
+}
+
+.feature-card h3 {
+    font-size: 1.05rem;
+    margin: 0 0 0.4rem 0;
+    color: var(--text-color);
+    font-weight: 600;
+}
+
+.feature-card p {
+    font-size: 0.85rem;
+    color: #666;
+    line-height: 1.5;
+    margin: 0;
+}
+
+.landing-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 2rem 0 1rem 0;
+}
+
+.landing-section-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: var(--text-color);
+    font-weight: 700;
+}
+
+.view-all-link {
+    background: transparent;
+    border: none;
+    color: var(--accent);
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.88rem;
+    padding: 0;
+    width: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.view-all-link:hover {
+    text-decoration: underline;
+}
+
+/* Search Page Styles */
+.search-view-header {
+    margin-bottom: 1.25rem;
+}
+
+.search-view-header h2 {
+    font-size: 1.5rem;
+    color: var(--text-color);
+    margin: 0 0 0.25rem 0;
+    font-weight: 700;
+}
+
+.search-view-header p {
+    font-size: 0.9rem;
+    color: #666;
+    margin: 0;
+}
+
+.search-input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.search-input-icon {
+    position: absolute;
+    left: 1rem;
+    font-size: 1.1rem;
+    color: #777;
+    pointer-events: none;
+}
+
+.search-input-wrap #searchInput {
+    padding-left: 2.75rem !important;
+}
+
+.search-results-info {
+    font-size: 0.88rem;
+    color: #666;
+    margin: 0.5rem 0 1rem 0;
+    font-weight: 500;
+}
+
+@media (max-width: 600px) {
+    .landing-hero {
+        padding: 1.75rem 1.25rem;
+    }
+
+    .hero-title {
+        font-size: 1.45rem;
+    }
+
+    .hero-desc {
+        font-size: 0.88rem;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+
+    .features-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+
 

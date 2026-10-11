@@ -28,6 +28,13 @@ document.addEventListener("DOMContentLoaded", () => {
     let searchQuery = '';
     let currentAiFile = null;
 
+    const landingSection = document.getElementById('landingSection');
+    const searchSection = document.getElementById('searchSection');
+    const coursesSection = document.getElementById('coursesSection');
+    const landingCoursesGrid = document.getElementById('landingCoursesGrid');
+    const searchResultsContainer = document.getElementById('searchResultsContainer');
+    const searchResultsInfo = document.getElementById('searchResultsInfo');
+
     const navigationBar = document.getElementById('navigationBar');
     const backBtn = document.getElementById('backBtn');
     const currentPath = document.getElementById('currentPath');
@@ -35,7 +42,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const coursesContainer = document.getElementById('coursesContainer');
     const uploadBtn = document.getElementById('uploadBtn');
 
-    let currentView = 'home'; // 'home', 'course', 'folder'
+    let currentTab = 'home'; // 'home', 'search', 'courses'
+    let currentView = 'all'; // inside courses view: 'all', 'course', 'folder'
     let selectedCourseCode = null;
     let selectedCourseName = null;
     let selectedFolder = null;
@@ -45,7 +53,7 @@ document.addEventListener("DOMContentLoaded", () => {
             currentView = 'course';
             selectedFolder = null;
         } else if (currentView === 'course') {
-            currentView = 'home';
+            currentView = 'all';
             selectedCourseCode = null;
             selectedCourseName = null;
         }
@@ -72,6 +80,8 @@ document.addEventListener("DOMContentLoaded", () => {
             adminWelcome.style.display = 'block';
             uploadSection.style.display = 'block';
             renderCourses();
+            renderSearch();
+            renderLandingCourses();
             renderQuickAccess();
         }
     };
@@ -487,7 +497,18 @@ document.addEventListener("DOMContentLoaded", () => {
         currentView = 'course';
         selectedCourseCode = code;
         selectedCourseName = name;
+        selectedFolder = null;
+        switchTab('courses');
         renderCourses();
+    };
+
+    window.openCourseFromLanding = (code, name) => {
+        selectedCourseCode = code;
+        selectedCourseName = name;
+        selectedFolder = null;
+        currentView = 'course';
+        switchTab('courses');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     window.openFolder = (folderName, courseCode = null, courseName = null) => {
@@ -495,28 +516,111 @@ document.addEventListener("DOMContentLoaded", () => {
         if (courseName) selectedCourseName = courseName;
         currentView = 'folder';
         selectedFolder = folderName;
+        switchTab('courses');
         renderCourses();
     };
 
+    const CORE_COURSES = [
+        { code: 'AIC270', name: 'Programming for Artificial Intelligence' },
+        { code: 'AIC372', name: 'Knowledge Rep. & Reasoning' },
+        { code: 'CSC322', name: 'Operating Systems' },
+        { code: 'MTH262', name: 'Probability & Statistics' },
+        { code: 'DAA',    name: 'Design and Analysis of Algorithms' },
+        { code: 'WEB',    name: 'Web Technologies' }
+    ];
+
+    const renderLandingCourses = () => {
+        if (!landingCoursesGrid) return;
+
+        const coursesMap = {};
+        allFiles.forEach(file => {
+            if (!coursesMap[file.course.code]) {
+                coursesMap[file.course.code] = { info: file.course, count: 0, folderTypes: new Set() };
+            }
+            coursesMap[file.course.code].count++;
+            coursesMap[file.course.code].folderTypes.add(file.resourceType);
+        });
+
+        let list = Object.values(coursesMap);
+        if (list.length === 0) {
+            list = CORE_COURSES.map(c => ({
+                info: c,
+                count: 0,
+                folderTypes: new Set()
+            }));
+        }
+
+        landingCoursesGrid.innerHTML = list.map(courseData => {
+            const escapedName = courseData.info.name.replace(/'/g, "\\'");
+            const countText = courseData.count > 0
+                ? `${courseData.count} study material(s) organized in ${courseData.folderTypes.size} category folder(s)`
+                : `Syllabus, CDF, lab manuals, and lecture slides`;
+
+            return `
+                <div class="course-card landing-course-card" style="cursor: pointer;" onclick="window.openCourseFromLanding('${courseData.info.code}', '${escapedName}')">
+                    <div class="course-header" style="margin-bottom: 0.75rem;">
+                        <div class="course-info">
+                            <span class="course-code" style="display:inline-block; margin-bottom: 0.35rem;">${courseData.info.code}</span>
+                            <h2 style="font-size: 1.15rem; margin-top: 0.15rem;">${courseData.info.name}</h2>
+                        </div>
+                    </div>
+                    <div style="font-size: 0.85rem; color: #666; margin-bottom: 1.1rem; line-height: 1.4;">
+                        ${countText}
+                    </div>
+                    <button type="button" class="action-btn" style="width: 100%; padding: 0.65rem 1rem; background: var(--accent-light); color: var(--accent); border: 1px solid transparent; font-weight: 600; cursor: pointer; border-radius: 6px; font-size: 0.88rem;" onclick="event.stopPropagation(); window.openCourseFromLanding('${courseData.info.code}', '${escapedName}')">
+                        Explore Course &rarr;
+                    </button>
+                </div>
+            `;
+        }).join('');
+    };
+
+    const renderSearch = () => {
+        if (!searchResultsContainer) return;
+
+        const query = searchQuery.trim().toLowerCase();
+        const filteredFiles = allFiles.filter(file => {
+            const matchesSearch = !query ||
+                file.name.toLowerCase().includes(query) ||
+                file.cleanName.toLowerCase().includes(query) ||
+                file.course.name.toLowerCase().includes(query) ||
+                file.course.code.toLowerCase().includes(query) ||
+                file.resourceType.toLowerCase().includes(query);
+            const matchesFilter = currentFilter === 'All' || file.resourceType === currentFilter;
+            return matchesSearch && matchesFilter;
+        });
+
+        if (searchResultsInfo) {
+            if (allFiles.length === 0) {
+                searchResultsInfo.textContent = 'Loading study materials...';
+            } else if (filteredFiles.length === 0) {
+                searchResultsInfo.textContent = `No materials found${query ? ` matching "${query}"` : ''}${currentFilter !== 'All' ? ` with filter "${currentFilter}"` : ''}.`;
+            } else {
+                searchResultsInfo.textContent = `Showing ${filteredFiles.length} of ${allFiles.length} study material(s)${currentFilter !== 'All' ? ` (${currentFilter})` : ''}`;
+            }
+        }
+
+        if (filteredFiles.length === 0) {
+            searchResultsContainer.innerHTML = '<div class="no-results" style="grid-column: 1 / -1; padding: 2.5rem 1rem; text-align: center; color: #777;">No matching documents. Try a different search query or select another filter.</div>';
+            return;
+        }
+
+        searchResultsContainer.innerHTML = filteredFiles.map(res => createResourceHtml(res)).join('');
+    };
+
     const renderCourses = () => {
-        if (currentView === 'home') {
+        if (currentView === 'all') {
             navigationBar.style.display = 'none';
-            controlsSection.style.display = 'block';
-            quickAccessContainer.style.display = recents.length ? 'block' : 'none';
+            controlsSection.style.display = 'none';
+            quickAccessContainer.style.display = 'none';
 
-            const filteredFiles = allFiles.filter(file => {
-                const matchesSearch = file.name.toLowerCase().includes(searchQuery);
-                const matchesFilter = currentFilter === 'All' || file.resourceType === currentFilter;
-                return matchesSearch && matchesFilter;
-            });
-
-            if (filteredFiles.length === 0) {
+            if (allFiles.length === 0) {
                 coursesContainer.innerHTML = '<div class="no-results">No resources found.</div>';
                 return;
             }
 
             const coursesMap = {};
-            filteredFiles.forEach(file => {
+            allFiles.forEach(file => {
                 if (!coursesMap[file.course.code]) {
                     coursesMap[file.course.code] = { info: file.course, resources: [], folderTypes: new Set() };
                 }
@@ -689,8 +793,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
 
                 updateAdminUI();
+                renderLandingCourses();
+                renderSearch();
                 renderCourses();
                 renderQuickAccess();
+                switchTab('home');
             } else {
                 coursesContainer.innerHTML = '<p class="loading-text" style="color:red;">Error loading documents.</p>';
             }
@@ -698,6 +805,10 @@ document.addEventListener("DOMContentLoaded", () => {
             coursesContainer.innerHTML = '<p class="loading-text" style="color:red;">Error loading documents.</p>';
         }
     }
+
+    // Immediate render of landing view and core courses
+    renderLandingCourses();
+    switchTab('home');
 
     loadFiles();
 
@@ -720,7 +831,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Event Listeners for Search & Filter
     searchInput.addEventListener('input', (e) => {
         searchQuery = e.target.value.toLowerCase();
-        renderCourses();
+        renderSearch();
     });
 
     filterChips.forEach(chip => {
@@ -728,7 +839,7 @@ document.addEventListener("DOMContentLoaded", () => {
             filterChips.forEach(c => c.classList.remove('active'));
             e.target.classList.add('active');
             currentFilter = e.target.dataset.filter;
-            renderCourses();
+            renderSearch();
         });
     });
 
@@ -807,45 +918,44 @@ document.addEventListener("DOMContentLoaded", () => {
         if (navItems[key]) navItems[key].classList.add('active');
     };
 
-    window.scrollToHome = () => {
-        setActiveNav('home');
-        if (currentView !== 'home') {
-            currentView = 'home';
-            selectedCourseCode = null;
-            selectedCourseName = null;
-            selectedFolder = null;
+    const switchTab = (tabName) => {
+        currentTab = tabName;
+        setActiveNav(tabName);
+
+        if (landingSection) landingSection.style.display = tabName === 'home' ? 'block' : 'none';
+        if (searchSection) searchSection.style.display = tabName === 'search' ? 'block' : 'none';
+        if (coursesSection) coursesSection.style.display = tabName === 'courses' ? 'block' : 'none';
+
+        if (tabName === 'home') {
+            renderLandingCourses();
+            renderQuickAccess();
+        } else if (tabName === 'search') {
+            renderSearch();
+        } else if (tabName === 'courses') {
             renderCourses();
         }
+    };
+
+    window.switchTab = switchTab;
+
+    window.scrollToHome = () => {
+        switchTab('home');
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     window.focusSearch = () => {
-        setActiveNav('search');
-        if (currentView !== 'home') {
-            currentView = 'home';
-            selectedCourseCode = null;
-            selectedCourseName = null;
-            selectedFolder = null;
-            renderCourses();
-        }
+        switchTab('search');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
         setTimeout(() => {
             const inputEl = document.getElementById('searchInput');
             if (inputEl) {
-                const header = document.querySelector('.header');
-                const headerOffset = header ? header.offsetHeight + 12 : 70;
-                const rect = inputEl.getBoundingClientRect();
-                const targetY = window.pageYOffset + rect.top - headerOffset;
-                window.scrollTo({
-                    top: Math.max(0, targetY),
-                    behavior: 'smooth'
-                });
                 try {
                     inputEl.focus({ preventScroll: true });
                 } catch (err) {
                     inputEl.focus();
                 }
             }
-        }, 100);
+        }, 120);
     };
 
     window.openUploadPanel = async () => {
@@ -853,16 +963,9 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!adminPass) {
             const pass = await promptAdminPassword();
             if (!pass) {
-                setActiveNav('home');
+                setActiveNav(currentTab);
                 return;
             }
-        }
-        if (currentView !== 'home') {
-            currentView = 'home';
-            selectedCourseCode = null;
-            selectedCourseName = null;
-            selectedFolder = null;
-            renderCourses();
         }
         if (uploadSection) {
             uploadSection.style.display = 'block';
@@ -880,27 +983,12 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     window.scrollToCourses = () => {
-        setActiveNav('courses');
-        if (currentView !== 'home') {
-            currentView = 'home';
-            selectedCourseCode = null;
-            selectedCourseName = null;
-            selectedFolder = null;
-            renderCourses();
-        }
-        setTimeout(() => {
-            const target = document.getElementById('coursesContainer');
-            if (target) {
-                const header = document.querySelector('.header');
-                const headerOffset = header ? header.offsetHeight + 12 : 70;
-                const rect = target.getBoundingClientRect();
-                const targetY = window.pageYOffset + rect.top - headerOffset;
-                window.scrollTo({
-                    top: Math.max(0, targetY),
-                    behavior: 'smooth'
-                });
-            }
-        }, 100);
+        currentView = 'all';
+        selectedCourseCode = null;
+        selectedCourseName = null;
+        selectedFolder = null;
+        switchTab('courses');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     if (navItems.home) navItems.home.addEventListener('click', (e) => { e.preventDefault(); window.scrollToHome(); });
@@ -990,7 +1078,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (noticesCloseBtn) {
         noticesCloseBtn.addEventListener('click', () => {
             noticesModal.classList.remove('active');
-            setActiveNav('home');
+            setActiveNav(currentTab);
         });
     }
 
@@ -1016,7 +1104,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && noticesModal && noticesModal.classList.contains('active')) {
             noticesModal.classList.remove('active');
-            setActiveNav('home');
+            setActiveNav(currentTab);
         }
     });
 
