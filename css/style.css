@@ -10,14 +10,8 @@
     --animation-speed: 0.3s;
 }
 
-/* === Fluid base font: 75% on mobile, 100% on PC: scales with browser zoom === */
 html {
-    font-size: 100%; /* 16px baseline: browser zoom multiplies this automatically */
-}
-@media (max-width: 768px) {
-    html {
-        font-size: 75%; /* 12px baseline on mobile = 75% of desktop */
-    }
+    font-size: 100%;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -29,7 +23,7 @@ html {
 }
 
 body {
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
     background-color: var(--bg-color);
     color: var(--text-color);
     display: flex;
@@ -37,7 +31,7 @@ body {
     align-items: flex-start;
     min-height: 100vh;
     margin: 0;
-    padding: 1.25rem 1.25rem 7.5rem 1.25rem; /* rem so it scales with zoom */
+    padding: 1.25rem 1.25rem 7.5rem 1.25rem;
     opacity: 0;
     transition: opacity var(--animation-speed) ease-in-out;
     box-sizing: border-box;
@@ -47,8 +41,16 @@ body.loaded {
     opacity: 1;
 }
 
-* {
+*, *::before, *::after {
     box-sizing: border-box;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+input,
+textarea,
+select {
+    font-size: 16px !important;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif !important;
 }
 
 .container {
@@ -294,12 +296,12 @@ button:disabled {
     padding: 0.85rem 1rem;
     border-radius: 6px;
     border: 1px solid var(--border-color);
-    font-size: 0.95rem;
+    font-size: 16px !important;
     margin-bottom: 1rem;
     box-shadow: none;
     outline: none;
     transition: border-color var(--animation-speed);
-    font-family: 'Inter', sans-serif;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
     background-color: var(--card-bg);
 }
 
@@ -792,10 +794,11 @@ button:disabled {
 .modal-footer input {
     flex: 1;
     padding: 0.8rem 1rem;
-    border: 2px solid var(--border-color);
-    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
     outline: none;
-    font-family: 'Inter', sans-serif;
+    font-size: 16px !important;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
     transition: all var(--animation-speed);
 }
 
@@ -1158,8 +1161,8 @@ button:disabled {
     padding: 0.75rem 2.5rem 0.75rem 0.85rem !important;
     border: 1px solid var(--border-color) !important;
     border-radius: 6px !important;
-    font-size: 0.95rem !important;
-    font-family: 'Inter', sans-serif !important;
+    font-size: 16px !important;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif !important;
     outline: none !important;
     background-color: #fafafa !important;
     transition: border-color var(--animation-speed) !important;

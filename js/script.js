@@ -829,8 +829,22 @@ document.addEventListener("DOMContentLoaded", () => {
             renderCourses();
         }
         setTimeout(() => {
-            searchInput.focus();
-            searchInput.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            const inputEl = document.getElementById('searchInput');
+            if (inputEl) {
+                const header = document.querySelector('.header');
+                const headerOffset = header ? header.offsetHeight + 12 : 70;
+                const rect = inputEl.getBoundingClientRect();
+                const targetY = window.pageYOffset + rect.top - headerOffset;
+                window.scrollTo({
+                    top: Math.max(0, targetY),
+                    behavior: 'smooth'
+                });
+                try {
+                    inputEl.focus({ preventScroll: true });
+                } catch (err) {
+                    inputEl.focus();
+                }
+            }
         }, 100);
     };
 
@@ -853,7 +867,14 @@ document.addEventListener("DOMContentLoaded", () => {
         if (uploadSection) {
             uploadSection.style.display = 'block';
             setTimeout(() => {
-                uploadSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                const header = document.querySelector('.header');
+                const headerOffset = header ? header.offsetHeight + 12 : 70;
+                const rect = uploadSection.getBoundingClientRect();
+                const targetY = window.pageYOffset + rect.top - headerOffset;
+                window.scrollTo({
+                    top: Math.max(0, targetY),
+                    behavior: 'smooth'
+                });
             }, 100);
         }
     };
@@ -868,9 +889,24 @@ document.addEventListener("DOMContentLoaded", () => {
             renderCourses();
         }
         setTimeout(() => {
-            coursesContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            const target = document.getElementById('coursesContainer');
+            if (target) {
+                const header = document.querySelector('.header');
+                const headerOffset = header ? header.offsetHeight + 12 : 70;
+                const rect = target.getBoundingClientRect();
+                const targetY = window.pageYOffset + rect.top - headerOffset;
+                window.scrollTo({
+                    top: Math.max(0, targetY),
+                    behavior: 'smooth'
+                });
+            }
         }, 100);
     };
+
+    if (navItems.home) navItems.home.addEventListener('click', (e) => { e.preventDefault(); window.scrollToHome(); });
+    if (navItems.search) navItems.search.addEventListener('click', (e) => { e.preventDefault(); window.focusSearch(); });
+    if (navItems.upload) navItems.upload.addEventListener('click', (e) => { e.preventDefault(); window.openUploadPanel(); });
+    if (navItems.courses) navItems.courses.addEventListener('click', (e) => { e.preventDefault(); window.scrollToCourses(); });
 
     // === Notices System ===
     const noticesModal = document.getElementById('noticesModal');
