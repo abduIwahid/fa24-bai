@@ -79,12 +79,14 @@
             <p id="uploadStatus"></p>
         </div>
 
-        <div id="navigationBar"
-            style="display: none; align-items: center; gap: 10px; margin-bottom: 1.5rem; background: var(--card-bg); padding: 1rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
-            <button id="backBtn" class="action-btn"
-                style="background: #333; color: white; border: none; padding: 8px 12px; cursor: pointer; border-radius: 6px;">&larr;
-                Back</button>
-            <h2 id="currentPath" style="margin: 0; font-size: 1.2rem; color: var(--text-color);"></h2>
+        <div id="navigationBar" class="nav-breadcrumbs-bar" style="display: none;">
+            <button id="backBtn" class="action-btn back-btn" aria-label="Go back">
+                <i class="bi bi-arrow-left"></i> Back
+            </button>
+            <div class="current-path-wrap">
+                <i class="bi bi-folder2-open path-icon"></i>
+                <h2 id="currentPath"></h2>
+            </div>
         </div>
 
         <div class="controls-section" id="controlsSection">

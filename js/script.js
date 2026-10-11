@@ -633,16 +633,15 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             const folderContainer = document.createElement('div');
-            folderContainer.className = 'course-card';
-            folderContainer.style.width = '100%';
+            folderContainer.className = 'course-card folder-card';
             folderContainer.innerHTML = `
-                <div class="course-header" style="border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 15px;">
+                <div class="course-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 15px;">
                     <div class="course-info">
                         <h2>${selectedFolder}</h2>
                         <p class="course-code">${folderFiles.length} item(s)</p>
                     </div>
                 </div>
-                <div class="resources-list">
+                <div class="folder-resources-grid">
                     ${folderFiles.map(res => createResourceHtml(res)).join('')}
                 </div>
             `;

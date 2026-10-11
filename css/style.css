@@ -479,6 +479,7 @@ button:disabled {
     align-items: center;
     gap: 0.4rem;
     position: relative;
+    flex-shrink: 0;
 }
 
 .action-btn {
@@ -1265,19 +1266,19 @@ button:disabled {
     }
 
     .resource-item {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.8rem;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
     }
 
     .resource-actions {
-        width: 100%;
-        justify-content: space-between;
+        width: auto;
+        justify-content: flex-end;
     }
 
     .action-btn {
-        flex: 1;
-        justify-content: center;
+        flex: initial;
     }
 
     .modal-content {
@@ -1431,17 +1432,98 @@ button:disabled {
     }
 }
 
-/* Navigation Bar Animation */
-#navigationBar {
+/* Navigation Breadcrumbs Bar */
+.nav-breadcrumbs-bar {
     display: none;
     align-items: center;
-    gap: 10px;
+    gap: 0.85rem;
     margin-bottom: 1.5rem;
     background: var(--card-bg);
-    padding: 1rem;
+    padding: 0.85rem 1.25rem;
     border-radius: 8px;
     border: 1px solid var(--border-color);
     box-shadow: var(--shadow);
+}
+
+.back-btn {
+    background-color: var(--accent);
+    color: white;
+    border: none;
+    padding: 0.5rem 0.95rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-weight: 500;
+    transition: background-color var(--animation-speed);
+}
+
+.back-btn:hover {
+    background-color: #005f57;
+}
+
+.current-path-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+    flex: 1;
+}
+
+.path-icon {
+    font-size: 1.25rem;
+    color: var(--accent);
+    flex-shrink: 0;
+}
+
+#currentPath {
+    margin: 0;
+    font-size: 1.05rem;
+    color: var(--text-color);
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Folder View and Responsive Resource Grid */
+.folder-card {
+    grid-column: 1 / -1 !important;
+    width: 100% !important;
+    box-sizing: border-box;
+}
+
+.folder-resources-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 0.85rem;
+    width: 100%;
+}
+
+.folder-card .resource-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.85rem 1rem;
+    background-color: #fbfbf9;
+    border-radius: 6px;
+    border: 1px solid #e2eae8;
+    gap: 0.85rem;
+    transition: border-color var(--animation-speed), background-color var(--animation-speed);
+}
+
+.folder-card .resource-item:hover {
+    background-color: var(--accent-light);
+    border-color: var(--accent);
+}
+
+.folder-card .resource-name {
+    font-size: 0.92rem;
+    line-height: 1.4;
+    word-break: break-word;
+    font-weight: 500;
 }
 
 /* App Footer */
