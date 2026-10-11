@@ -1567,3 +1567,29 @@ button:disabled {
     font-size: 0.78rem;
 }
 
+.footer-author {
+    margin: 0.35rem 0 0.25rem 0;
+    font-size: 0.82rem;
+    color: #555;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+}
+
+.author-link {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    transition: opacity var(--animation-speed);
+}
+
+.author-link:hover {
+    text-decoration: underline;
+    opacity: 0.85;
+}
+
+

@@ -1,6 +1,3 @@
-import pdf from 'pdf-parse';
-import { GoogleGenerativeAI } from '@google/generative-ai';
-
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
         return res.status(405).json({ message: 'Method Not Allowed' });
@@ -19,7 +16,9 @@ export default async function handler(req, res) {
 
     const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
     if (!GEMINI_API_KEY) {
-        return res.status(500).json({ reply: 'Server Error: GEMINI_API_KEY is not configured in environment variables.' });
+        return res.status(200).json({
+            reply: 'Server configuration note: GEMINI_API_KEY is not set in Vercel Environment Variables. Please add your Google AI Studio key to Vercel.'
+        });
     }
 
     try {
@@ -27,7 +26,6 @@ export default async function handler(req, res) {
         const repo = 'fa24-bai';
         const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 
-        // Clean document and folder names for context
         const cleanDocName = filename
             ? filename.split('/').pop().replace(/\.[^/.]+$/, '').replace(/_/g, ' ')
             : 'Course Document';
@@ -35,10 +33,10 @@ export default async function handler(req, res) {
             ? filename.substring(0, filename.lastIndexOf('/'))
             : '';
 
-        let pdfText = '';
+        let base64Pdf = null;
 
-        // Attempt to fetch and extract document text from GitHub
-        if (filename) {
+        // Fetch PDF from GitHub if filename is provided
+        if (filename && filename.match(/\.pdf$/i)) {
             try {
                 const encodedPath = filename.split('/').map(encodeURIComponent).join('/');
                 const url = `https://raw.githubusercontent.com/${owner}/${repo}/main/${encodedPath}`;
@@ -50,60 +48,122 @@ export default async function handler(req, res) {
                 const fileResponse = await fetch(url, { headers: fetchHeaders });
                 if (fileResponse.ok) {
                     const arrayBuffer = await fileResponse.arrayBuffer();
-                    const buffer = Buffer.from(arrayBuffer);
-
-                    // Only parse PDF formats with pdf-parse
-                    if (filename.match(/\.pdf$/i)) {
-                        const parsed = await pdf(buffer);
-                        if (parsed && parsed.text) {
-                            pdfText = parsed.text.trim();
-                        }
+                    // Check file size under 7MB for inline data transfer
+                    if (arrayBuffer.byteLength > 0 && arrayBuffer.byteLength < 7 * 1024 * 1024) {
+                        base64Pdf = Buffer.from(arrayBuffer).toString('base64');
                     }
                 }
-            } catch (docErr) {
-                console.warn('Could not extract direct document text, using contextual knowledge:', docErr.message);
+            } catch (fetchErr) {
+                console.warn('Could not load raw PDF for inline data:', fetchErr.message);
             }
         }
 
-        // Prepare structured, highly relevant prompt instructions
-        const systemContext = `You are a knowledgeable university AI study assistant for the FA24-BAI (Artificial Intelligence) program. Provide direct, academically rigorous, and relevant answers in clean markdown without meta-talk or filler.`;
-
+        // Build prompt instruction
         let promptInstruction = '';
         if (action === 'summarize') {
-            promptInstruction = `Provide a comprehensive, well-structured study summary for "${cleanDocName}".
+            promptInstruction = `Provide a comprehensive, highly structured study summary for "${cleanDocName}".
 Include:
-- Overview: Core purpose and high-level concepts.
-- Key Principles & Formulas / Algorithms: Essential points in clear bullet points.
-- Exam Focus: Critical takeaways and common student misunderstandings.`;
+- Core Overview: Primary purpose and fundamental themes.
+- Key Concepts & Theorems/Formulas: Clear bullet points explaining essential topics.
+- Exam Takeaways: High-yield concepts, key definitions, and critical exam points.`;
         } else if (action === 'quiz') {
-            promptInstruction = `Create 5 high-yield multiple-choice questions (MCQs) testing understanding of "${cleanDocName}".
-Format each question with options (A, B, C, D).
-At the end, provide an "Answers & Explanations" section with the correct choices and concise rationales.`;
+            promptInstruction = `Generate 5 high-yield multiple choice practice questions (MCQs) for "${cleanDocName}".
+For each question:
+- State the question clearly.
+- Provide options (A, B, C, D).
+- At the end, include an "Answers & Explanations" section with the correct choices and concise rationales.`;
         } else if (action === 'viva') {
             promptInstruction = `Generate 5 realistic viva / oral exam questions on "${cleanDocName}".
-Provide each question followed by a model answer highlighting the exact technical keywords an examiner looks for.`;
+Provide each question followed by a model answer highlighting the exact keywords an examiner expects.`;
         } else {
-            promptInstruction = `The student asked: "${prompt}".
-Provide a clear, detailed, and directly relevant academic response.`;
+            promptInstruction = `The student is studying "${cleanDocName}" and asked:
+"${prompt}"
+
+Provide a direct, academically thorough, and helpful answer.`;
         }
 
-        const docContentSnippet = pdfText ? pdfText.substring(0, 40000) : '';
-        const finalPrompt = `${systemContext}
+        const systemMessage = `You are an expert academic tutor for students in the FA24-BAI (Artificial Intelligence) program. Provide clear, accurate, and structured study guidance in clean markdown without conversational filler.`;
 
-Document: ${cleanDocName}${folderContext ? ` (Category: ${folderContext})` : ''}
-${docContentSnippet ? `\n--- DOCUMENT CONTENT ---\n${docContentSnippet}\n--- END DOCUMENT CONTENT ---\n` : ''}
-${promptInstruction}`;
+        // Assemble request parts
+        const parts = [];
+        if (base64Pdf) {
+            parts.push({
+                inline_data: {
+                    mime_type: 'application/pdf',
+                    data: base64Pdf
+                }
+            });
+        }
 
-        // Initialize Gemini model
-        const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-        const result = await model.generateContent(finalPrompt);
-        const response = await result.response;
-        const replyText = response.text();
+        parts.push({
+            text: `${systemMessage}
 
-        return res.status(200).json({ reply: replyText });
+Document Title: ${cleanDocName}${folderContext ? ` (Category: ${folderContext})` : ''}
+
+${promptInstruction}`
+        });
+
+        // Try candidate Gemini models via direct Google Generative Language REST API
+        const candidateModels = [
+            'gemini-1.5-flash',
+            'gemini-1.5-flash-latest',
+            'gemini-2.0-flash',
+            'gemini-1.5-pro'
+        ];
+
+        let replyText = null;
+        let lastErrorMessage = '';
+
+        for (const modelName of candidateModels) {
+            try {
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${encodeURIComponent(GEMINI_API_KEY.trim())}`;
+                const apiRes = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts }],
+                        generationConfig: {
+                            temperature: 0.3,
+                            maxOutputTokens: 2048
+                        }
+                    })
+                });
+
+                const data = await apiRes.json();
+
+                if (apiRes.ok && data.candidates && data.candidates[0] && data.candidates[0].content) {
+                    const textParts = data.candidates[0].content.parts.map(p => p.text).join('\n');
+                    if (textParts) {
+                        replyText = textParts;
+                        break;
+                    }
+                } else if (data.error) {
+                    lastErrorMessage = data.error.message || 'API error';
+                    console.warn(`Model ${modelName} returned error:`, lastErrorMessage);
+                    // If error is about API key, break immediately
+                    if (lastErrorMessage.toLowerCase().includes('api key')) {
+                        break;
+                    }
+                }
+            } catch (modelErr) {
+                lastErrorMessage = modelErr.message;
+                console.warn(`Model ${modelName} fetch error:`, lastErrorMessage);
+            }
+        }
+
+        if (replyText) {
+            return res.status(200).json({ reply: replyText });
+        }
+
+        return res.status(200).json({
+            reply: lastErrorMessage
+                ? `AI response notice: ${lastErrorMessage}. Please verify your GEMINI_API_KEY in Vercel settings.`
+                : 'AI assistant is temporarily unable to process this document. Please try again shortly.'
+        });
     } catch (error) {
         console.error('AI Handler Error:', error);
-        return res.status(500).json({ reply: 'AI generation encountered an issue. Please try again in a moment.' });
+        return res.status(200).json({
+            reply: `AI assistant encountered an unexpected error: ${error.message || 'Check connection'}.`
+        });
     }
 }
