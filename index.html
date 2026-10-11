@@ -88,12 +88,19 @@
                 <p class="hero-desc">
                     Access course syllabi, lab manuals, CDFs, and lecture materials for the 5th Semester Artificial Intelligence cohort, powered by an integrated AI study companion.
                 </p>
+                <div class="landing-search-bar-wrap">
+                    <div class="landing-search-bar">
+                        <i class="bi bi-search landing-search-icon"></i>
+                        <input type="text" id="landingSearchInput" placeholder="Search courses, manuals, CDFs, lectures..." autocomplete="off">
+                        <button type="button" class="landing-search-btn" id="landingSearchBtn" onclick="window.submitLandingSearch();">Search</button>
+                    </div>
+                </div>
                 <div class="hero-actions">
                     <button type="button" class="action-btn hero-primary-btn" onclick="window.scrollToCourses();">
                         <i class="bi bi-journal-bookmark-fill"></i> Explore Courses
                     </button>
                     <button type="button" class="action-btn hero-secondary-btn" onclick="window.focusSearch();">
-                        <i class="bi bi-search"></i> Search Materials
+                        <i class="bi bi-funnel"></i> Browse All Materials
                     </button>
                 </div>
             </div>

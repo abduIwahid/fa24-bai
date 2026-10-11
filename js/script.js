@@ -102,6 +102,26 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 120);
     };
 
+    window.submitLandingSearch = () => {
+        const landingInput = document.getElementById('landingSearchInput');
+        const query = landingInput ? landingInput.value.trim() : '';
+        searchQuery = query.toLowerCase();
+        if (searchInput) searchInput.value = query;
+        switchTab('search');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        if (typeof renderSearch === 'function') renderSearch();
+    };
+
+    const landingSearchInput = document.getElementById('landingSearchInput');
+    if (landingSearchInput) {
+        landingSearchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                window.submitLandingSearch();
+            }
+        });
+    }
+
     window.scrollToCourses = () => {
         currentView = 'all';
         selectedCourseCode = null;

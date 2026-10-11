@@ -12,6 +12,14 @@
 
 html {
     font-size: 100%;
+    background-color: var(--bg-color);
+    zoom: 85%;
+}
+
+@media (max-width: 768px) {
+    html {
+        zoom: 75%;
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -23,7 +31,6 @@ html {
 }
 
 body {
-    zoom: 85%;
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
     background-color: var(--bg-color);
     color: var(--text-color);
@@ -36,12 +43,6 @@ body {
     opacity: 0;
     transition: opacity var(--animation-speed) ease-in-out;
     box-sizing: border-box;
-}
-
-@media (max-width: 768px) {
-    body {
-        zoom: 75%;
-    }
 }
 
 body.loaded {
@@ -1844,10 +1845,75 @@ button:disabled {
         gap: 0.75rem;
     }
 
-    .features-grid {
-        grid-template-columns: 1fr;
+.landing-search-bar-wrap {
+    width: 100%;
+    max-width: 620px;
+    margin: 1.5rem auto 1.25rem auto;
+}
+
+.landing-search-bar {
+    display: flex;
+    align-items: center;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 0.35rem 0.45rem 0.35rem 1rem;
+    box-shadow: 0 4px 12px rgba(0, 71, 65, 0.08);
+    transition: all var(--animation-speed);
+}
+
+.landing-search-bar:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 4px 16px rgba(0, 71, 65, 0.16);
+}
+
+.landing-search-icon {
+    font-size: 1.15rem;
+    color: #666;
+    margin-right: 0.65rem;
+    flex-shrink: 0;
+}
+
+.landing-search-bar input {
+    flex: 1;
+    border: none !important;
+    outline: none !important;
+    background: transparent !important;
+    padding: 0.6rem 0.25rem !important;
+    font-size: 16px !important;
+    color: var(--text-color);
+    min-width: 0;
+}
+
+.landing-search-btn {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 0.65rem 1.25rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    width: auto !important;
+    flex-shrink: 0;
+    transition: opacity var(--animation-speed);
+}
+
+.landing-search-btn:hover {
+    opacity: 0.92;
+}
+
+@media (max-width: 600px) {
+    .landing-search-bar-wrap {
+        margin: 1.25rem 0 1rem 0;
+    }
+
+    .landing-search-btn {
+        padding: 0.55rem 0.9rem;
+        font-size: 0.85rem;
     }
 }
+
 
 
 
