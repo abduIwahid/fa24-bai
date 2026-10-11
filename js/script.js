@@ -144,7 +144,7 @@ document.addEventListener("DOMContentLoaded", () => {
             updateLoginAttempts();
             closeAdminLoginModal();
             updateAdminUI();
-            showNotification('✓ Admin access granted!', 'success');
+            showNotification('Admin access granted', 'success');
         };
 
         const denyAccess = () => {
@@ -155,7 +155,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 showLoginError('Account locked for 5 minutes due to too many failed attempts');
             } else {
                 const remaining = maxLoginAttempts - adminLoginAttempts;
-                showLoginError(`❌ Wrong password. ${remaining} attempt(s) remaining`);
+                showLoginError(`Wrong password. ${remaining} attempt(s) remaining`);
             }
             adminPasswordInput.value = '';
             adminPasswordInput.focus();
@@ -171,7 +171,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (response.status === 200) {
                 grantAccess();
             } else {
-                // API returned an error — fallback to local check
+                // API returned an error: fallback to local check
                 if (pass === 'admin@fa24bai') {
                     grantAccess();
                 } else {
@@ -179,7 +179,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             }
         } catch (error) {
-            // No server / local mode — validate against hardcoded password
+            // No server or local mode: validate against hardcoded password
             if (pass === 'admin@fa24bai') {
                 grantAccess();
             } else {
@@ -235,6 +235,38 @@ document.addEventListener("DOMContentLoaded", () => {
         return clean;
     };
 
+    window.toggleRogerMenu = (e, menuId) => {
+        e.stopPropagation();
+        const menu = document.getElementById(menuId);
+        if (!menu) return;
+        const isOpen = menu.classList.contains('active');
+        window.closeAllRogerMenus();
+        if (!isOpen) {
+            menu.classList.add('active');
+        }
+    };
+
+    window.closeAllRogerMenus = () => {
+        document.querySelectorAll('.roger-dropdown.active').forEach(m => m.classList.remove('active'));
+    };
+
+    window.copyResourceLink = (filename) => {
+        const fullUrl = window.location.origin + '/' + encodeURI(filename);
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(fullUrl).then(() => {
+                showNotification('Resource link copied to clipboard', 'info');
+            }).catch(() => {
+                showNotification('Could not copy link', 'error');
+            });
+        } else {
+            showNotification('Clipboard access unavailable', 'error');
+        }
+    };
+
+    document.addEventListener('click', () => {
+        window.closeAllRogerMenus();
+    });
+
     const createResourceHtml = (res) => {
         let viewUrl = res.rawName;
         if (viewUrl.match(/\.(pptx|ppt|docx|doc)$/i)) {
@@ -244,15 +276,38 @@ document.addEventListener("DOMContentLoaded", () => {
             viewUrl = 'https://view.officeapps.live.com/op/view.aspx?src=' + encodeURIComponent(rawGithubUrl);
         }
 
+        const escapedRawName = res.rawName.replace(/'/g, "\\'");
+        const menuId = 'menu-' + Math.random().toString(36).substring(2, 9);
+
         return `
             <div class="resource-item">
-                <div>
+                <div class="resource-main">
                     <div class="resource-name">${res.cleanName}</div>
                     <div class="resource-type-badge">${res.resourceType}</div>
                 </div>
                 <div class="resource-actions">
-                    <a href="${viewUrl}" target="_blank" class="action-btn view" onclick="window.trackView('${res.rawName.replace(/'/g, "\\'")}')">View</a>
-                    ${adminPass ? `<button class="action-btn delete-btn" onclick="window.deleteFile('${res.rawName.replace(/'/g, "\\'")}')" style="background:#ff4444; color:white; border:none; margin-left: auto;">Delete</button>` : ''}
+                    <a href="${viewUrl}" target="_blank" class="action-btn view" onclick="window.trackView('${escapedRawName}')">Open</a>
+                    <div class="roger-menu-wrap">
+                        <button type="button" class="roger-btn" onclick="window.toggleRogerMenu(event, '${menuId}')" aria-label="Resource options" title="Options">
+                            <i class="bi bi-three-dots-vertical"></i>
+                        </button>
+                        <div class="roger-dropdown" id="${menuId}">
+                            <a href="${viewUrl}" target="_blank" class="roger-item" onclick="window.trackView('${escapedRawName}'); window.closeAllRogerMenus();">
+                                <i class="bi bi-box-arrow-up-right"></i> Open Resource
+                            </a>
+                            <button type="button" class="roger-item" onclick="window.openAI('${escapedRawName}'); window.closeAllRogerMenus();">
+                                <i class="bi bi-chat-left-dots"></i> AI Assistant
+                            </button>
+                            <button type="button" class="roger-item" onclick="window.copyResourceLink('${escapedRawName}'); window.closeAllRogerMenus();">
+                                <i class="bi bi-link-45deg"></i> Copy Link
+                            </button>
+                            ${adminPass ? `
+                            <button type="button" class="roger-item danger" onclick="window.deleteFile('${escapedRawName}'); window.closeAllRogerMenus();">
+                                <i class="bi bi-trash3"></i> Delete
+                            </button>
+                            ` : ''}
+                        </div>
+                    </div>
                 </div>
             </div>
         `;
@@ -872,7 +927,7 @@ document.addEventListener("DOMContentLoaded", () => {
             noticeInput.value = '';
             renderNotices();
             updateNoticeBadge();
-            showNotification('✓ Announcement posted!', 'success');
+            showNotification('Announcement posted', 'success');
         });
     }
 
@@ -920,7 +975,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         showLoginError('Account locked for 5 minutes due to too many failed attempts');
                     } else {
                         const remaining = maxLoginAttempts - adminLoginAttempts;
-                        showLoginError(`❌ Wrong password. ${remaining} attempt(s) remaining`);
+                        showLoginError(`Wrong password. ${remaining} attempt(s) remaining`);
                     }
                     adminPasswordInput.value = '';
                     adminPasswordInput.focus();
