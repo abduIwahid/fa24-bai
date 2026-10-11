@@ -106,20 +106,58 @@ ${promptInstruction}`
 
         const partsTextOnly = [textPromptPart];
 
-        // Candidate models available in Google Generative AI v1beta
-        const candidateModels = [
-            'gemini-1.5-flash',
-            'gemini-2.0-flash',
-            'gemini-1.5-flash-8b',
-            'gemini-1.5-pro-latest'
-        ];
+        const cleanKey = (GEMINI_API_KEY || '').trim().replace(/^["']|["']$/g, '').trim();
+
+        // Dynamically query Google Generative Language API to discover available models for this key
+        let targetModels = [];
+        try {
+            const listUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(cleanKey)}`;
+            const listRes = await fetch(listUrl);
+            const listData = await listRes.json();
+
+            if (!listRes.ok || listData.error) {
+                const apiErrMsg = listData.error ? listData.error.message : `HTTP ${listRes.status}`;
+                console.warn('Google ListModels returned error:', apiErrMsg);
+                return res.status(200).json({
+                    reply: `Google Gemini API error: ${apiErrMsg}. Please check your GEMINI_API_KEY in Vercel settings.`
+                });
+            }
+
+            if (Array.isArray(listData.models)) {
+                const contentModels = listData.models
+                    .filter(m => Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes('generateContent'))
+                    .map(m => m.name.replace(/^models\//, ''));
+
+                // Prioritize fastest and most reliable models in order
+                const preferred = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash-8b', 'gemini-1.5-pro'];
+                for (const p of preferred) {
+                    const match = contentModels.find(m => m === p || m.startsWith(`${p}-`));
+                    if (match && !targetModels.includes(match)) {
+                        targetModels.push(match);
+                    }
+                }
+
+                // Add any remaining models that support generateContent
+                for (const m of contentModels) {
+                    if (!targetModels.includes(m)) {
+                        targetModels.push(m);
+                    }
+                }
+            }
+        } catch (discoverErr) {
+            console.warn('Could not discover models dynamically, falling back to defaults:', discoverErr.message);
+        }
+
+        if (targetModels.length === 0) {
+            targetModels = ['gemini-1.5-flash', 'gemini-2.0-flash'];
+        }
 
         let replyText = null;
         let lastErrorMessage = '';
 
         // Helper to query Gemini REST endpoint
         async function queryGemini(modelName, partsPayload) {
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${encodeURIComponent(GEMINI_API_KEY.trim())}`;
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${encodeURIComponent(cleanKey)}`;
             const apiRes = await fetch(apiUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -136,22 +174,24 @@ ${promptInstruction}`
             return { ok: apiRes.ok, status: apiRes.status, data };
         }
 
-        // Try candidate models with multimodal PDF payload first
-        for (const modelName of candidateModels) {
+        // Try available models
+        for (const modelName of targetModels) {
             try {
-                const resPdf = await queryGemini(modelName, partsWithPdf);
+                // Try multimodal PDF if available, otherwise text
+                const primaryPayload = base64Pdf ? partsWithPdf : partsTextOnly;
+                let res = await queryGemini(modelName, primaryPayload);
 
-                if (resPdf.ok && resPdf.data.candidates && resPdf.data.candidates[0] && resPdf.data.candidates[0].content) {
-                    const textParts = resPdf.data.candidates[0].content.parts.map(p => p.text).join('\n');
+                if (res.ok && res.data.candidates && res.data.candidates[0] && res.data.candidates[0].content) {
+                    const textParts = res.data.candidates[0].content.parts.map(p => p.text).join('\n');
                     if (textParts) {
                         replyText = textParts;
                         break;
                     }
                 }
 
-                // If error occurred with PDF payload (e.g., payload size limit or schema), fallback to text-only prompt
-                if (base64Pdf && resPdf.data && resPdf.data.error) {
-                    console.warn(`Model ${modelName} PDF payload error, retrying text-only:`, resPdf.data.error.message);
+                // If multimodal PDF payload failed (e.g. payload too large or PDF decode issue), retry with text only
+                if (base64Pdf && res.data && res.data.error) {
+                    console.warn(`Model ${modelName} PDF payload failed, retrying text-only:`, res.data.error.message);
                     const resText = await queryGemini(modelName, partsTextOnly);
                     if (resText.ok && resText.data.candidates && resText.data.candidates[0] && resText.data.candidates[0].content) {
                         const textParts = resText.data.candidates[0].content.parts.map(p => p.text).join('\n');
@@ -162,10 +202,10 @@ ${promptInstruction}`
                     }
                 }
 
-                if (resPdf.data && resPdf.data.error) {
-                    lastErrorMessage = resPdf.data.error.message || 'API error';
-                    // If key is outright invalid, stop early
-                    if (lastErrorMessage.toLowerCase().includes('api_key_invalid') || lastErrorMessage.toLowerCase().includes('api key not valid')) {
+                if (res.data && res.data.error) {
+                    lastErrorMessage = res.data.error.message || 'API error';
+                    // If error is about API key authenticity, break immediately
+                    if (lastErrorMessage.toLowerCase().includes('api key') || lastErrorMessage.toLowerCase().includes('permission_denied')) {
                         break;
                     }
                 }
