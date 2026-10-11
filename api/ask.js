@@ -84,70 +84,94 @@ Provide a direct, academically thorough, and helpful answer.`;
 
         const systemMessage = `You are an expert academic tutor for students in the FA24-BAI (Artificial Intelligence) program. Provide clear, accurate, and structured study guidance in clean markdown without conversational filler.`;
 
-        // Assemble request parts
-        const parts = [];
-        if (base64Pdf) {
-            parts.push({
-                inline_data: {
-                    mime_type: 'application/pdf',
-                    data: base64Pdf
-                }
-            });
-        }
-
-        parts.push({
+        const textPromptPart = {
             text: `${systemMessage}
 
 Document Title: ${cleanDocName}${folderContext ? ` (Category: ${folderContext})` : ''}
 
 ${promptInstruction}`
-        });
+        };
 
-        // Try candidate Gemini models via direct Google Generative Language REST API
+        // Assemble request parts (multimodal with PDF inlineData if available)
+        const partsWithPdf = [];
+        if (base64Pdf) {
+            partsWithPdf.push({
+                inlineData: {
+                    mimeType: 'application/pdf',
+                    data: base64Pdf
+                }
+            });
+        }
+        partsWithPdf.push(textPromptPart);
+
+        const partsTextOnly = [textPromptPart];
+
+        // Candidate models available in Google Generative AI v1beta
         const candidateModels = [
             'gemini-1.5-flash',
-            'gemini-1.5-flash-latest',
             'gemini-2.0-flash',
-            'gemini-1.5-pro'
+            'gemini-1.5-flash-8b',
+            'gemini-1.5-pro-latest'
         ];
 
         let replyText = null;
         let lastErrorMessage = '';
 
+        // Helper to query Gemini REST endpoint
+        async function queryGemini(modelName, partsPayload) {
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${encodeURIComponent(GEMINI_API_KEY.trim())}`;
+            const apiRes = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: partsPayload }],
+                    generationConfig: {
+                        temperature: 0.3,
+                        maxOutputTokens: 2048
+                    }
+                })
+            });
+
+            const data = await apiRes.json();
+            return { ok: apiRes.ok, status: apiRes.status, data };
+        }
+
+        // Try candidate models with multimodal PDF payload first
         for (const modelName of candidateModels) {
             try {
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${encodeURIComponent(GEMINI_API_KEY.trim())}`;
-                const apiRes = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts }],
-                        generationConfig: {
-                            temperature: 0.3,
-                            maxOutputTokens: 2048
-                        }
-                    })
-                });
+                const resPdf = await queryGemini(modelName, partsWithPdf);
 
-                const data = await apiRes.json();
-
-                if (apiRes.ok && data.candidates && data.candidates[0] && data.candidates[0].content) {
-                    const textParts = data.candidates[0].content.parts.map(p => p.text).join('\n');
+                if (resPdf.ok && resPdf.data.candidates && resPdf.data.candidates[0] && resPdf.data.candidates[0].content) {
+                    const textParts = resPdf.data.candidates[0].content.parts.map(p => p.text).join('\n');
                     if (textParts) {
                         replyText = textParts;
                         break;
                     }
-                } else if (data.error) {
-                    lastErrorMessage = data.error.message || 'API error';
-                    console.warn(`Model ${modelName} returned error:`, lastErrorMessage);
-                    // If error is about API key, break immediately
-                    if (lastErrorMessage.toLowerCase().includes('api key')) {
+                }
+
+                // If error occurred with PDF payload (e.g., payload size limit or schema), fallback to text-only prompt
+                if (base64Pdf && resPdf.data && resPdf.data.error) {
+                    console.warn(`Model ${modelName} PDF payload error, retrying text-only:`, resPdf.data.error.message);
+                    const resText = await queryGemini(modelName, partsTextOnly);
+                    if (resText.ok && resText.data.candidates && resText.data.candidates[0] && resText.data.candidates[0].content) {
+                        const textParts = resText.data.candidates[0].content.parts.map(p => p.text).join('\n');
+                        if (textParts) {
+                            replyText = textParts;
+                            break;
+                        }
+                    }
+                }
+
+                if (resPdf.data && resPdf.data.error) {
+                    lastErrorMessage = resPdf.data.error.message || 'API error';
+                    // If key is outright invalid, stop early
+                    if (lastErrorMessage.toLowerCase().includes('api_key_invalid') || lastErrorMessage.toLowerCase().includes('api key not valid')) {
                         break;
                     }
                 }
             } catch (modelErr) {
                 lastErrorMessage = modelErr.message;
-                console.warn(`Model ${modelName} fetch error:`, lastErrorMessage);
+                console.warn(`Model ${modelName} request exception:`, lastErrorMessage);
             }
         }
 
