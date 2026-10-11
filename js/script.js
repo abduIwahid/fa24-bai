@@ -48,6 +48,98 @@ document.addEventListener("DOMContentLoaded", () => {
     let selectedCourseName = null;
     let selectedFolder = null;
 
+    // === Navigation State & Handlers ===
+    const navItems = {
+        home: document.getElementById('navHome'),
+        search: document.getElementById('navSearch'),
+        upload: document.getElementById('navUpload'),
+        notice: document.getElementById('navNotice'),
+        courses: document.getElementById('navCourses'),
+    };
+
+    const setActiveNav = (key) => {
+        Object.values(navItems).forEach(el => el && el.classList.remove('active'));
+        if (navItems[key]) navItems[key].classList.add('active');
+    };
+
+    const switchTab = (tabName) => {
+        currentTab = tabName;
+        setActiveNav(tabName);
+
+        if (landingSection) landingSection.style.display = tabName === 'home' ? 'block' : 'none';
+        if (searchSection) searchSection.style.display = tabName === 'search' ? 'block' : 'none';
+        if (coursesSection) coursesSection.style.display = tabName === 'courses' ? 'block' : 'none';
+
+        if (tabName === 'home') {
+            if (typeof renderLandingCourses === 'function') renderLandingCourses();
+            if (typeof renderQuickAccess === 'function') renderQuickAccess();
+        } else if (tabName === 'search') {
+            if (typeof renderSearch === 'function') renderSearch();
+        } else if (tabName === 'courses') {
+            if (typeof renderCourses === 'function') renderCourses();
+        }
+    };
+
+    window.switchTab = switchTab;
+
+    window.scrollToHome = () => {
+        switchTab('home');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    window.focusSearch = () => {
+        switchTab('search');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        setTimeout(() => {
+            const inputEl = document.getElementById('searchInput');
+            if (inputEl) {
+                try {
+                    inputEl.focus({ preventScroll: true });
+                } catch (err) {
+                    inputEl.focus();
+                }
+            }
+        }, 120);
+    };
+
+    window.scrollToCourses = () => {
+        currentView = 'all';
+        selectedCourseCode = null;
+        selectedCourseName = null;
+        selectedFolder = null;
+        switchTab('courses');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    window.openUploadPanel = async () => {
+        setActiveNav('upload');
+        if (!adminPass) {
+            const pass = await promptAdminPassword();
+            if (!pass) {
+                setActiveNav(currentTab);
+                return;
+            }
+        }
+        if (uploadSection) {
+            uploadSection.style.display = 'block';
+            setTimeout(() => {
+                const header = document.querySelector('.header');
+                const headerOffset = header ? header.offsetHeight + 12 : 70;
+                const rect = uploadSection.getBoundingClientRect();
+                const targetY = window.pageYOffset + rect.top - headerOffset;
+                window.scrollTo({
+                    top: Math.max(0, targetY),
+                    behavior: 'smooth'
+                });
+            }, 100);
+        }
+    };
+
+    if (navItems.home) navItems.home.addEventListener('click', (e) => { e.preventDefault(); window.scrollToHome(); });
+    if (navItems.search) navItems.search.addEventListener('click', (e) => { e.preventDefault(); window.focusSearch(); });
+    if (navItems.upload) navItems.upload.addEventListener('click', (e) => { e.preventDefault(); window.openUploadPanel(); });
+    if (navItems.courses) navItems.courses.addEventListener('click', (e) => { e.preventDefault(); window.scrollToCourses(); });
+
     backBtn.addEventListener('click', () => {
         if (currentView === 'folder') {
             currentView = 'course';
@@ -904,97 +996,7 @@ document.addEventListener("DOMContentLoaded", () => {
         reader.readAsDataURL(file);
     });
 
-    // === Favicon Bar Logic ===
-    const navItems = {
-        home: document.getElementById('navHome'),
-        search: document.getElementById('navSearch'),
-        upload: document.getElementById('navUpload'),
-        notice: document.getElementById('navNotice'),
-        courses: document.getElementById('navCourses'),
-    };
-
-    const setActiveNav = (key) => {
-        Object.values(navItems).forEach(el => el && el.classList.remove('active'));
-        if (navItems[key]) navItems[key].classList.add('active');
-    };
-
-    const switchTab = (tabName) => {
-        currentTab = tabName;
-        setActiveNav(tabName);
-
-        if (landingSection) landingSection.style.display = tabName === 'home' ? 'block' : 'none';
-        if (searchSection) searchSection.style.display = tabName === 'search' ? 'block' : 'none';
-        if (coursesSection) coursesSection.style.display = tabName === 'courses' ? 'block' : 'none';
-
-        if (tabName === 'home') {
-            renderLandingCourses();
-            renderQuickAccess();
-        } else if (tabName === 'search') {
-            renderSearch();
-        } else if (tabName === 'courses') {
-            renderCourses();
-        }
-    };
-
-    window.switchTab = switchTab;
-
-    window.scrollToHome = () => {
-        switchTab('home');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
-
-    window.focusSearch = () => {
-        switchTab('search');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        setTimeout(() => {
-            const inputEl = document.getElementById('searchInput');
-            if (inputEl) {
-                try {
-                    inputEl.focus({ preventScroll: true });
-                } catch (err) {
-                    inputEl.focus();
-                }
-            }
-        }, 120);
-    };
-
-    window.openUploadPanel = async () => {
-        setActiveNav('upload');
-        if (!adminPass) {
-            const pass = await promptAdminPassword();
-            if (!pass) {
-                setActiveNav(currentTab);
-                return;
-            }
-        }
-        if (uploadSection) {
-            uploadSection.style.display = 'block';
-            setTimeout(() => {
-                const header = document.querySelector('.header');
-                const headerOffset = header ? header.offsetHeight + 12 : 70;
-                const rect = uploadSection.getBoundingClientRect();
-                const targetY = window.pageYOffset + rect.top - headerOffset;
-                window.scrollTo({
-                    top: Math.max(0, targetY),
-                    behavior: 'smooth'
-                });
-            }, 100);
-        }
-    };
-
-    window.scrollToCourses = () => {
-        currentView = 'all';
-        selectedCourseCode = null;
-        selectedCourseName = null;
-        selectedFolder = null;
-        switchTab('courses');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
-
-    if (navItems.home) navItems.home.addEventListener('click', (e) => { e.preventDefault(); window.scrollToHome(); });
-    if (navItems.search) navItems.search.addEventListener('click', (e) => { e.preventDefault(); window.focusSearch(); });
-    if (navItems.upload) navItems.upload.addEventListener('click', (e) => { e.preventDefault(); window.openUploadPanel(); });
-    if (navItems.courses) navItems.courses.addEventListener('click', (e) => { e.preventDefault(); window.scrollToCourses(); });
+    // Favicon bar navigation initialized at start
 
     // === Notices System ===
     const noticesModal = document.getElementById('noticesModal');
