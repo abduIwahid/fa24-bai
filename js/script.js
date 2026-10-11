@@ -515,11 +515,20 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     let isAiGenerating = false;
+    let lastAiRequestTime = 0;
+    const AI_COOLDOWN_MS = 2500; // 2.5s anti-spam cooldown
 
     const handleAiRequest = async (prompt, action = 'chat') => {
         if (!currentAiFile || isAiGenerating) return;
 
+        const now = Date.now();
+        if (now - lastAiRequestTime < AI_COOLDOWN_MS) {
+            showNotification('Please wait a moment before sending another AI request.', 'info');
+            return;
+        }
+
         if (action === 'chat' && !prompt.trim()) return;
+        lastAiRequestTime = now;
 
         if (action === 'chat') {
             addChatMessage(prompt, 'user');
@@ -865,14 +874,46 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
-    // Load Files
-    async function loadFiles() {
-        try {
-            const response = await fetch('/api/files');
-            const data = await response.json();
+    // Load Files with Session Storage Caching (5 min TTL)
+    const FILES_CACHE_KEY = 'fa24bai_files_cache';
+    const FILES_CACHE_TIME_KEY = 'fa24bai_files_cache_time';
+    const CACHE_TTL_MS = 5 * 60 * 1000;
 
-            if (response.ok) {
-                const pdfs = data.filter(file => file.name.match(/\.(pdf|pptx|ppt|doc|docx)$/i));
+    async function loadFiles(forceRefresh = false) {
+        try {
+            let data = null;
+            const cachedTime = parseInt(sessionStorage.getItem(FILES_CACHE_TIME_KEY) || '0', 10);
+            const isCacheValid = !forceRefresh && (Date.now() - cachedTime < CACHE_TTL_MS);
+
+            if (isCacheValid) {
+                const cachedDataStr = sessionStorage.getItem(FILES_CACHE_KEY);
+                if (cachedDataStr) {
+                    try {
+                        data = JSON.parse(cachedDataStr);
+                    } catch (e) {
+                        data = null;
+                    }
+                }
+            }
+
+            if (!data) {
+                const response = await fetch('/api/files');
+                if (response.ok) {
+                    data = await response.json();
+                    try {
+                        sessionStorage.setItem(FILES_CACHE_KEY, JSON.stringify(data));
+                        sessionStorage.setItem(FILES_CACHE_TIME_KEY, Date.now().toString());
+                    } catch (storageErr) {
+                        // Storage full or private mode, proceed without session cache
+                    }
+                } else {
+                    coursesContainer.innerHTML = '<p class="loading-text" style="color:red;">Error loading documents.</p>';
+                    return;
+                }
+            }
+
+            if (Array.isArray(data)) {
+                const pdfs = data.filter(file => file.name && file.name.match(/\.(pdf|pptx|ppt|doc|docx)$/i));
 
                 allFiles = pdfs.map(file => {
                     const courseInfo = getCourseInfo(file.name);
@@ -910,8 +951,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 renderCourses();
                 renderQuickAccess();
                 switchTab('home');
-            } else {
-                coursesContainer.innerHTML = '<p class="loading-text" style="color:red;">Error loading documents.</p>';
             }
         } catch (error) {
             coursesContainer.innerHTML = '<p class="loading-text" style="color:red;">Error loading documents.</p>';
@@ -1018,7 +1057,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Favicon bar navigation initialized at start
 
-    // === Notices System ===
+    // === Notices System with Backend Sync ===
     const noticesModal = document.getElementById('noticesModal');
     const noticesCloseBtn = document.getElementById('noticesCloseBtn');
     const noticesList = document.getElementById('noticesList');
@@ -1030,8 +1069,32 @@ document.addEventListener("DOMContentLoaded", () => {
     const NOTICES_KEY = 'fa24bai_notices';
     const SEEN_KEY = 'fa24bai_notices_seen';
 
-    const getNotices = () => JSON.parse(localStorage.getItem(NOTICES_KEY) || '[]');
-    const saveNotices = (arr) => localStorage.setItem(NOTICES_KEY, JSON.stringify(arr));
+    let localNotices = JSON.parse(localStorage.getItem(NOTICES_KEY) || '[]');
+
+    const getNotices = () => localNotices;
+
+    const saveNoticesLocally = (arr) => {
+        localNotices = arr;
+        try {
+            localStorage.setItem(NOTICES_KEY, JSON.stringify(arr));
+        } catch (e) {}
+    };
+
+    const fetchNoticesFromBackend = async () => {
+        try {
+            const res = await fetch('/api/notices');
+            if (res.ok) {
+                const serverNotices = await res.json();
+                if (Array.isArray(serverNotices) && serverNotices.length > 0) {
+                    saveNoticesLocally(serverNotices);
+                    renderNotices();
+                    updateNoticeBadge();
+                }
+            }
+        } catch (e) {
+            // Local fallback active
+        }
+    };
 
     const updateNoticeBadge = () => {
         const notices = getNotices();
@@ -1073,28 +1136,38 @@ document.addEventListener("DOMContentLoaded", () => {
         }).join('');
     };
 
-    window.deleteNotice = (idx) => {
+    window.deleteNotice = async (idx) => {
         if (!adminPass) return;
-        const notices = getNotices();
+        const notices = [...getNotices()];
         notices.splice(idx, 1);
-        saveNotices(notices);
-        // Adjust seen count
+        saveNoticesLocally(notices);
+
         const seen = Math.min(parseInt(localStorage.getItem(SEEN_KEY) || '0', 10), notices.length);
         localStorage.setItem(SEEN_KEY, seen);
         renderNotices();
         updateNoticeBadge();
+
+        try {
+            await fetch('/api/notices', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password: adminPass, notices, action: 'delete' })
+            });
+            showNotification('Notice deleted from cohort board', 'info');
+        } catch (e) {
+            // Local update succeeded
+        }
     };
 
     window.openNotices = () => {
         setActiveNav('notice');
-        // Mark all as seen
         const notices = getNotices();
         localStorage.setItem(SEEN_KEY, notices.length);
         updateNoticeBadge();
-        // Show admin post form if logged in
         if (noticesFooter) noticesFooter.style.display = adminPass ? 'flex' : 'none';
         renderNotices();
         noticesModal.classList.add('active');
+        fetchNoticesFromBackend();
     };
 
     if (noticesCloseBtn) {
@@ -1105,21 +1178,38 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (postNoticeBtn) {
-        postNoticeBtn.addEventListener('click', () => {
+        postNoticeBtn.addEventListener('click', async () => {
             const text = noticeInput.value.trim();
             if (!text) return;
-            const notices = getNotices();
+            postNoticeBtn.disabled = true;
+
+            const notices = [...getNotices()];
             notices.push({
                 text,
                 date: new Date().toLocaleString('en-PK', { dateStyle: 'medium', timeStyle: 'short' })
             });
-            saveNotices(notices);
-            // New notice counts as seen by admin
+            saveNoticesLocally(notices);
             localStorage.setItem(SEEN_KEY, notices.length);
             noticeInput.value = '';
             renderNotices();
             updateNoticeBadge();
-            showNotification('Announcement posted', 'success');
+
+            try {
+                const res = await fetch('/api/notices', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: adminPass, notices, action: 'post' })
+                });
+                if (res.ok) {
+                    showNotification('Announcement posted and synced to GitHub', 'success');
+                } else {
+                    showNotification('Announcement saved locally', 'info');
+                }
+            } catch (e) {
+                showNotification('Announcement saved locally', 'info');
+            } finally {
+                postNoticeBtn.disabled = false;
+            }
         });
     }
 
@@ -1130,8 +1220,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // Init badge on load
+    // Init badge and fetch backend notices
     updateNoticeBadge();
+    fetchNoticesFromBackend();
 
 
 
