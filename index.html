@@ -40,22 +40,30 @@
         <div class="modal-content admin-login-modal">
             <div class="modal-header">
                 <div>
-                    <h3>Admin Login</h3>
-                    <p style="margin:0; font-size:0.85rem; color:#999;">Secure Access</p>
+                    <span class="admin-login-badge"><i class="bi bi-shield-lock-fill"></i> Restricted</span>
+                    <h3 style="margin: 0; font-size: 1.2rem; color: var(--text-color);">Admin Authentication</h3>
+                    <p style="margin: 0.2rem 0 0 0; font-size: 0.82rem; color: #666;">Enter authorization key to manage cohort files</p>
                 </div>
                 <button class="close-btn" id="adminCloseBtn" aria-label="Close login">&times;</button>
             </div>
             <div class="modal-body">
-                <form id="adminLoginForm" style="display: flex; flex-direction: column; gap: 1.2rem;">
+                <form id="adminLoginForm" style="display: flex; flex-direction: column; gap: 1rem;">
                     <div class="form-group">
-                        <label for="adminPassword" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-color);">Password</label>
-                        <input type="password" id="adminPassword" placeholder="Enter admin password"
-                            style="width: 100%; padding: 0.9rem 1rem; border: 2px solid var(--border-color); border-radius: 8px; font-size: 1rem; font-family: 'Inter', sans-serif; transition: all 0.3s;">
-                        <div id="loginError" style="display: none; color: #dc2626; font-size: 0.9rem; margin-top: 0.5rem; font-weight: 500; animation: slideDown 0.3s ease-out;"></div>
+                        <label for="adminPassword" style="display: block; margin-bottom: 0.4rem; font-weight: 600; font-size: 0.85rem; color: var(--text-color);">Master Password</label>
+                        <div class="password-input-wrap">
+                            <input type="password" id="adminPassword" placeholder="Enter admin password" autocomplete="current-password" required>
+                            <button type="button" class="toggle-password-btn" id="togglePasswordBtn" aria-label="Toggle password visibility">
+                                <i class="bi bi-eye" id="togglePasswordIcon"></i>
+                            </button>
+                        </div>
+                        <div id="loginError" style="display: none; color: #dc2626; font-size: 0.85rem; margin-top: 0.5rem; font-weight: 500;"></div>
+                        <p class="admin-hint">Grants permissions to upload course slides, delete files, and publish class announcements.</p>
                     </div>
-                    <button type="submit" style="width: 100%; padding: 0.9rem; background: var(--accent); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s;">Login</button>
+                    <button type="submit" style="width: 100%; padding: 0.75rem; background: var(--accent); color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">
+                        Authorize Access
+                    </button>
                 </form>
-                <div id="loginAttempts" style="text-align: center; font-size: 0.85rem; color: #999; margin-top: 1rem;"></div>
+                <div id="loginAttempts" style="text-align: center; font-size: 0.8rem; color: #888;"></div>
             </div>
         </div>
     </div>

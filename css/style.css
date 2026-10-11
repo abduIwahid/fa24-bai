@@ -1124,6 +1124,80 @@ button:disabled {
     border-top: 1px solid var(--border-color);
 }
 
+/* Admin Login Modal: Compact, perfectly proportioned */
+.admin-login-modal {
+    max-width: 420px !important;
+    height: auto !important;
+    max-height: 90vh !important;
+    border-radius: 8px !important;
+}
+
+.admin-login-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--accent);
+    background: var(--accent-light);
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    margin-bottom: 0.35rem;
+}
+
+.password-input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.password-input-wrap input {
+    width: 100%;
+    padding: 0.75rem 2.5rem 0.75rem 0.85rem !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 6px !important;
+    font-size: 0.95rem !important;
+    font-family: 'Inter', sans-serif !important;
+    outline: none !important;
+    background-color: #fafafa !important;
+    transition: border-color var(--animation-speed) !important;
+}
+
+.password-input-wrap input:focus {
+    border-color: var(--accent) !important;
+    background-color: #ffffff !important;
+}
+
+.toggle-password-btn {
+    position: absolute;
+    right: 0.4rem;
+    background: transparent !important;
+    border: none !important;
+    color: #777 !important;
+    cursor: pointer;
+    padding: 0.35rem !important;
+    width: auto !important;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: none !important;
+}
+
+.toggle-password-btn:hover {
+    color: var(--accent) !important;
+    opacity: 1 !important;
+}
+
+.admin-hint {
+    font-size: 0.78rem;
+    color: #666;
+    margin-top: 0.45rem;
+    line-height: 1.4;
+    margin-bottom: 0;
+}
+
 
 /* Responsive Media Queries */
 @media (max-width: 1024px) {

@@ -87,6 +87,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const closeAdminLoginModal = () => {
         adminLoginModal.classList.remove('active');
         adminPasswordInput.value = '';
+        adminPasswordInput.type = 'password';
+        if (togglePasswordIcon) togglePasswordIcon.className = 'bi bi-eye';
         loginError.style.display = 'none';
     };
 
@@ -108,6 +110,17 @@ document.addEventListener("DOMContentLoaded", () => {
             adminPasswordInput.style.animation = 'none';
         }, 400);
     };
+
+    const togglePasswordBtn = document.getElementById('togglePasswordBtn');
+    const togglePasswordIcon = document.getElementById('togglePasswordIcon');
+
+    if (togglePasswordBtn && adminPasswordInput && togglePasswordIcon) {
+        togglePasswordBtn.addEventListener('click', () => {
+            const isPassword = adminPasswordInput.type === 'password';
+            adminPasswordInput.type = isPassword ? 'text' : 'password';
+            togglePasswordIcon.className = isPassword ? 'bi bi-eye-slash' : 'bi bi-eye';
+        });
+    }
 
     adminLoginBtn.addEventListener('click', openAdminLoginModal);
 
@@ -354,32 +367,60 @@ document.addEventListener("DOMContentLoaded", () => {
         document.body.style.overflow = 'auto';
     });
 
+    const formatMarkdown = (str) => {
+        if (!str) return '';
+        let escaped = str
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+        escaped = escaped.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        escaped = escaped.replace(/\*(.*?)\*/g, '<em>$1</em>');
+        escaped = escaped.replace(/`([^`]+)`/g, '<code style="background:rgba(0,0,0,0.06);padding:2px 4px;border-radius:3px;">$1</code>');
+        escaped = escaped.replace(/\n/g, '<br>');
+        return escaped;
+    };
+
     const addChatMessage = (text, sender) => {
         const msg = document.createElement('div');
         msg.className = `chat-message ${sender}`;
-        msg.textContent = text;
+        if (sender === 'ai') {
+            msg.innerHTML = formatMarkdown(text);
+        } else {
+            msg.textContent = text;
+        }
         chatContainer.appendChild(msg);
         chatContainer.scrollTop = chatContainer.scrollHeight;
     };
 
-    const handleAiRequest = async (prompt, action = 'chat') => {
-        if (!currentAiFile) return;
+    let isAiGenerating = false;
 
-        if (action === 'chat' && !prompt) return;
+    const handleAiRequest = async (prompt, action = 'chat') => {
+        if (!currentAiFile || isAiGenerating) return;
+
+        if (action === 'chat' && !prompt.trim()) return;
 
         if (action === 'chat') {
             addChatMessage(prompt, 'user');
             aiInput.value = '';
         } else {
-            addChatMessage(`Action: ${action.charAt(0).toUpperCase() + action.slice(1)}`, 'user');
+            const labelMap = {
+                summarize: 'Summarize Document',
+                quiz: 'Generate Practice Quiz',
+                viva: 'Generate Viva Questions'
+            };
+            addChatMessage(labelMap[action] || action, 'user');
         }
+
+        isAiGenerating = true;
+        aiSendBtn.disabled = true;
+        aiActionBtns.forEach(b => b.disabled = true);
 
         // Typing indicator
         const typingId = Date.now();
         const typingEl = document.createElement('div');
         typingEl.className = 'chat-message ai';
         typingEl.id = `typing-${typingId}`;
-        typingEl.textContent = 'Thinking...';
+        typingEl.textContent = 'Analyzing document...';
         chatContainer.appendChild(typingEl);
         chatContainer.scrollTop = chatContainer.scrollHeight;
 
@@ -394,16 +435,22 @@ document.addEventListener("DOMContentLoaded", () => {
                 })
             });
             const data = await response.json();
-            document.getElementById(`typing-${typingId}`).remove();
+            const placeholder = document.getElementById(`typing-${typingId}`);
+            if (placeholder) placeholder.remove();
 
-            if (response.ok) {
+            if (response.ok && data.reply) {
                 addChatMessage(data.reply, 'ai');
             } else {
-                addChatMessage("Sorry, there was an error processing your request.", 'ai');
+                addChatMessage(data.reply || 'Could not process request at this time.', 'ai');
             }
         } catch (e) {
-            document.getElementById(`typing-${typingId}`).remove();
-            addChatMessage("Network error. Please try again.", 'ai');
+            const placeholder = document.getElementById(`typing-${typingId}`);
+            if (placeholder) placeholder.remove();
+            addChatMessage('Connection issue. Please verify internet and try again.', 'ai');
+        } finally {
+            isAiGenerating = false;
+            aiSendBtn.disabled = false;
+            aiActionBtns.forEach(b => b.disabled = false);
         }
     };
 
