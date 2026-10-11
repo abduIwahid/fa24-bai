@@ -124,12 +124,20 @@ ${promptInstruction}`
             }
 
             if (Array.isArray(listData.models)) {
+                // Strictly filter to conversational Gemini models only (exclude research, embedding, or zero-quota preview models)
                 const contentModels = listData.models
                     .filter(m => Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes('generateContent'))
-                    .map(m => m.name.replace(/^models\//, ''));
+                    .map(m => m.name.replace(/^models\//, ''))
+                    .filter(m => m.startsWith('gemini-') && !m.includes('deep-research') && !m.includes('preview-0'));
 
-                // Prioritize fastest and most reliable models in order
-                const preferred = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash-8b', 'gemini-1.5-pro'];
+                // Prioritize fastest and standard free-tier models in order
+                const preferred = [
+                    'gemini-1.5-flash',
+                    'gemini-2.0-flash',
+                    'gemini-1.5-flash-8b',
+                    'gemini-2.0-flash-exp'
+                ];
+
                 for (const p of preferred) {
                     const match = contentModels.find(m => m === p || m.startsWith(`${p}-`));
                     if (match && !targetModels.includes(match)) {
@@ -137,9 +145,8 @@ ${promptInstruction}`
                     }
                 }
 
-                // Add any remaining models that support generateContent
                 for (const m of contentModels) {
-                    if (!targetModels.includes(m)) {
+                    if (m.includes('flash') && !targetModels.includes(m)) {
                         targetModels.push(m);
                     }
                 }
@@ -149,11 +156,11 @@ ${promptInstruction}`
         }
 
         if (targetModels.length === 0) {
-            targetModels = ['gemini-1.5-flash', 'gemini-2.0-flash'];
+            targetModels = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash-8b'];
         }
 
         let replyText = null;
-        let lastErrorMessage = '';
+        let modelErrors = [];
 
         // Helper to query Gemini REST endpoint
         async function queryGemini(modelName, partsPayload) {
@@ -162,7 +169,10 @@ ${promptInstruction}`
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    contents: [{ parts: partsPayload }],
+                    contents: [{
+                        role: 'user',
+                        parts: partsPayload
+                    }],
                     generationConfig: {
                         temperature: 0.3,
                         maxOutputTokens: 2048
@@ -189,7 +199,7 @@ ${promptInstruction}`
                     }
                 }
 
-                // If multimodal PDF payload failed (e.g. payload too large or PDF decode issue), retry with text only
+                // If multimodal PDF payload failed, retry with text only
                 if (base64Pdf && res.data && res.data.error) {
                     console.warn(`Model ${modelName} PDF payload failed, retrying text-only:`, res.data.error.message);
                     const resText = await queryGemini(modelName, partsTextOnly);
@@ -203,15 +213,16 @@ ${promptInstruction}`
                 }
 
                 if (res.data && res.data.error) {
-                    lastErrorMessage = res.data.error.message || 'API error';
+                    const errMsg = res.data.error.message || `Error code ${res.data.error.code}`;
+                    modelErrors.push(`${modelName}: ${errMsg}`);
                     // If error is about API key authenticity, break immediately
-                    if (lastErrorMessage.toLowerCase().includes('api key') || lastErrorMessage.toLowerCase().includes('permission_denied')) {
+                    if (errMsg.toLowerCase().includes('api key') || errMsg.toLowerCase().includes('permission_denied')) {
                         break;
                     }
                 }
             } catch (modelErr) {
-                lastErrorMessage = modelErr.message;
-                console.warn(`Model ${modelName} request exception:`, lastErrorMessage);
+                modelErrors.push(`${modelName}: ${modelErr.message}`);
+                console.warn(`Model ${modelName} request exception:`, modelErr.message);
             }
         }
 
@@ -219,10 +230,10 @@ ${promptInstruction}`
             return res.status(200).json({ reply: replyText });
         }
 
+        const primaryError = modelErrors.length > 0 ? modelErrors[0] : 'No active model response received.';
+
         return res.status(200).json({
-            reply: lastErrorMessage
-                ? `AI response notice: ${lastErrorMessage}. Please verify your GEMINI_API_KEY in Vercel settings.`
-                : 'AI assistant is temporarily unable to process this document. Please try again shortly.'
+            reply: `AI response notice: ${primaryError}. Please verify your GEMINI_API_KEY in Vercel settings.`
         });
     } catch (error) {
         console.error('AI Handler Error:', error);
