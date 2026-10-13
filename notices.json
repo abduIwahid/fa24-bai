@@ -1,6 +1,10 @@
 [
-    {
-        "text": "Welcome to FA24-BAI Study Hub! All course materials, lab manuals, CDFs, and AI assistance are active.",
-        "date": "11/10/2026, 12:00 PM"
-    }
+  {
+    "text": "Welcome to FA24-BAI Study Hub! All course materials, lab manuals, CDFs, and AI assistance are active.",
+    "date": "11/10/2026, 12:00 PM"
+  },
+  {
+    "text": "Date,Time,Subject\n02 Nov 2026,08:30–10:00 AM,Principles of Operating Systems\n02 Nov 2026,03:00–04:30 PM,Statistics and Probability Theory\n03 Nov 2026,11:50 AM–01:20 PM,Web Technologies\n04 Nov 2026,10:10–11:40 AM,Programming for Artificial Intelligence\n05 Nov 2026,10:10–11:40 AM,Knowledge Representation and Reasoning\n06 Nov 2026,11:50 AM–01:20 PM,Design and Analysis of Algorithms",
+    "date": "13-Oct-2026 at 9:09 AM"
+  }
 ]
