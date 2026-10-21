@@ -3,13 +3,37 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FA24-BAI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FA24-BAI Study Hub — 5th Semester AI Resources</title>
+    <meta name="description" content="FA24-BAI Study Hub: course syllabi, CDFs, lab manuals, lectures, notes and an AI study companion for the 5th Semester Artificial Intelligence cohort at COMSATS University Islamabad, Attock Campus.">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="FA24-BAI Study Hub">
+    <meta property="og:title" content="FA24-BAI Study Hub — 5th Semester AI Resources">
+    <meta property="og:description" content="Syllabi, CDFs, lab manuals, lectures and notes for the FA24-BAI (5th Semester AI) cohort, with an integrated AI study companion.">
+    <meta property="og:url" content="https://fa24-bai.vercel.app/">
+    <meta property="og:image" content="https://fa24-bai.vercel.app/logo.jpeg">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="FA24-BAI Study Hub — 5th Semester AI Resources">
+    <meta name="twitter:description" content="Syllabi, CDFs, lab manuals, lectures and notes for the FA24-BAI (5th Semester AI) cohort, with an integrated AI study companion.">
+    <meta name="twitter:image" content="https://fa24-bai.vercel.app/logo.jpeg">
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="alternate icon" href="logo.jpeg" type="image/jpeg">
     <link rel="apple-touch-icon" href="logo.jpeg">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#004741">
+    <script>
+        // Set the theme before first paint (stored choice, else OS preference)
+        (function () {
+            try {
+                var t = localStorage.getItem('fa24bai_theme');
+                if (t !== 'dark' && t !== 'light') {
+                    t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+                }
+                document.documentElement.setAttribute('data-theme', t);
+            } catch (e) { /* light theme is the default */ }
+        })();
+    </script>
+    <noscript><style>body { opacity: 1 !important; }</style></noscript>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 </head>
@@ -26,6 +50,7 @@
                     </div>
                 </div>
                 <div class="header-right">
+                    <button id="themeToggleBtn" class="theme-toggle-btn" aria-label="Toggle dark mode" title="Toggle dark mode"><i class="bi bi-moon-fill" id="themeToggleIcon"></i></button>
                     <button id="adminLoginBtn" class="admin-btn" aria-label="Admin Login">Admin Login</button>
                     <div id="adminWelcome" class="admin-welcome" role="status" aria-live="polite">
                         Welcome Admin, Abdul Wahid!
@@ -170,6 +195,7 @@
                     <button type="button" class="filter-chip" data-filter="Syllabus">Syllabus</button>
                     <button type="button" class="filter-chip" data-filter="Lectures">Lectures</button>
                     <button type="button" class="filter-chip" data-filter="Assignments">Assignments</button>
+                    <button type="button" class="filter-chip" data-filter="Notes">Notes</button>
                 </div>
             </div>
             <div class="search-results-info" id="searchResultsInfo"></div>

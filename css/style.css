@@ -8,18 +8,12 @@
     --shadow: 0 4px 6px -1px rgba(0, 71, 65, 0.1), 0 2px 4px -1px rgba(0, 71, 65, 0.06);
     --hover-shadow: 0 10px 15px -3px rgba(0, 71, 65, 0.1), 0 4px 6px -2px rgba(0, 71, 65, 0.05);
     --animation-speed: 0.3s;
+    --header-bg: linear-gradient(135deg, #f0ede4 0%, rgba(240, 237, 228, 0.95) 100%);
 }
 
 html {
     font-size: 100%;
     background-color: var(--bg-color);
-    zoom: 85%;
-}
-
-@media (max-width: 768px) {
-    html {
-        zoom: 75%;
-    }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -182,7 +176,7 @@ select {
     position: sticky;
     top: 0;
     z-index: 50;
-    background: linear-gradient(135deg, var(--bg-color) 0%, rgba(240, 237, 228, 0.95) 100%);
+    background: var(--header-bg);
     backdrop-filter: blur(10px);
     padding: 0.6rem 0;
     border-bottom: 1px solid rgba(192, 209, 207, 0.3);
@@ -366,6 +360,9 @@ button:disabled {
     color: var(--text-color);
     border: 1px solid var(--border-color);
     padding: 0.45rem 0.85rem;
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
     border-radius: 6px;
     font-size: 0.85rem;
     font-weight: 500;
@@ -422,11 +419,11 @@ button:disabled {
 
 .course-card {
     background-color: var(--card-bg);
-    border-radius: 8px;
+    border-radius: 12px;
     border: 1px solid var(--border-color);
     padding: 1.5rem;
     box-shadow: var(--shadow);
-    transition: border-color var(--animation-speed), box-shadow var(--animation-speed);
+    transition: border-color var(--animation-speed), box-shadow var(--animation-speed), transform var(--animation-speed);
     cursor: pointer;
     position: relative;
 }
@@ -434,6 +431,7 @@ button:disabled {
 .course-card:hover {
     border-color: var(--accent);
     box-shadow: var(--hover-shadow);
+    transform: translateY(-2px);
 }
 
 .course-header {
@@ -480,7 +478,7 @@ button:disabled {
     align-items: center;
     padding: 0.75rem 0.9rem;
     background-color: #fbfbf9;
-    border-radius: 6px;
+    border-radius: 8px;
     border: 1px solid #e2eae8;
     gap: 0.75rem;
     transition: border-color var(--animation-speed), background-color var(--animation-speed);
@@ -526,6 +524,7 @@ button:disabled {
 
 .action-btn {
     width: auto;
+    min-height: 40px;
     padding: 0.4rem 0.75rem;
     font-size: 0.85rem;
     border-radius: 6px;
@@ -558,8 +557,8 @@ button:disabled {
     background: transparent;
     color: var(--text-color);
     border: 1px solid var(--border-color);
-    width: 32px;
-    height: 32px;
+    width: 40px;
+    height: 40px;
     padding: 0;
     display: inline-flex;
     align-items: center;
@@ -745,6 +744,11 @@ button:disabled {
     font-size: 1.8rem;
     color: #9ca3af;
     width: auto;
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     padding: 0;
     line-height: 1;
     cursor: pointer;
@@ -947,7 +951,6 @@ button:disabled {
     z-index: 100;
     box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
     animation: slideUp var(--animation-speed) ease-out;
-    /* Scale the bar with browser zoom via font-size inheritance */
     font-size: 1rem;
 }
 
@@ -968,6 +971,7 @@ button:disabled {
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    min-height: 52px;
     gap: 0.2rem;
     text-decoration: none;
     color: var(--text-color);
@@ -1495,6 +1499,7 @@ button:disabled {
     background-color: var(--accent);
     color: white;
     border: none;
+    min-height: 44px;
     padding: 0.5rem 0.95rem;
     border-radius: 6px;
     font-size: 0.85rem;
@@ -1952,4 +1957,193 @@ button:disabled {
         padding: 0.55rem 0.9rem;
         font-size: 0.85rem;
     }
+}
+/* === Round-2 polish: focus states, state blocks, shortcuts, theme === */
+
+/* Visible keyboard focus everywhere */
+:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+/* Folder shortcut rows in the Courses "all" view */
+.folder-shortcut {
+    cursor: pointer;
+    background: var(--card-bg);
+    border: 1px dashed var(--border-color);
+}
+
+.folder-shortcut:hover {
+    background: var(--accent-light);
+    border-color: var(--accent);
+}
+
+/* "Jump to course" link under search results */
+.resource-course-link {
+    display: inline-block;
+    margin-top: 0.3rem;
+    padding: 0.2rem 0.1rem;
+    background: transparent;
+    border: none;
+    width: auto;
+    min-height: 28px;
+    color: var(--accent);
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: left;
+}
+
+.resource-course-link:hover {
+    text-decoration: underline;
+    opacity: 1;
+}
+
+/* Loading / error state blocks */
+.state-block {
+    padding: 2.5rem 1rem;
+}
+
+.state-block p {
+    margin: 0 0 1rem 0;
+    font-style: normal;
+}
+
+.retry-btn {
+    width: auto;
+    min-height: 44px;
+    padding: 0.6rem 1.4rem;
+    background: var(--accent);
+    color: var(--card-bg);
+    border: 1px solid var(--accent);
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+/* Header theme toggle */
+.theme-toggle-btn {
+    background: transparent;
+    border: 2px solid var(--text-color);
+    color: var(--text-color);
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    padding: 0;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.05rem;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all var(--animation-speed);
+}
+
+.theme-toggle-btn:hover {
+    background: rgba(0, 71, 65, 0.1);
+    opacity: 1;
+}
+
+/* === Dark theme (same cream/deep-green identity, inverted) === */
+[data-theme="dark"] {
+    --bg-color: #0c1f1c;
+    --text-color: #e7f0ec;
+    --card-bg: #132e29;
+    --accent: #7fc8bc;
+    --accent-light: rgba(127, 200, 188, 0.14);
+    --border-color: #275047;
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.45), 0 2px 4px -1px rgba(0, 0, 0, 0.35);
+    --hover-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.4);
+    --header-bg: linear-gradient(135deg, #0c1f1c 0%, rgba(12, 31, 28, 0.92) 100%);
+}
+
+/* Accent-filled controls need a deeper green in dark mode so white
+   text on them keeps proper contrast */
+[data-theme="dark"] button,
+[data-theme="dark"] .action-btn.view,
+[data-theme="dark"] .hero-primary-btn,
+[data-theme="dark"] .back-btn,
+[data-theme="dark"] .landing-search-btn,
+[data-theme="dark"] .retry-btn {
+    background-color: #00695c;
+    border-color: #00695c;
+    color: #ffffff;
+}
+
+[data-theme="dark"] .upload-pill,
+[data-theme="dark"] .chat-message.user,
+[data-theme="dark"] .filter-chip.active {
+    background-color: #00695c;
+    color: #ffffff;
+}
+
+[data-theme="dark"] .filter-chip.active {
+    border-color: #00695c;
+}
+
+/* ...while genuinely transparent controls stay transparent */
+[data-theme="dark"] .roger-btn,
+[data-theme="dark"] .view-all-link,
+[data-theme="dark"] .notice-card-delete,
+[data-theme="dark"] .close-btn,
+[data-theme="dark"] .admin-btn,
+[data-theme="dark"] .theme-toggle-btn,
+[data-theme="dark"] .resource-course-link {
+    background-color: transparent;
+}
+
+[data-theme="dark"] .ai-action-btn {
+    background-color: var(--accent-light);
+    color: var(--accent);
+}
+
+[data-theme="dark"] .hero-secondary-btn {
+    background-color: var(--card-bg);
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .resource-item,
+[data-theme="dark"] .folder-card .resource-item {
+    background-color: rgba(255, 255, 255, 0.04);
+    border-color: #275047;
+}
+
+[data-theme="dark"] .resource-item:hover,
+[data-theme="dark"] .folder-card .resource-item:hover {
+    background-color: var(--accent-light);
+    border-color: var(--accent);
+}
+
+[data-theme="dark"] .password-input-wrap input {
+    background-color: var(--card-bg) !important;
+    color: var(--text-color);
+}
+
+[data-theme="dark"] input[type="file"] {
+    background-color: var(--accent-light);
+    color: var(--text-color);
+}
+
+/* Muted greys are too dim on dark cards — lift them */
+[data-theme="dark"] .course-info .course-code,
+[data-theme="dark"] .hero-desc,
+[data-theme="dark"] .feature-card p,
+[data-theme="dark"] .stat-label,
+[data-theme="dark"] .search-view-header p,
+[data-theme="dark"] .search-results-info,
+[data-theme="dark"] .no-results,
+[data-theme="dark"] .app-footer,
+[data-theme="dark"] .footer-copy,
+[data-theme="dark"] .footer-author,
+[data-theme="dark"] .admin-hint,
+[data-theme="dark"] .notice-card-meta,
+[data-theme="dark"] .notice-empty,
+[data-theme="dark"] .header-subtitle {
+    color: #9db8b1;
+}
+
+[data-theme="dark"] .theme-toggle-btn:hover {
+    background: rgba(127, 200, 188, 0.15);
 }

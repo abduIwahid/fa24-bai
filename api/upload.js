@@ -5,9 +5,12 @@ export default async function handler(req, res) {
 
     const { filename, contentBase64, password, folder } = req.body;
     
-    // Security check
+    // Security check (fail closed: no env var configured = no access)
     const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
-    if (ADMIN_PASSWORD && password !== ADMIN_PASSWORD) {
+    if (!ADMIN_PASSWORD) {
+        return res.status(503).json({ message: 'Server configuration error: ADMIN_PASSWORD is not set' });
+    }
+    if (password !== ADMIN_PASSWORD) {
         return res.status(401).json({ message: 'Unauthorized: Invalid Admin Password' });
     }
 
@@ -29,19 +32,33 @@ export default async function handler(req, res) {
         path = `${cleanFolder}/${filename}`;
     }
 
-    const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+    // Percent-encode each path segment (file names contain spaces, '#', etc.)
+    const encodedPath = path.split('/').map(encodeURIComponent).join('/');
+    const url = `https://api.github.com/repos/${owner}/${repo}/contents/${encodedPath}`;
+
+    const ghHeaders = {
+        'Authorization': `Bearer ${GITHUB_TOKEN}`,
+        'Content-Type': 'application/json',
+        'User-Agent': 'Vercel-Upload-App'
+    };
 
     try {
+        // GitHub requires the current blob sha to overwrite an existing
+        // file — look it up first so re-uploading a fixed deck works.
+        let existingSha = null;
+        const getRes = await fetch(url, { headers: ghHeaders });
+        if (getRes.ok) {
+            const existing = await getRes.json();
+            existingSha = existing.sha;
+        }
+
         const response = await fetch(url, {
             method: 'PUT',
-            headers: {
-                'Authorization': `Bearer ${GITHUB_TOKEN}`,
-                'Content-Type': 'application/json',
-                'User-Agent': 'Vercel-Upload-App'
-            },
+            headers: ghHeaders,
             body: JSON.stringify({
                 message: `Upload ${filename} via Vercel`,
-                content: contentBase64
+                content: contentBase64,
+                ...(existingSha ? { sha: existingSha } : {})
             })
         });
 

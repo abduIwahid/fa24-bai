@@ -24,6 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const aiActionBtns = document.querySelectorAll('.ai-action-btn');
 
     let allFiles = [];
+    let filesState = 'loading'; // 'loading' | 'ready' | 'error' — drives view states
     let currentFilter = 'All';
     let searchQuery = '';
     let currentAiFile = null;
@@ -178,6 +179,22 @@ document.addEventListener("DOMContentLoaded", () => {
     const maxLoginAttempts = 5;
     let adminLoginLockedUntil = null;
 
+    // The password is ONLY ever verified by the server (POST /api/ask,
+    // action "verify"). There is deliberately no client-side copy of it:
+    // any network/server failure means "not verified" (fail closed).
+    const verifyAdminPasswordOnServer = async (pass) => {
+        try {
+            const response = await fetch('/api/ask', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password: pass, action: 'verify' })
+            });
+            return response.ok;
+        } catch (error) {
+            return false;
+        }
+    };
+
     // Admin Login Elements
     const adminLoginModal = document.getElementById('adminLoginModal');
     const adminLoginForm = document.getElementById('adminLoginForm');
@@ -296,30 +313,26 @@ document.addEventListener("DOMContentLoaded", () => {
             adminPasswordInput.focus();
         };
 
+        // Server-side verification only — no local fallback of any kind.
+        let response = null;
         try {
-            const response = await fetch('/api/ask', {
+            response = await fetch('/api/ask', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ password: pass, action: 'verify' })
             });
-
-            if (response.status === 200) {
-                grantAccess();
-            } else {
-                // API returned an error: fallback to local check
-                if (pass === 'admin@fa24bai') {
-                    grantAccess();
-                } else {
-                    denyAccess();
-                }
-            }
         } catch (error) {
-            // No server or local mode: validate against hardcoded password
-            if (pass === 'admin@fa24bai') {
-                grantAccess();
-            } else {
-                denyAccess();
-            }
+            response = null;
+        }
+
+        if (response && response.ok) {
+            grantAccess();
+        } else if (response && response.status === 401) {
+            denyAccess();
+        } else {
+            // Server unreachable or misconfigured: fail closed, and do not
+            // count it as a wrong-password attempt.
+            showLoginError('Could not verify with the server. Check your connection and try again.');
         }
     });
 
@@ -331,13 +344,27 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // Load LocalState
-    let recents = []; // In-memory only, clears on page refresh
+    // Recently Viewed — persisted in localStorage so it survives refresh
+    const RECENTS_KEY = 'fa24bai_recents';
+    let recents = [];
+    try {
+        const storedRecents = JSON.parse(localStorage.getItem(RECENTS_KEY) || '[]');
+        if (Array.isArray(storedRecents)) recents = storedRecents.filter(f => typeof f === 'string');
+    } catch (e) {
+        recents = [];
+    }
+
+    const saveRecents = () => {
+        try {
+            localStorage.setItem(RECENTS_KEY, JSON.stringify(recents));
+        } catch (e) { /* private mode / quota: recents just stay in memory */ }
+    };
 
     const addRecent = (filename) => {
         recents = recents.filter(f => f !== filename);
         recents.unshift(filename);
-        if (recents.length > 3) recents.pop();
+        if (recents.length > 6) recents.length = 6;
+        saveRecents();
         renderQuickAccess();
     };
 
@@ -355,12 +382,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const getResourceType = (filepath) => {
         const lowerName = filepath.toLowerCase();
-        if (lowerName.includes('cdf')) return 'CDF';
-        if (lowerName.includes('lab manual')) return 'Lab Manual';
-        if (lowerName.includes('syllabus')) return 'Syllabus';
-        if (lowerName.includes('lecture')) return 'Lectures';
-        if (lowerName.includes('assignment')) return 'Assignments';
-        return 'Other';
+        const detectType = (text) => {
+            if (text.includes('cdf')) return 'CDF';
+            if (text.includes('lab manual')) return 'Lab Manual';
+            if (text.includes('syllabus')) return 'Syllabus';
+            if (text.includes('notes')) return 'Notes';
+            if (text.includes('lecture')) return 'Lectures';
+            if (text.includes('assignment')) return 'Assignments';
+            return null;
+        };
+        // Prefer the actual parent-folder segment (".../Notes/x.pdf") over
+        // filename substrings, which mis-filed e.g. Statistics Notes as Other.
+        const segments = lowerName.split('/');
+        const folderSegment = segments.length > 1 ? segments[segments.length - 2] : '';
+        return detectType(folderSegment) || detectType(lowerName) || 'Other';
     };
 
     const getCleanName = (filepath) => {
@@ -402,7 +437,7 @@ document.addEventListener("DOMContentLoaded", () => {
         window.closeAllRogerMenus();
     });
 
-    const createResourceHtml = (res) => {
+    const createResourceHtml = (res, opts = {}) => {
         let viewUrl = res.rawName;
         if (viewUrl.match(/\.(pptx|ppt|docx|doc)$/i)) {
             // Encode the path segments properly for the raw github URL
@@ -419,6 +454,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div class="resource-main">
                     <div class="resource-name">${res.cleanName}</div>
                     <div class="resource-type-badge">${res.resourceType}</div>
+                    ${opts.showCourse ? `<button type="button" class="resource-course-link" onclick="window.openFolder('${res.resourceType}', '${res.course.code}', '${res.course.name.replace(/'/g, "\\'")}')">${res.course.code} · ${res.course.name} &rarr;</button>` : ''}
                 </div>
                 <div class="resource-actions">
                     <a href="${viewUrl}" target="_blank" class="action-btn view" onclick="window.trackView('${escapedRawName}')">Open</a>
@@ -699,22 +735,55 @@ document.addEventListener("DOMContentLoaded", () => {
     const renderSearch = () => {
         if (!searchResultsContainer) return;
 
+        // Loading / error states (data comes from /api/files via loadFiles)
+        if (filesState === 'loading') {
+            if (searchResultsInfo) searchResultsInfo.textContent = 'Loading study materials...';
+            searchResultsContainer.innerHTML = '<div class="no-results state-block" style="grid-column: 1 / -1;"><p class="loading-text">Loading study materials...</p></div>';
+            return;
+        }
+        if (filesState === 'error') {
+            if (searchResultsInfo) searchResultsInfo.textContent = 'Could not load study materials.';
+            searchResultsContainer.innerHTML = `
+                <div class="no-results state-block" style="grid-column: 1 / -1;">
+                    <p>We couldn't load the materials list. Check your connection and try again.</p>
+                    <button type="button" class="retry-btn" onclick="window.retryLoadFiles()">Retry</button>
+                </div>`;
+            return;
+        }
+
         const query = searchQuery.trim().toLowerCase();
-        const filteredFiles = allFiles.filter(file => {
-            const matchesSearch = !query ||
-                file.name.toLowerCase().includes(query) ||
-                file.cleanName.toLowerCase().includes(query) ||
-                file.course.name.toLowerCase().includes(query) ||
-                file.course.code.toLowerCase().includes(query) ||
-                file.resourceType.toLowerCase().includes(query);
-            const matchesFilter = currentFilter === 'All' || file.resourceType === currentFilter;
-            return matchesSearch && matchesFilter;
-        });
+        const tokens = query.split(/\s+/).filter(Boolean);
+
+        // Search covers title AND full repo path, token by token, so
+        // "os lab manual" or "statistics notes" find the right file.
+        const haystackOf = (file) => [file.name, file.cleanName, file.rawName, file.course.name, file.course.code, file.resourceType].join(' ').toLowerCase();
+
+        const scoreOf = (file) => {
+            if (!query) return 0;
+            const name = file.cleanName.toLowerCase();
+            let score = 0;
+            if (name.startsWith(query)) score += 100;
+            else if (name.includes(query)) score += 60;
+            if (file.name.toLowerCase().includes(query)) score += 25;
+            if (file.course.code.toLowerCase() === query || file.course.name.toLowerCase().includes(query)) score += 20;
+            if (file.resourceType.toLowerCase() === query) score += 15;
+            return score;
+        };
+
+        const filteredFiles = allFiles
+            .filter(file => {
+                const matchesFilter = currentFilter === 'All' || file.resourceType === currentFilter;
+                if (!matchesFilter) return false;
+                if (tokens.length === 0) return true;
+                const hay = haystackOf(file);
+                return tokens.every(token => hay.includes(token));
+            })
+            .map(file => ({ file, score: scoreOf(file) }))
+            .sort((a, b) => (b.score - a.score) || a.file.cleanName.localeCompare(b.file.cleanName))
+            .map(entry => entry.file);
 
         if (searchResultsInfo) {
-            if (allFiles.length === 0) {
-                searchResultsInfo.textContent = 'Loading study materials...';
-            } else if (filteredFiles.length === 0) {
+            if (filteredFiles.length === 0) {
                 searchResultsInfo.textContent = `No materials found${query ? ` matching "${query}"` : ''}${currentFilter !== 'All' ? ` with filter "${currentFilter}"` : ''}.`;
             } else {
                 searchResultsInfo.textContent = `Showing ${filteredFiles.length} of ${allFiles.length} study material(s)${currentFilter !== 'All' ? ` (${currentFilter})` : ''}`;
@@ -726,7 +795,7 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        searchResultsContainer.innerHTML = filteredFiles.map(res => createResourceHtml(res)).join('');
+        searchResultsContainer.innerHTML = filteredFiles.map(res => createResourceHtml(res, { showCourse: true })).join('');
     };
 
     const renderCourses = () => {
@@ -735,6 +804,18 @@ document.addEventListener("DOMContentLoaded", () => {
             controlsSection.style.display = 'none';
             quickAccessContainer.style.display = 'none';
 
+            if (filesState === 'loading') {
+                coursesContainer.innerHTML = '<div class="no-results state-block"><p class="loading-text">Loading hub...</p></div>';
+                return;
+            }
+            if (filesState === 'error') {
+                coursesContainer.innerHTML = `
+                    <div class="no-results state-block">
+                        <p>We couldn't load the materials list. Check your connection and try again.</p>
+                        <button type="button" class="retry-btn" onclick="window.retryLoadFiles()">Retry</button>
+                    </div>`;
+                return;
+            }
             if (allFiles.length === 0) {
                 coursesContainer.innerHTML = '<div class="no-results">No resources found.</div>';
                 return;
@@ -757,15 +838,18 @@ document.addEventListener("DOMContentLoaded", () => {
                 const mainResources = courseData.resources.filter(r => r.resourceType === 'CDF' || r.resourceType === 'Lab Manual');
                 let resourcesHtml = mainResources.map(res => createResourceHtml(res)).join('');
 
-                if (courseData.folderTypes.has('Lectures')) {
-                    const lectureCount = courseData.resources.filter(r => r.resourceType === 'Lectures').length;
+                // Every other category (Lectures, Syllabus, Assignments,
+                // Notes, Other) gets a folder shortcut, so nothing is hidden.
+                const shortcutTypes = [...courseData.folderTypes].filter(t => t !== 'CDF' && t !== 'Lab Manual');
+                shortcutTypes.forEach(type => {
+                    const count = courseData.resources.filter(r => r.resourceType === type).length;
                     resourcesHtml += `
-                        <div class="resource-item" style="cursor: pointer; background: #fafafa; border: 1px dashed #ccc;" onclick="window.openFolder('Lectures', '${courseData.info.code}', '${courseData.info.name.replace(/'/g, "\\'")}')">
+                        <div class="resource-item folder-shortcut" onclick="window.openFolder('${type}', '${courseData.info.code}', '${courseData.info.name.replace(/'/g, "\\'")}')">
                             <div style="display: flex; align-items: center; gap: 10px;">
                                 <span style="font-size: 1.4rem; color: var(--accent); display:flex; align-items:center;"><i class="bi bi-folder-fill"></i></span>
                                 <div>
-                                    <div class="resource-name">Lectures</div>
-                                    <div style="font-size: 0.8rem; color: #666;">${lectureCount} item(s)</div>
+                                    <div class="resource-name">${type}</div>
+                                    <div style="font-size: 0.8rem; color: #666;">${count} item(s)</div>
                                 </div>
                             </div>
                             <div class="resource-actions">
@@ -773,9 +857,9 @@ document.addEventListener("DOMContentLoaded", () => {
                             </div>
                         </div>
                     `;
-                }
+                });
 
-                if (mainResources.length === 0 && !courseData.folderTypes.has('Lectures') && courseData.resources.length > 0) {
+                if (mainResources.length === 0 && shortcutTypes.length === 0 && courseData.resources.length > 0) {
                     resourcesHtml = `<p style="font-size: 0.9rem; color: #666; margin-bottom: 10px;">(Only specific resources are directly visible here)</p>`;
                 }
 
@@ -824,6 +908,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     'CDF':         'bi-file-earmark-text-fill',
                     'Syllabus':    'bi-list-task',
                     'Assignments': 'bi-pencil-square',
+                    'Notes':       'bi-journal-text',
                     'Other':       'bi-folder-fill',
                 };
                 const iconClass = folderIcons[folder] || 'bi-folder-fill';
@@ -874,6 +959,14 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
+    // Retry entry point used by the error states in Search / Courses views
+    window.retryLoadFiles = () => {
+        filesState = 'loading';
+        renderSearch();
+        renderCourses();
+        loadFiles(true);
+    };
+
     // Load Files with Session Storage Caching (5 min TTL)
     const FILES_CACHE_KEY = 'fa24bai_files_cache';
     const FILES_CACHE_TIME_KEY = 'fa24bai_files_cache_time';
@@ -907,12 +1000,16 @@ document.addEventListener("DOMContentLoaded", () => {
                         // Storage full or private mode, proceed without session cache
                     }
                 } else {
-                    coursesContainer.innerHTML = '<p class="loading-text" style="color:red;">Error loading documents.</p>';
+                    filesState = 'error';
+                    renderLandingCourses();
+                    renderSearch();
+                    renderCourses();
                     return;
                 }
             }
 
             if (Array.isArray(data)) {
+                filesState = 'ready';
                 const pdfs = data.filter(file => file.name && file.name.match(/\.(pdf|pptx|ppt|doc|docx)$/i));
 
                 allFiles = pdfs.map(file => {
@@ -953,7 +1050,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 switchTab('home');
             }
         } catch (error) {
-            coursesContainer.innerHTML = '<p class="loading-text" style="color:red;">Error loading documents.</p>';
+            filesState = 'error';
+            renderLandingCourses();
+            renderSearch();
+            renderCourses();
         }
     }
 
@@ -992,6 +1092,15 @@ document.addEventListener("DOMContentLoaded", () => {
             currentFilter = e.target.dataset.filter;
             renderSearch();
         });
+    });
+
+    // Keyboard shortcut: "/" jumps to search from anywhere
+    document.addEventListener('keydown', (e) => {
+        if (e.key !== '/') return;
+        const tag = (document.activeElement && document.activeElement.tagName) || '';
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+        e.preventDefault();
+        window.focusSearch();
     });
 
     // Upload
@@ -1125,9 +1234,14 @@ document.addEventListener("DOMContentLoaded", () => {
                        <i class="bi bi-trash3"></i> Delete
                    </button>`
                 : '';
+            const safeText = String(n.text)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/\n/g, '<br>');
             return `
                 <div class="notice-card">
-                    <div style="font-size:0.95rem; line-height:1.5;">${n.text.replace(/\n/g, '<br>')}</div>
+                    <div style="font-size:0.95rem; line-height:1.5;">${safeText}</div>
                     <div class="notice-card-meta">
                         <span><i class="bi bi-clock" style="margin-right:0.2rem;"></i>${n.date}</span>
                         ${deleteBtn}
@@ -1242,7 +1356,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     return;
                 }
 
-                if (pass === 'admin@fa24bai') {
+                if (await verifyAdminPasswordOnServer(pass)) {
                     adminPass = pass;
                     sessionStorage.setItem('adminPass', pass);
                     adminLoginAttempts = 0;
@@ -1267,6 +1381,24 @@ document.addEventListener("DOMContentLoaded", () => {
             };
         });
     };
+
+    // === Theme toggle (dark mode) — initial theme is set by the inline
+    // script in index.html <head> before first paint ===
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+    const themeToggleIcon = document.getElementById('themeToggleIcon');
+    const applyThemeIcon = () => {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        if (themeToggleIcon) themeToggleIcon.className = isDark ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
+    };
+    applyThemeIcon();
+    if (themeToggleBtn) {
+        themeToggleBtn.addEventListener('click', () => {
+            const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            try { localStorage.setItem('fa24bai_theme', next); } catch (e) { /* ignore */ }
+            applyThemeIcon();
+        });
+    }
 
     // Notification System
     const showNotification = (message, type = 'info') => {
