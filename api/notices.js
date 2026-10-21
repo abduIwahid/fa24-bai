@@ -40,7 +40,10 @@ export default async function handler(req, res) {
         const { password, notices, action } = req.body;
 
         const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
-        if (ADMIN_PASSWORD && password !== ADMIN_PASSWORD) {
+        if (!ADMIN_PASSWORD) {
+            return res.status(503).json({ message: 'Server configuration error: ADMIN_PASSWORD is not set' });
+        }
+        if (password !== ADMIN_PASSWORD) {
             return res.status(401).json({ message: 'Unauthorized: Invalid Admin Password' });
         }
 

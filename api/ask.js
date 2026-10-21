@@ -5,9 +5,13 @@ export default async function handler(req, res) {
 
     const { filename, prompt, action, password } = req.body;
 
-    // Support admin password verification
+    // Support admin password verification (server-side only, fail closed:
+    // if the env var is not configured, nobody gets in)
     if (action === 'verify') {
-        const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin@fa24bai';
+        const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+        if (!ADMIN_PASSWORD) {
+            return res.status(503).json({ success: false, message: 'Server configuration error: ADMIN_PASSWORD is not set' });
+        }
         if (password === ADMIN_PASSWORD) {
             return res.status(200).json({ success: true, message: 'Authorized' });
         }
