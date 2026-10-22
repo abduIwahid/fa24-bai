@@ -472,12 +472,20 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // Recently Viewed — persisted in localStorage so it survives refresh
+    // Recently Viewed — localStorage, one timestamped entry { f, t } per item.
+    // Entries expire after RECENT_TTL_MIN minutes so the list clears itself
+    // (per Wadi, 2026-10-22). Legacy plain-string entries get a fresh
+    // timestamp on first load so nobody's list vanishes mid-use.
     const RECENTS_KEY = 'fa24bai_recents';
+    const RECENT_TTL_MIN = 30; // change this one number to shorten/lengthen the timer
+    const RECENT_TTL_MS = RECENT_TTL_MIN * 60 * 1000;
     let recents = [];
     try {
         const storedRecents = JSON.parse(localStorage.getItem(RECENTS_KEY) || '[]');
-        if (Array.isArray(storedRecents)) recents = storedRecents.filter(f => typeof f === 'string');
+        if (Array.isArray(storedRecents)) recents = storedRecents.map(e =>
+            typeof e === 'string' ? { f: e, t: Date.now() }
+            : (e && typeof e.f === 'string' && typeof e.t === 'number') ? e : null
+        ).filter(Boolean);
     } catch (e) {
         recents = [];
     }
@@ -488,13 +496,24 @@ document.addEventListener("DOMContentLoaded", () => {
         } catch (e) { /* private mode / quota: recents just stay in memory */ }
     };
 
+    const pruneRecents = () => {
+        const now = Date.now();
+        const before = recents.length;
+        recents = recents.filter(e => e && typeof e.f === 'string' && (now - e.t) < RECENT_TTL_MS);
+        if (recents.length !== before) saveRecents();
+    };
+    pruneRecents();
+
     const addRecent = (filename) => {
-        recents = recents.filter(f => f !== filename);
-        recents.unshift(filename);
+        recents = recents.filter(e => e.f !== filename);
+        recents.unshift({ f: filename, t: Date.now() });
         if (recents.length > 6) recents.length = 6;
         saveRecents();
         renderQuickAccess();
     };
+
+    // While the page stays open, drop items as they cross the TTL.
+    setInterval(() => { pruneRecents(); renderQuickAccess(); }, 60 * 1000);
 
     // === Shared helpers (Round 2) ===
     const DAY_MS = 24 * 60 * 60 * 1000;
@@ -1163,6 +1182,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Render logic
     const renderQuickAccess = () => {
+        pruneRecents();
         if (recents.length === 0) {
             quickAccessContainer.style.display = 'none';
             return;
@@ -1170,8 +1190,8 @@ document.addEventListener("DOMContentLoaded", () => {
         quickAccessContainer.style.display = 'block';
         quickAccessList.innerHTML = '';
 
-        recents.forEach(filename => {
-            const file = allFiles.find(f => f.rawName === filename);
+        recents.forEach(entry => {
+            const file = allFiles.find(f => f.rawName === entry.f);
             if (file) {
                 quickAccessList.innerHTML += createResourceHtml(file);
             }
