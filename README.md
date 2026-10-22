@@ -21,6 +21,14 @@ A modern web portal for the FA24-BAI cohort (BS Artificial Intelligence, 5th sem
 - **Admin Management:** Password-protected uploads and deletions, verified server-side only (fail-closed), committed straight to GitHub via the REST API.
 - **Fast by Default:** Semester files and assets are served with long-term immutable caching, and links shared on WhatsApp/social show a proper title, description, and preview image.
 - **Custom 404 Page:** A themed not-found page (with a familiar animated face) that guides lost visitors back home.
+- **Deep Links & Working Back Button:** Every course, folder, search, and material has its own shareable link (`#/course/CSC322`, `#/search?q=...`); browser Back/Forward just work.
+- **New & Updated Badges:** Materials show when they were added or last updated, with a Recently Added strip on the home page.
+- **Midterm Countdown:** The home page counts down to the next exams, fed by dated exam notices on the notice board (pinned notices and category filters included).
+- **Interactive Practice Quizzes:** AI quizzes are now tap-to-answer — instant right/wrong marking, explanations, a running score, and a final result with retry.
+- **Bookmarks:** Star any material to save it; all saved items live in the new Saved view.
+- **WhatsApp Share:** One tap shares any material (title + deep link) to WhatsApp.
+- **Most Downloaded:** A live download counter shows which materials the class uses most.
+- **Installable App (PWA):** Add the Study Hub to your home screen; the app shell loads instantly and previously opened materials work from cache.
 
 ---
 
@@ -56,7 +64,8 @@ A modern web portal for the FA24-BAI cohort (BS Artificial Intelligence, 5th sem
 | `/api/ask` | POST | `filename`, `action` (`summarize`, `quiz`, `viva`), `prompt`, `password` (admin verification) | Generates AI analysis, or validates the admin key server-side |
 | `/api/upload` | POST | `filename`, `contentBase64`, `password`, `folder` | Commits a new resource to the repository (supports overwriting) |
 | `/api/delete` | POST | `filename`, `password` | Deletes a resource from the repository |
-| `/api/notices` | GET / POST | `password` (POST only) | Reads the notice board, or posts a new announcement (admin only) |
+| `/api/notices` | GET / POST | `password` (POST only) | Reads the notice board, or posts a new announcement (admin only); notices can carry an exam date, category, and pin |
+| `/api/count` | GET / POST | — | Download counts per material (Most Downloaded) |
 
 All admin endpoints fail closed: if `ADMIN_PASSWORD` is not configured on the server, they refuse every request.
 
