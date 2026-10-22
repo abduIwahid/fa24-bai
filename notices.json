@@ -1,58 +1,54 @@
 [
   {
-    "date": "11/10/2026, 12:00 PM",
-    "text": "Welcome to FA24-BAI Study Hub! All course materials, lab manuals, CDFs, and AI assistance are active."
+    "text": "Welcome to FA24-BAI Study Hub! All course materials, lab manuals, CDFs, and AI assistance are active.",
+    "date": "11/10/2026, 12:00 PM"
   },
   {
-    "date": "13-Oct-2026 at 9:14 AM",
-    "text": "Date      Time                 Subject\n---------------------------------------\n02 Nov    08:30–10:00 AM       OS\n02 Nov    03:00–04:30 PM       Statistics\n03 Nov    11:50 AM–01:20 PM    WEB\n04 Nov    10:10–11:40 AM       PAI\n05 Nov    10:10–11:40 AM       KRR\n06 Nov    11:50 AM–01:20 PM    DAA"
-  },
-  {
-    "category": "Exam",
-    "course": "CSC322",
-    "date": "22-Oct-2026",
-    "examDate": "2026-11-02",
     "text": "Midterm — Operating Systems",
-    "time": "8:30–10:00 AM · CR2"
-  },
-  {
-    "category": "Exam",
-    "course": "MTH262",
     "date": "22-Oct-2026",
     "examDate": "2026-11-02",
-    "text": "Midterm — Probability & Statistics",
-    "time": "3:00–4:30 PM · CR2"
+    "time": "8:30–10:00 AM · CR2",
+    "category": "Exam",
+    "course": "CSC322"
   },
   {
+    "text": "Midterm — Probability & Statistics",
+    "date": "22-Oct-2026",
+    "examDate": "2026-11-02",
+    "time": "3:00–4:30 PM · CR2",
     "category": "Exam",
-    "course": "WEB",
+    "course": "MTH262"
+  },
+  {
+    "text": "Midterm — Web Technologies",
     "date": "22-Oct-2026",
     "examDate": "2026-11-03",
-    "text": "Midterm — Web Technologies",
-    "time": "11:50 AM–1:20 PM · CR4"
+    "time": "11:50 AM–1:20 PM · CR4",
+    "category": "Exam",
+    "course": "WEB"
   },
   {
-    "category": "Exam",
-    "course": "AIC270",
+    "text": "Midterm — Programming for Artificial Intelligence",
     "date": "22-Oct-2026",
     "examDate": "2026-11-04",
-    "text": "Midterm — Programming for Artificial Intelligence",
-    "time": "10:10–11:40 AM · EE Hall"
+    "time": "10:10–11:40 AM · EE Hall",
+    "category": "Exam",
+    "course": "AIC270"
   },
   {
-    "category": "Exam",
-    "course": "AIC372",
+    "text": "Midterm — Knowledge Rep. & Reasoning",
     "date": "22-Oct-2026",
     "examDate": "2026-11-05",
-    "text": "Midterm — Knowledge Rep. & Reasoning",
-    "time": "10:10–11:40 AM · CR2"
+    "time": "10:10–11:40 AM · CR2",
+    "category": "Exam",
+    "course": "AIC372"
   },
   {
-    "category": "Exam",
-    "course": "DAA",
+    "text": "Midterm — Design and Analysis of Algorithms",
     "date": "22-Oct-2026",
     "examDate": "2026-11-06",
-    "text": "Midterm — Design and Analysis of Algorithms",
-    "time": "11:50 AM–1:20 PM · EE Hall"
+    "time": "11:50 AM–1:20 PM · EE Hall",
+    "category": "Exam",
+    "course": "DAA"
   }
 ]
