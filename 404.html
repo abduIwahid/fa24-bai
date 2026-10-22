@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 — Page Not Found | FA24-BAI Study Hub</title>
+    <meta name="description" content="This page could not be found on the FA24-BAI Study Hub.">
+    <meta name="theme-color" content="#f0ede4" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#0c1f1c" media="(prefers-color-scheme: dark)">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <script>
+        // Apply the saved theme before first paint (same logic as the home page)
+        (function () {
+            var t = null;
+            try { t = localStorage.getItem('fa24bai_theme'); } catch (e) { /* ignore */ }
+            if (t !== 'dark' && t !== 'light') {
+                t = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            }
+            document.documentElement.setAttribute('data-theme', t);
+        })();
+    </script>
+    <style>
+        :root {
+            --bg-color: #f0ede4;
+            --text-color: #004741;
+            --card-bg: #ffffff;
+            --accent: #004741;
+            --accent-light: #e6f0ef;
+            --border-color: #c0d1cf;
+            --shadow: 0 4px 6px -1px rgba(0, 71, 65, 0.1), 0 2px 4px -1px rgba(0, 71, 65, 0.06);
+            --hover-shadow: 0 10px 15px -3px rgba(0, 71, 65, 0.1), 0 4px 6px -2px rgba(0, 71, 65, 0.05);
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #0c1f1c;
+            --text-color: #e7f0ec;
+            --card-bg: #132e29;
+            --accent: #7fc8bc;
+            --accent-light: rgba(127, 200, 188, 0.14);
+            --border-color: #275047;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.45), 0 2px 4px -1px rgba(0, 0, 0, 0.35);
+            --hover-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.4);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1.25rem;
+        }
+
+        .nf-topbar {
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .nf-topbar a {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            text-decoration: none;
+            color: var(--text-color);
+            font-weight: 700;
+            font-size: 1.05rem;
+        }
+
+        .nf-topbar img {
+            width: 38px;
+            height: 38px;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+        }
+
+        .nf-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            max-width: 560px;
+            width: 100%;
+            margin: auto;
+            padding: 2rem 1.75rem 2.25rem;
+            text-align: center;
+        }
+
+        .nf-code {
+            font-size: clamp(3rem, 14vw, 4.5rem);
+            font-weight: 800;
+            letter-spacing: 2px;
+            line-height: 1;
+            margin: 0;
+            color: var(--text-color);
+        }
+
+        .nf-code span {
+            color: var(--accent);
+            opacity: 0.55;
+        }
+
+        .nf-title {
+            font-size: 1.35rem;
+            font-weight: 700;
+            margin: 0.5rem 0 0.4rem;
+        }
+
+        .nf-text {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            opacity: 0.75;
+            margin: 0 auto 1.5rem;
+            max-width: 400px;
+        }
+
+        .nf-home-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            background-color: var(--accent);
+            color: var(--card-bg);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            min-height: 44px;
+            transition: opacity 0.3s, box-shadow 0.3s;
+        }
+
+        [data-theme="dark"] .nf-home-btn {
+            color: #0c1f1c;
+        }
+
+        .nf-home-btn:hover {
+            opacity: 0.92;
+            box-shadow: var(--hover-shadow);
+        }
+
+        .nf-home-btn:focus-visible {
+            outline: 3px solid var(--accent);
+            outline-offset: 3px;
+        }
+
+        /* === Animated face (from Uiverse.io by preet_7613), themed via currentColor === */
+        .my-custom-face-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: transparent;
+            color: var(--text-color);
+            padding: 0.5rem 0 0.25rem;
+        }
+
+        .my-custom-face-container .face {
+            width: clamp(140px, 38vw, 190px);
+        }
+
+        .my-custom-face-container .face__eyes,
+        .my-custom-face-container .face__eye-lid,
+        .my-custom-face-container .face__mouth-left,
+        .my-custom-face-container .face__mouth-right,
+        .my-custom-face-container .face__nose,
+        .my-custom-face-container .face__pupil {
+            animation: eyes 1s 0.3s forwards;
+        }
+
+        .my-custom-face-container .face__eye-lid,
+        .my-custom-face-container .face__pupil {
+            animation-duration: 4s;
+            animation-delay: 1.3s;
+            animation-iteration-count: infinite;
+        }
+
+        .my-custom-face-container .face__eye-lid {
+            animation-name: eye-lid;
+        }
+
+        .my-custom-face-container .face__mouth-left {
+            animation-name: mouth-left;
+        }
+
+        .my-custom-face-container .face__mouth-right {
+            animation-name: mouth-right;
+        }
+
+        .my-custom-face-container .face__nose {
+            animation-name: nose;
+        }
+
+        .my-custom-face-container .face__pupil {
+            animation-name: pupil;
+        }
+
+        @keyframes eye-lid {
+            0%,
+            40%,
+            45%,
+            100% {
+                transform: translateY(0);
+            }
+
+            42.5% {
+                transform: translateY(17.5px);
+            }
+        }
+
+        @keyframes eyes {
+            from {
+                transform: translateY(112.5px);
+            }
+
+            to {
+                transform: translateY(15px);
+            }
+        }
+
+        @keyframes pupil {
+            0%,
+            37.5%,
+            40%,
+            45%,
+            87.5%,
+            100% {
+                stroke-dashoffset: 0;
+                transform: translate(0, 0);
+            }
+
+            12.5%,
+            25%,
+            62.5%,
+            75% {
+                transform: translate(-35px, 0);
+            }
+
+            42.5% {
+                stroke-dashoffset: 35;
+                transform: translate(0, 17.5px);
+            }
+        }
+
+        @keyframes mouth-left {
+            from,
+            50% {
+                stroke-dashoffset: -102;
+            }
+
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        @keyframes mouth-right {
+            from,
+            50% {
+                stroke-dashoffset: 102;
+            }
+
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        @keyframes nose {
+            from {
+                transform: translate(0, 0);
+            }
+
+            to {
+                transform: translate(0, 22.5px);
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .my-custom-face-container .face__eyes,
+            .my-custom-face-container .face__eye-lid,
+            .my-custom-face-container .face__mouth-left,
+            .my-custom-face-container .face__mouth-right,
+            .my-custom-face-container .face__nose,
+            .my-custom-face-container .face__pupil {
+                animation: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="nf-topbar">
+        <a href="/">
+            <img src="/logo.jpeg" alt="Study Hub logo">
+            FA24-BAI Study Hub
+        </a>
+    </div>
+
+    <main class="nf-card">
+        <div class="my-custom-face-container" aria-hidden="true">
+            <svg class="face" viewBox="0 0 320 380">
+                <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="25">
+                    <g class="face__eyes" transform="translate(0,112.5)">
+                        <g transform="translate(15,0)">
+                            <polyline class="face__eye-lid" points="37,0 0,120 75,120"></polyline>
+                            <polyline class="face__pupil" points="55,120 55,155" stroke-dasharray="35 35"></polyline>
+                        </g>
+                        <g transform="translate(230,0)">
+                            <polyline class="face__eye-lid" points="37,0 0,120 75,120"></polyline>
+                            <polyline class="face__pupil" points="55,120 55,155" stroke-dasharray="35 35"></polyline>
+                        </g>
+                    </g>
+                    <rect class="face__nose" x="132.5" y="112.5" width="55" height="155" rx="4" ry="4"></rect>
+                    <g transform="translate(65,334)" stroke-dasharray="102 102">
+                        <path class="face__mouth-left" d="M 0 30 C 0 30 40 0 95 0"></path>
+                        <path class="face__mouth-right" d="M 95 0 C 150 0 190 30 190 30"></path>
+                    </g>
+                </g>
+            </svg>
+        </div>
+
+        <h1 class="nf-code">4<span>0</span>4</h1>
+        <p class="nf-title">Page not found</p>
+        <p class="nf-text">The page you are looking for doesn't exist, or the link may be broken. Let's get you back to your study material.</p>
+        <a class="nf-home-btn" href="/">← Back to Study Hub</a>
+    </main>
+</body>
+
+</html>
