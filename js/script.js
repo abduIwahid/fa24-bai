@@ -583,9 +583,11 @@ document.addEventListener("DOMContentLoaded", () => {
         // Reflect the new state on every star button for this file
         document.querySelectorAll('[data-bookmark]').forEach(btn => {
             if (btn.getAttribute('data-bookmark') === filename) {
-                btn.classList.toggle('active', nowBookmarked);
+                if (btn.classList.contains('fav')) btn.classList.toggle('active', nowBookmarked);
                 const icon = btn.querySelector('i');
                 if (icon) icon.className = nowBookmarked ? 'bi bi-star-fill' : 'bi bi-star';
+                const lbl = btn.querySelector('.bookmark-label');
+                if (lbl) lbl.textContent = nowBookmarked ? 'Remove Bookmark' : 'Bookmark';
             }
         });
         if (currentTab === 'bookmarks') renderBookmarks();
@@ -802,9 +804,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 </div>
                 <div class="resource-actions">
                     <a href="${viewUrl}" target="_blank" class="action-btn view" onclick="window.trackView('${escapedRawName}')">Open</a>
-                    <button type="button" class="action-btn fav ${fav ? 'active' : ''}" data-bookmark="${attrRawName}" onclick="window.toggleBookmark(event, '${escapedRawName}')" aria-label="Bookmark this material" title="Bookmark">
-                        <i class="bi ${fav ? 'bi-star-fill' : 'bi-star'}"></i>
-                    </button>
                     <div class="roger-menu-wrap">
                         <button type="button" class="roger-btn" onclick="window.toggleRogerMenu(event, '${menuId}')" aria-label="Resource options" title="Options">
                             <i class="bi bi-three-dots-vertical"></i>
@@ -818,6 +817,9 @@ document.addEventListener("DOMContentLoaded", () => {
                             </button>
                             <button type="button" class="roger-item" onclick="window.copyResourceLink('${escapedRawName}'); window.closeAllRogerMenus();">
                                 <i class="bi bi-link-45deg"></i> Copy Link
+                            </button>
+                            <button type="button" class="roger-item" data-bookmark="${attrRawName}" onclick="window.toggleBookmark(event, '${escapedRawName}'); window.closeAllRogerMenus();">
+                                <i class="bi ${fav ? 'bi-star-fill' : 'bi-star'}"></i> <span class="bookmark-label">${fav ? 'Remove Bookmark' : 'Bookmark'}</span>
                             </button>
                             <button type="button" class="roger-item" onclick="window.shareOnWhatsApp('${escapedRawName}'); window.closeAllRogerMenus();">
                                 <i class="bi bi-whatsapp"></i> Share on WhatsApp
