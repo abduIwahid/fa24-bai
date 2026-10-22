@@ -35,27 +35,21 @@
         })();
     </script>
     <noscript><style>body { opacity: 1 !important; }</style></noscript>
-    <link rel="stylesheet" href="css/style.css?v=8">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css?v=9">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 </head>
 
 <body>
     <div class="container">
         <div class="header">
-            <div class="header-content">
-                <div class="header-left" style="cursor: pointer;" onclick="window.scrollToHome();" title="Go to Home">
-                    <img src="logo.jpeg" alt="FA24-BAI Logo" class="app-logo" aria-label="Application Logo">
-                    <div class="header-text">
-                        <h1>Study Hub</h1>
-                        <p class="header-subtitle">Your Learning Companion</p>
-                    </div>
-                </div>
-                <div class="header-right">
-                    <button id="themeToggleBtn" class="theme-toggle-btn" aria-label="Toggle dark mode" title="Toggle dark mode"><i class="bi bi-moon-fill" id="themeToggleIcon"></i></button>
-                    <button id="adminLoginBtn" class="admin-btn" aria-label="Admin Login">Admin Login</button>
-                    <div id="adminWelcome" class="admin-welcome" role="status" aria-live="polite">
-                        Welcome Admin, Abdul Wahid!
-                    </div>
+            <div class="header-left" style="cursor: pointer;" onclick="window.scrollToHome();" title="Go to Home">
+                <img src="logo.jpeg" alt="FA24-BAI Logo" class="app-logo" aria-label="Application Logo">
+                <div class="header-text">
+                    <h1>Study Hub</h1>
+                    <p class="header-subtitle">Your Learning Companion</p>
                 </div>
             </div>
             <nav class="favicon-bar header-nav" id="faviconBar" aria-label="Main navigation">
@@ -83,6 +77,13 @@
                     <span class="favicon-label">Saved</span>
                 </a>
             </nav>
+            <div class="header-right">
+                <button id="themeToggleBtn" class="theme-toggle-btn" aria-label="Toggle dark mode" title="Toggle dark mode"><i class="bi bi-moon-fill" id="themeToggleIcon"></i></button>
+                <button id="adminLoginBtn" class="admin-btn" aria-label="Admin Login">Admin Login</button>
+                <div id="adminWelcome" class="admin-welcome" role="status" aria-live="polite">
+                    Welcome Admin, Abdul Wahid!
+                </div>
+            </div>
         </div>
 
     <!-- Admin Login Modal -->
@@ -363,7 +364,7 @@
         </div>
     </div>
 
-    <script src="js/script.js?v=7"></script>
+    <script src="js/script.js?v=8"></script>
 </body>
 
 </html>

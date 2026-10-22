@@ -2147,6 +2147,19 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
+    // Tap the dimmed area outside any open window (AI Assistant, Notices,
+    // Admin Login) to close it — clicks inside the window keep working.
+    document.querySelectorAll('.modal-overlay').forEach((overlay) => {
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                overlay.classList.remove('active');
+                if (overlay.id === 'noticesModal' && typeof setActiveNav === 'function') {
+                    setActiveNav(currentTab);
+                }
+            }
+        });
+    });
+
     // Init badge and fetch backend notices
     updateNoticeBadge();
     fetchNoticesFromBackend();

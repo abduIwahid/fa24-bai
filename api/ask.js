@@ -121,9 +121,9 @@ ${promptInstruction}`
 
             if (!listRes.ok || listData.error) {
                 const apiErrMsg = listData.error ? listData.error.message : `HTTP ${listRes.status}`;
-                console.warn('Google ListModels returned error:', apiErrMsg);
+                console.error('Google ListModels returned error:', apiErrMsg);
                 return res.status(200).json({
-                    reply: `Google Gemini API error: ${apiErrMsg}. Please check your GEMINI_API_KEY in Vercel settings.`
+                    reply: 'The AI assistant is not available right now — please try again later.'
                 });
             }
 
@@ -134,12 +134,13 @@ ${promptInstruction}`
                     .map(m => m.name.replace(/^models\//, ''))
                     .filter(m => m.startsWith('gemini-') && !m.includes('deep-research') && !m.includes('preview-0'));
 
-                // Prioritize fastest and standard free-tier models in order
+                // Prioritize the current recommended flash model first
+                // (older 1.5/2.0 models were retired for newer keys)
                 const preferred = [
-                    'gemini-1.5-flash',
+                    'gemini-3.8-flash',
+                    'gemini-2.5-flash',
                     'gemini-2.0-flash',
-                    'gemini-1.5-flash-8b',
-                    'gemini-2.0-flash-exp'
+                    'gemini-1.5-flash'
                 ];
 
                 for (const p of preferred) {
@@ -159,8 +160,15 @@ ${promptInstruction}`
             console.warn('Could not discover models dynamically, falling back to defaults:', discoverErr.message);
         }
 
+        // The provider-recommended model goes first even if discovery did
+        // not surface it for this key — retired models answer with an error
+        // that names it as the replacement.
+        if (!targetModels.includes('gemini-3.8-flash')) {
+            targetModels.unshift('gemini-3.8-flash');
+        }
+
         if (targetModels.length === 0) {
-            targetModels = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash-8b'];
+            targetModels = ['gemini-3.8-flash', 'gemini-2.5-flash', 'gemini-2.0-flash'];
         }
 
         let replyText = null;
@@ -219,8 +227,9 @@ ${promptInstruction}`
                 if (res.data && res.data.error) {
                     const errMsg = res.data.error.message || `Error code ${res.data.error.code}`;
                     modelErrors.push(`${modelName}: ${errMsg}`);
-                    // If error is about API key authenticity, break immediately
-                    if (errMsg.toLowerCase().includes('api key') || errMsg.toLowerCase().includes('permission_denied')) {
+                    // Only a genuinely invalid key is fatal — a retired or
+                    // busy model must fall through to the next candidate.
+                    if (errMsg.toLowerCase().includes('api key not valid') || errMsg.toLowerCase().includes('api_key_invalid')) {
                         break;
                     }
                 }
@@ -234,10 +243,10 @@ ${promptInstruction}`
             return res.status(200).json({ reply: replyText });
         }
 
-        const primaryError = modelErrors.length > 0 ? modelErrors[0] : 'No active model response received.';
+        console.error('AI: all model attempts failed:', modelErrors.join(' | ') || 'No active model response received.');
 
         return res.status(200).json({
-            reply: `AI response notice: ${primaryError}. Please verify your GEMINI_API_KEY in Vercel settings.`
+            reply: 'The AI assistant is having trouble right now — please try again in a few minutes.'
         });
     } catch (error) {
         console.error('AI Handler Error:', error);

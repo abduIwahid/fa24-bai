@@ -2715,3 +2715,54 @@ button:disabled {
 .upload-submit:disabled { opacity: 0.6; cursor: wait; }
 #uploadStatus { margin: 0.8rem 0 0; font-size: 0.9rem; font-weight: 600; }
 #uploadStatus:empty { margin: 0; }
+
+/* === Header v2 — one bar: brand | nav | actions (2026-10-22) === */
+.header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    column-gap: 1rem;
+    row-gap: 0.1rem;
+    padding: 0.55rem 0 0.45rem;
+}
+/* Bigger logo + punchy display wordmark */
+.app-logo { width: 54px; height: 54px; border-radius: 12px; }
+.header-text h1 {
+    font-family: 'Anton', 'Arial Narrow', 'Helvetica Neue', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 400;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--accent);
+    line-height: 1.05;
+}
+.header-subtitle { font-size: 0.72rem; margin-top: 1px; }
+.hero-title {
+    font-family: 'Anton', 'Arial Narrow', 'Helvetica Neue', sans-serif;
+    font-weight: 400;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+}
+/* Nav lives inside the same bar — no divider line */
+.header .favicon-bar {
+    order: 3;
+    flex: 1 1 100%;
+    border-top: none;
+    margin-top: 0.15rem;
+    padding-top: 0.15rem;
+}
+.header-right { margin-left: auto; }
+/* Desktop: everything on ONE row, nav centred — like the portfolio */
+@media (min-width: 1024px) {
+    .header { flex-wrap: nowrap; padding-bottom: 0.55rem; }
+    .header .favicon-bar {
+        order: 0;
+        flex: 1 1 auto;
+        margin-top: 0;
+        padding-top: 0.2rem;
+        justify-content: center;
+        gap: 1.6rem;
+    }
+    .header-right { margin-left: 0; }
+}
+.view-section { scroll-margin-top: 148px; }
