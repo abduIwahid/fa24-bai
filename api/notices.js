@@ -47,6 +47,28 @@ export default async function handler(req, res) {
             return res.status(401).json({ message: 'Unauthorized: Invalid Admin Password' });
         }
 
+        if (!Array.isArray(notices)) {
+            return res.status(400).json({ message: 'Invalid payload: notices must be an array' });
+        }
+
+        // Normalize to the known notice model so stray/legacy fields can't
+        // corrupt the board. Backward compatible: older notices only carry
+        // {text, date}; the round-2 fields (examDate, time, category,
+        // pinned, course) are all optional.
+        const CATEGORIES = ['Exam', 'Class', 'General'];
+        const cleanNotices = notices.slice(0, 200).map((n) => {
+            const out = {
+                text: String((n && n.text) || '').slice(0, 4000),
+                date: String((n && n.date) || '')
+            };
+            if (n && typeof n.examDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(n.examDate)) out.examDate = n.examDate;
+            if (n && typeof n.time === 'string' && n.time) out.time = n.time.slice(0, 60);
+            if (n && CATEGORIES.includes(n.category)) out.category = n.category;
+            if (n && n.pinned === true) out.pinned = true;
+            if (n && typeof n.course === 'string' && n.course) out.course = n.course.slice(0, 20);
+            return out;
+        }).filter(n => n.text);
+
         if (!GITHUB_TOKEN) {
             return res.status(500).json({ message: 'Server configuration error: GITHUB_TOKEN missing' });
         }
@@ -67,7 +89,7 @@ export default async function handler(req, res) {
                 sha = existing.sha;
             }
 
-            const updatedContentBase64 = Buffer.from(JSON.stringify(notices, null, 2)).toString('base64');
+            const updatedContentBase64 = Buffer.from(JSON.stringify(cleanNotices, null, 2)).toString('base64');
             const putRes = await fetch(getUrl, {
                 method: 'PUT',
                 headers: {
@@ -87,7 +109,7 @@ export default async function handler(req, res) {
                 return res.status(putRes.status).json({ message: err.message });
             }
 
-            return res.status(200).json({ message: 'Notices updated successfully', notices });
+            return res.status(200).json({ message: 'Notices updated successfully', notices: cleanNotices });
         } catch (error) {
             console.error('Save notices error:', error);
             return res.status(500).json({ message: error.message || 'Internal Server Error' });

@@ -34,7 +34,7 @@
         })();
     </script>
     <noscript><style>body { opacity: 1 !important; }</style></noscript>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style.css?v=2">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 </head>
 
@@ -130,6 +130,8 @@
                 </div>
             </div>
 
+            <div id="countdownContainer" style="display: none;"></div>
+
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-number">6</div>
@@ -163,12 +165,32 @@
                 </div>
             </div>
 
+            <div class="request-strip">
+                <div class="request-strip-text">
+                    <h3><i class="bi bi-envelope-paper-fill"></i> Can't find a material?</h3>
+                    <p>Request notes, slides or manuals from the cohort — or share yours with the class.</p>
+                </div>
+                <button type="button" class="action-btn request-btn" onclick="window.openRequestForm();">
+                    <i class="bi bi-send-fill"></i> Request a Material
+                </button>
+            </div>
+
             <div class="landing-section-header">
                 <h3>Semester Courses</h3>
                 <button type="button" class="view-all-link" onclick="window.scrollToCourses();">View All Courses &rarr;</button>
             </div>
             <div class="courses-grid" id="landingCoursesGrid">
                 <!-- Courses preview loaded dynamically -->
+            </div>
+
+            <div id="recentlyAddedContainer" style="display: none; margin-top: 2rem;">
+                <h3 class="section-title"><i class="bi bi-stars"></i> Recently Added</h3>
+                <div class="resources-list" id="recentlyAddedList"></div>
+            </div>
+
+            <div id="mostDownloadedContainer" style="display: none; margin-top: 2rem;">
+                <h3 class="section-title"><i class="bi bi-fire"></i> Most Downloaded</h3>
+                <div class="resources-list" id="mostDownloadedList"></div>
             </div>
 
             <div id="quickAccessContainer" style="display: none; margin-top: 2rem;">
@@ -188,6 +210,7 @@
                     <i class="bi bi-search search-input-icon"></i>
                     <input type="text" id="searchInput" placeholder="Search courses, manuals, CDFs..." autocomplete="off">
                 </div>
+                <div class="recent-searches" id="recentSearches" style="display: none;"></div>
                 <div class="filters" id="filtersContainer">
                     <button type="button" class="filter-chip active" data-filter="All">All</button>
                     <button type="button" class="filter-chip" data-filter="CDF">CDF</button>
@@ -217,6 +240,15 @@
             <div class="courses-grid" id="coursesContainer">
                 <p class="loading-text">Loading hub...</p>
             </div>
+        </section>
+
+        <!-- Bookmarks View -->
+        <section id="bookmarksSection" class="view-section" style="display: none;">
+            <div class="search-view-header">
+                <h2><i class="bi bi-star-fill" style="color: var(--accent);"></i> Bookmarks</h2>
+                <p>Your starred materials, saved on this device for revision week.</p>
+            </div>
+            <div class="folder-resources-grid" id="bookmarksContainer"></div>
         </section>
 
         <footer class="app-footer">
@@ -276,6 +308,27 @@
             <div class="modal-footer notices-post-footer" id="noticesFooter" style="display:none;">
                 <textarea id="noticeInput" placeholder="Write an announcement..." rows="3"
                     style="width:100%; padding:0.8rem; border:1px solid var(--border-color); border-radius:6px; font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; font-size:16px; resize:vertical; outline:none;"></textarea>
+                <div class="notice-form-row">
+                    <label class="notice-form-field">
+                        <span>Category</span>
+                        <select id="noticeCategory">
+                            <option value="General">General</option>
+                            <option value="Exam">Exam</option>
+                            <option value="Class">Class</option>
+                        </select>
+                    </label>
+                    <label class="notice-form-field">
+                        <span>Date (for exams/deadlines)</span>
+                        <input type="date" id="noticeExamDate">
+                    </label>
+                    <label class="notice-form-field">
+                        <span>Time (optional)</span>
+                        <input type="text" id="noticeTime" placeholder="e.g. 8:30–10:00 AM">
+                    </label>
+                    <label class="notice-pin-label">
+                        <input type="checkbox" id="noticePinned"> Pin to top
+                    </label>
+                </div>
                 <button id="postNoticeBtn" style="width:100%;">
                     <i class="bi bi-send-fill" style="margin-right:0.4rem;"></i>Post Announcement
                 </button>
@@ -308,9 +361,13 @@
             <i class="bi bi-journal-bookmark-fill favicon-icon"></i>
             <span class="favicon-label">COURSES</span>
         </a>
+        <a href="#/bookmarks" class="favicon-item" id="navBookmarks" title="Bookmarks" onclick="window.openBookmarks(); return false;" aria-label="View bookmarks">
+            <i class="bi bi-star-fill favicon-icon"></i>
+            <span class="favicon-label">SAVED</span>
+        </a>
     </nav>
 
-    <script src="js/script.js"></script>
+    <script src="js/script.js?v=2"></script>
 </body>
 
 </html>

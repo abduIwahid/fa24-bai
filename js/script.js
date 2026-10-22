@@ -32,6 +32,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const landingSection = document.getElementById('landingSection');
     const searchSection = document.getElementById('searchSection');
     const coursesSection = document.getElementById('coursesSection');
+    const bookmarksSection = document.getElementById('bookmarksSection');
+    const bookmarksContainer = document.getElementById('bookmarksContainer');
+
+    // Request-a-material form (Google Form) — single place to swap the URL
+    const REQUEST_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSe8ZaXjapeO1vaGv1k4KDVo2ziVLxygVu6pjrCC5igZB2ExGA/viewform';
+    window.openRequestForm = () => window.open(REQUEST_FORM_URL, '_blank', 'noopener');
     const landingCoursesGrid = document.getElementById('landingCoursesGrid');
     const searchResultsContainer = document.getElementById('searchResultsContainer');
     const searchResultsInfo = document.getElementById('searchResultsInfo');
@@ -56,6 +62,7 @@ document.addEventListener("DOMContentLoaded", () => {
         upload: document.getElementById('navUpload'),
         notice: document.getElementById('navNotice'),
         courses: document.getElementById('navCourses'),
+        bookmarks: document.getElementById('navBookmarks'),
     };
 
     const setActiveNav = (key) => {
@@ -63,33 +70,158 @@ document.addEventListener("DOMContentLoaded", () => {
         if (navItems[key]) navItems[key].classList.add('active');
     };
 
-    const switchTab = (tabName) => {
-        currentTab = tabName;
-        setActiveNav(tabName);
+    // === Hash routing (Round 2) ======================================
+    // Routes:  #/                                   → Home
+    //          #/search[?q=term]                   → Search
+    //          #/courses                            → Courses overview
+    //          #/course/<CODE>                      → one course
+    //          #/course/<CODE>/<Folder>[?file=...]  → a folder / a material
+    //          #/bookmarks                          → Bookmarks
+    // The URL is the single source of truth: UI actions only ever change
+    // location.hash, and the hashchange handler applies the route to the
+    // view state — so Back/Forward, bookmarks and shared links all work.
+    let pendingHighlight = null; // rawName to scroll to once a folder renders
 
-        if (landingSection) landingSection.style.display = tabName === 'home' ? 'block' : 'none';
-        if (searchSection) searchSection.style.display = tabName === 'search' ? 'block' : 'none';
-        if (coursesSection) coursesSection.style.display = tabName === 'courses' ? 'block' : 'none';
+    const courseNameFor = (code) => {
+        const f = allFiles.find(x => x.course.code === code);
+        if (f) return f.course.name;
+        const core = CORE_COURSES.find(c => c.code === code);
+        return core ? core.name : code;
+    };
 
-        if (tabName === 'home') {
-            if (typeof renderLandingCourses === 'function') renderLandingCourses();
-            if (typeof renderQuickAccess === 'function') renderQuickAccess();
-        } else if (tabName === 'search') {
-            if (typeof renderSearch === 'function') renderSearch();
-        } else if (tabName === 'courses') {
-            if (typeof renderCourses === 'function') renderCourses();
+    const buildMaterialHash = (file) =>
+        '#/course/' + encodeURIComponent(file.course.code) + '/' +
+        encodeURIComponent(file.resourceType) +
+        '?file=' + encodeURIComponent(file.rawName.split('/').pop());
+
+    const materialDeepLink = (file) =>
+        window.location.origin + window.location.pathname + buildMaterialHash(file);
+
+    const parseRoute = () => {
+        const raw = (window.location.hash || '').replace(/^#\/?/, '');
+        const qIdx = raw.indexOf('?');
+        const pathPart = qIdx >= 0 ? raw.slice(0, qIdx) : raw;
+        const params = new URLSearchParams(qIdx >= 0 ? raw.slice(qIdx + 1) : '');
+        const seg = pathPart.split('/').filter(Boolean).map(s => {
+            try { return decodeURIComponent(s); } catch (e) { return s; }
+        });
+        if (seg.length === 0) return { name: 'home' };
+        if (seg[0] === 'search') return { name: 'search', q: params.has('q') ? (params.get('q') || '') : null };
+        if (seg[0] === 'courses') return { name: 'courses' };
+        if (seg[0] === 'bookmarks') return { name: 'bookmarks' };
+        if (seg[0] === 'course' && seg[1]) {
+            if (seg[2]) return { name: 'folder', code: seg[1], folder: seg[2], file: params.get('file') || null };
+            return { name: 'course', code: seg[1] };
+        }
+        return { name: 'home' };
+    };
+
+    const renderCurrentTab = () => {
+        setActiveNav(currentTab);
+        if (landingSection) landingSection.style.display = currentTab === 'home' ? 'block' : 'none';
+        if (searchSection) searchSection.style.display = currentTab === 'search' ? 'block' : 'none';
+        if (coursesSection) coursesSection.style.display = currentTab === 'courses' ? 'block' : 'none';
+        if (bookmarksSection) bookmarksSection.style.display = currentTab === 'bookmarks' ? 'block' : 'none';
+
+        if (currentTab === 'home') {
+            renderLandingCourses();
+            renderQuickAccess();
+            renderHomeStrips();
+            renderCountdown();
+        } else if (currentTab === 'search') {
+            renderSearch();
+            renderRecentSearches();
+        } else if (currentTab === 'courses') {
+            renderCourses();
+        } else if (currentTab === 'bookmarks') {
+            renderBookmarks();
         }
     };
 
+    const applyRoute = () => {
+        const route = parseRoute();
+        pendingHighlight = null;
+
+        if (route.name === 'search') {
+            currentTab = 'search';
+            if (route.q !== null) {
+                searchQuery = route.q.toLowerCase();
+                if (searchInput) searchInput.value = route.q;
+            }
+        } else if (route.name === 'courses') {
+            currentTab = 'courses';
+            currentView = 'all';
+            selectedCourseCode = null;
+            selectedCourseName = null;
+            selectedFolder = null;
+        } else if (route.name === 'course' || route.name === 'folder') {
+            currentTab = 'courses';
+            selectedCourseCode = route.code;
+            selectedCourseName = courseNameFor(route.code);
+            if (route.name === 'folder') {
+                currentView = 'folder';
+                selectedFolder = route.folder;
+                if (route.file) {
+                    const target = allFiles.find(f => f.course.code === route.code &&
+                        f.resourceType === route.folder &&
+                        f.rawName.split('/').pop() === route.file);
+                    if (target) pendingHighlight = target.rawName;
+                }
+            } else {
+                currentView = 'course';
+                selectedFolder = null;
+            }
+        } else if (route.name === 'bookmarks') {
+            currentTab = 'bookmarks';
+        } else {
+            currentTab = 'home';
+        }
+
+        renderCurrentTab();
+
+        if (pendingHighlight) {
+            setTimeout(() => highlightPending(), 90);
+        }
+    };
+
+    const highlightPending = () => {
+        if (!pendingHighlight || !coursesContainer) return;
+        const items = coursesContainer.querySelectorAll('.resource-item');
+        for (const el of items) {
+            if (el.getAttribute('data-file') === pendingHighlight) {
+                el.classList.add('highlight');
+                try { el.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) { /* no-op */ }
+                break;
+            }
+        }
+    };
+
+    const goTo = (hash) => {
+        if (window.location.hash === hash) {
+            applyRoute();
+        } else {
+            window.location.hash = hash; // hashchange handler applies it
+        }
+    };
+
+    window.addEventListener('hashchange', applyRoute);
+
+    // Backwards-compatible shim for any lingering switchTab callers
+    const switchTab = (tabName) => {
+        if (tabName === 'search') goTo('#/search');
+        else if (tabName === 'courses') goTo('#/courses');
+        else if (tabName === 'bookmarks') goTo('#/bookmarks');
+        else goTo('#/');
+    };
     window.switchTab = switchTab;
 
     window.scrollToHome = () => {
-        switchTab('home');
+        goTo('#/');
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     window.focusSearch = () => {
-        switchTab('search');
+        goTo('#/search');
         window.scrollTo({ top: 0, behavior: 'smooth' });
         setTimeout(() => {
             const inputEl = document.getElementById('searchInput');
@@ -106,11 +238,9 @@ document.addEventListener("DOMContentLoaded", () => {
     window.submitLandingSearch = () => {
         const landingInput = document.getElementById('landingSearchInput');
         const query = landingInput ? landingInput.value.trim() : '';
-        searchQuery = query.toLowerCase();
-        if (searchInput) searchInput.value = query;
-        switchTab('search');
+        if (query) saveRecentSearch(query);
+        goTo('#/search' + (query ? '?q=' + encodeURIComponent(query) : ''));
         window.scrollTo({ top: 0, behavior: 'smooth' });
-        if (typeof renderSearch === 'function') renderSearch();
     };
 
     const landingSearchInput = document.getElementById('landingSearchInput');
@@ -124,11 +254,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     window.scrollToCourses = () => {
-        currentView = 'all';
-        selectedCourseCode = null;
-        selectedCourseName = null;
-        selectedFolder = null;
-        switchTab('courses');
+        goTo('#/courses');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    window.openBookmarks = () => {
+        goTo('#/bookmarks');
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
@@ -160,17 +291,14 @@ document.addEventListener("DOMContentLoaded", () => {
     if (navItems.search) navItems.search.addEventListener('click', (e) => { e.preventDefault(); window.focusSearch(); });
     if (navItems.upload) navItems.upload.addEventListener('click', (e) => { e.preventDefault(); window.openUploadPanel(); });
     if (navItems.courses) navItems.courses.addEventListener('click', (e) => { e.preventDefault(); window.scrollToCourses(); });
+    if (navItems.bookmarks) navItems.bookmarks.addEventListener('click', (e) => { e.preventDefault(); window.openBookmarks(); });
 
     backBtn.addEventListener('click', () => {
-        if (currentView === 'folder') {
-            currentView = 'course';
-            selectedFolder = null;
+        if (currentView === 'folder' && selectedCourseCode) {
+            goTo('#/course/' + encodeURIComponent(selectedCourseCode));
         } else if (currentView === 'course') {
-            currentView = 'all';
-            selectedCourseCode = null;
-            selectedCourseName = null;
+            goTo('#/courses');
         }
-        renderCourses();
     });
 
     // Admin State
@@ -368,6 +496,192 @@ document.addEventListener("DOMContentLoaded", () => {
         renderQuickAccess();
     };
 
+    // === Shared helpers (Round 2) ===
+    const DAY_MS = 24 * 60 * 60 * 1000;
+
+    const escapeHtml = (s) => String(s == null ? '' : s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+
+    // "New" (first added ≤14 days ago) / "Updated" (changed ≤14 days ago
+    // and not brand new). Dates come from /api/files (git history).
+    const dateBadge = (file) => {
+        const now = Date.now();
+        const created = file.createdAt ? Date.parse(file.createdAt) : null;
+        const updated = file.updatedAt ? Date.parse(file.updatedAt) : null;
+        if (created && now - created <= 14 * DAY_MS) {
+            return '<span class="badge-fresh badge-new">New</span>';
+        }
+        if (updated && now - updated <= 14 * DAY_MS && (!created || updated - created > DAY_MS)) {
+            return '<span class="badge-fresh badge-updated">Updated</span>';
+        }
+        return '';
+    };
+
+    const timeAgo = (iso) => {
+        const then = Date.parse(iso);
+        if (isNaN(then)) return '';
+        const days = Math.floor((Date.now() - then) / DAY_MS);
+        if (days <= 0) return 'today';
+        if (days === 1) return 'yesterday';
+        if (days < 30) return `${days} days ago`;
+        const months = Math.floor(days / 30);
+        return months === 1 ? '1 month ago' : `${months} months ago`;
+    };
+
+    const skeletonCardsHtml = (n) => Array.from({ length: n }, () => `
+        <div class="skeleton-card" aria-hidden="true">
+            <div class="skeleton-line short"></div>
+            <div class="skeleton-line med"></div>
+            <div class="skeleton-line"></div>
+            <div class="skeleton-line short"></div>
+        </div>`).join('');
+
+    // === Bookmarks (Round 2) — starred materials in localStorage ===
+    const BOOKMARKS_KEY = 'fa24bai_bookmarks';
+    let bookmarks = [];
+    try {
+        const storedBookmarks = JSON.parse(localStorage.getItem(BOOKMARKS_KEY) || '[]');
+        if (Array.isArray(storedBookmarks)) bookmarks = storedBookmarks.filter(f => typeof f === 'string');
+    } catch (e) {
+        bookmarks = [];
+    }
+
+    const saveBookmarks = () => {
+        try { localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(bookmarks)); } catch (e) { /* ignore */ }
+    };
+
+    const isBookmarked = (filename) => bookmarks.includes(filename);
+
+    window.toggleBookmark = (e, filename) => {
+        if (e) e.stopPropagation();
+        const nowBookmarked = !isBookmarked(filename);
+        bookmarks = nowBookmarked
+            ? [filename, ...bookmarks.filter(f => f !== filename)]
+            : bookmarks.filter(f => f !== filename);
+        saveBookmarks();
+        // Reflect the new state on every star button for this file
+        document.querySelectorAll('[data-bookmark]').forEach(btn => {
+            if (btn.getAttribute('data-bookmark') === filename) {
+                btn.classList.toggle('active', nowBookmarked);
+                const icon = btn.querySelector('i');
+                if (icon) icon.className = nowBookmarked ? 'bi bi-star-fill' : 'bi bi-star';
+            }
+        });
+        if (currentTab === 'bookmarks') renderBookmarks();
+        showNotification(nowBookmarked ? 'Bookmarked for revision' : 'Bookmark removed', 'info');
+    };
+
+    const renderBookmarks = () => {
+        if (!bookmarksContainer) return;
+        if (filesState === 'loading') {
+            bookmarksContainer.innerHTML = skeletonCardsHtml(3);
+            return;
+        }
+        if (filesState === 'error') {
+            bookmarksContainer.innerHTML = `
+                <div class="no-results state-block" style="grid-column: 1 / -1;">
+                    <p>We couldn't load the materials list. Check your connection and try again.</p>
+                    <button type="button" class="retry-btn" onclick="window.retryLoadFiles()">Retry</button>
+                </div>`;
+            return;
+        }
+        const files = bookmarks.map(n => allFiles.find(f => f.rawName === n)).filter(Boolean);
+        if (files.length === 0) {
+            bookmarksContainer.innerHTML = '<div class="no-results" style="grid-column: 1 / -1; padding: 2.5rem 1rem; text-align: center; color: #777;">No bookmarks yet. Tap the star on any material to save it here for revision week.</div>';
+            return;
+        }
+        bookmarksContainer.innerHTML = files.map(f => createResourceHtml(f, { showCourse: true })).join('');
+    };
+
+    // === Download counts (Round 2) — /api/count, throttled per session ===
+    let countsMap = {};
+    const countedThisSession = new Set();
+
+    const fetchCounts = async () => {
+        try {
+            const r = await fetch('/api/count');
+            if (!r.ok) return;
+            const d = await r.json();
+            if (d && d.counts && typeof d.counts === 'object') {
+                countsMap = d.counts;
+                if (currentTab === 'home') renderHomeStrips();
+                if (currentTab === 'bookmarks') renderBookmarks();
+            }
+        } catch (e) { /* counts are decorative — never block the UI */ }
+    };
+
+    const incrementCount = (filename) => {
+        if (countedThisSession.has(filename)) return;
+        countedThisSession.add(filename);
+        countsMap[filename] = (countsMap[filename] || 0) + 1; // optimistic
+        const payload = JSON.stringify({ name: filename });
+        try {
+            if (navigator.sendBeacon) {
+                const blob = new Blob([payload], { type: 'application/json' });
+                if (navigator.sendBeacon('/api/count', blob)) return;
+            }
+            fetch('/api/count', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: payload,
+                keepalive: true
+            }).catch(() => {});
+        } catch (e) { /* ignore */ }
+    };
+
+    // === Recent searches (Round 2) ===
+    const RECENT_SEARCHES_KEY = 'fa24bai_recent_searches';
+    let recentSearches = [];
+    try {
+        const storedSearches = JSON.parse(localStorage.getItem(RECENT_SEARCHES_KEY) || '[]');
+        if (Array.isArray(storedSearches)) recentSearches = storedSearches.filter(s => typeof s === 'string');
+    } catch (e) {
+        recentSearches = [];
+    }
+
+    const saveRecentSearches = () => {
+        try { localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(recentSearches)); } catch (e) { /* ignore */ }
+    };
+
+    const saveRecentSearch = (q) => {
+        const term = (q || '').trim();
+        if (term.length < 2) return;
+        recentSearches = [term, ...recentSearches.filter(s => s.toLowerCase() !== term.toLowerCase())].slice(0, 6);
+        saveRecentSearches();
+        renderRecentSearches();
+    };
+
+    const renderRecentSearches = () => {
+        const box = document.getElementById('recentSearches');
+        if (!box) return;
+        const typing = searchInput && searchInput.value.trim().length > 0;
+        if (recentSearches.length === 0 || typing) {
+            box.style.display = 'none';
+            box.innerHTML = '';
+            return;
+        }
+        box.style.display = 'block';
+        box.innerHTML = '<span class="recent-searches-label">Recent:</span>' +
+            recentSearches.map(q => `<button type="button" class="recent-search-chip" onclick="window.runRecentSearch('${q.replace(/'/g, "\\'")}')"><i class="bi bi-clock-history"></i>${escapeHtml(q)}</button>`).join('') +
+            '<button type="button" class="recent-search-clear" onclick="window.clearRecentSearches()">Clear</button>';
+    };
+
+    window.runRecentSearch = (q) => {
+        searchQuery = q.toLowerCase();
+        if (searchInput) searchInput.value = q;
+        goTo('#/search?q=' + encodeURIComponent(q));
+        renderSearch();
+        renderRecentSearches();
+    };
+
+    window.clearRecentSearches = () => {
+        recentSearches = [];
+        saveRecentSearches();
+        renderRecentSearches();
+    };
+
     // Course mapping logic
     const getCourseInfo = (filepath) => {
         const lowerName = filepath.toLowerCase();
@@ -421,7 +735,8 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     window.copyResourceLink = (filename) => {
-        const fullUrl = window.location.origin + '/' + encodeURI(filename);
+        const file = allFiles.find(f => f.rawName === filename);
+        const fullUrl = file ? materialDeepLink(file) : window.location.origin + '/' + encodeURI(filename);
         if (navigator.clipboard && navigator.clipboard.writeText) {
             navigator.clipboard.writeText(fullUrl).then(() => {
                 showNotification('Resource link copied to clipboard', 'info');
@@ -431,6 +746,13 @@ document.addEventListener("DOMContentLoaded", () => {
         } else {
             showNotification('Clipboard access unavailable', 'error');
         }
+    };
+
+    window.shareOnWhatsApp = (filename) => {
+        const file = allFiles.find(f => f.rawName === filename);
+        if (!file) return;
+        const text = `📚 ${file.cleanName} (${file.course.code} · ${file.resourceType}) — FA24-BAI Study Hub\n${materialDeepLink(file)}`;
+        window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank', 'noopener');
     };
 
     document.addEventListener('click', () => {
@@ -447,17 +769,23 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         const escapedRawName = res.rawName.replace(/'/g, "\\'");
+        const attrRawName = res.rawName.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
         const menuId = 'menu-' + Math.random().toString(36).substring(2, 9);
+        const fav = isBookmarked(res.rawName);
+        const dlCount = countsMap[res.rawName] || 0;
 
         return `
-            <div class="resource-item">
+            <div class="resource-item" data-file="${attrRawName}">
                 <div class="resource-main">
-                    <div class="resource-name">${res.cleanName}</div>
-                    <div class="resource-type-badge">${res.resourceType}</div>
+                    <div class="resource-name">${res.cleanName}${dateBadge(res)}</div>
+                    <div><span class="resource-type-badge">${res.resourceType}</span>${dlCount > 0 ? `<span class="download-count"><i class="bi bi-download"></i> ${dlCount}</span>` : ''}</div>
                     ${opts.showCourse ? `<button type="button" class="resource-course-link" onclick="window.openFolder('${res.resourceType}', '${res.course.code}', '${res.course.name.replace(/'/g, "\\'")}')">${res.course.code} · ${res.course.name} &rarr;</button>` : ''}
                 </div>
                 <div class="resource-actions">
                     <a href="${viewUrl}" target="_blank" class="action-btn view" onclick="window.trackView('${escapedRawName}')">Open</a>
+                    <button type="button" class="action-btn fav ${fav ? 'active' : ''}" data-bookmark="${attrRawName}" onclick="window.toggleBookmark(event, '${escapedRawName}')" aria-label="Bookmark this material" title="Bookmark">
+                        <i class="bi ${fav ? 'bi-star-fill' : 'bi-star'}"></i>
+                    </button>
                     <div class="roger-menu-wrap">
                         <button type="button" class="roger-btn" onclick="window.toggleRogerMenu(event, '${menuId}')" aria-label="Resource options" title="Options">
                             <i class="bi bi-three-dots-vertical"></i>
@@ -472,6 +800,9 @@ document.addEventListener("DOMContentLoaded", () => {
                             <button type="button" class="roger-item" onclick="window.copyResourceLink('${escapedRawName}'); window.closeAllRogerMenus();">
                                 <i class="bi bi-link-45deg"></i> Copy Link
                             </button>
+                            <button type="button" class="roger-item" onclick="window.shareOnWhatsApp('${escapedRawName}'); window.closeAllRogerMenus();">
+                                <i class="bi bi-whatsapp"></i> Share on WhatsApp
+                            </button>
                             ${adminPass ? `
                             <button type="button" class="roger-item danger" onclick="window.deleteFile('${escapedRawName}'); window.closeAllRogerMenus();">
                                 <i class="bi bi-trash3"></i> Delete
@@ -484,7 +815,10 @@ document.addEventListener("DOMContentLoaded", () => {
         `;
     };
 
-    window.trackView = (filename) => addRecent(filename);
+    window.trackView = (filename) => {
+        addRecent(filename);
+        incrementCount(filename);
+    };
 
     window.deleteFile = async (filename) => {
         if (!confirm(`Are you sure you want to permanently delete ${filename}?`)) return;
@@ -606,7 +940,16 @@ document.addEventListener("DOMContentLoaded", () => {
             if (placeholder) placeholder.remove();
 
             if (response.ok && data.reply) {
-                addChatMessage(data.reply, 'ai');
+                if (action === 'quiz') {
+                    const parsedQuiz = parseMcqQuiz(data.reply);
+                    if (parsedQuiz && parsedQuiz.length >= 2) {
+                        renderInteractiveQuiz(parsedQuiz, data.reply);
+                    } else {
+                        addChatMessage(data.reply, 'ai');
+                    }
+                } else {
+                    addChatMessage(data.reply, 'ai');
+                }
             } else {
                 addChatMessage(data.reply || 'Could not process request at this time.', 'ai');
             }
@@ -619,6 +962,191 @@ document.addEventListener("DOMContentLoaded", () => {
             aiSendBtn.disabled = false;
             aiActionBtns.forEach(b => b.disabled = false);
         }
+    };
+
+    // === Interactive practice quiz (Round 2) ==========================
+    // Tolerant parser for the Gemini quiz format produced by /api/ask:
+    // numbered questions, lettered options (A–D), and an "Answers &
+    // Explanations" section. Also understands an inline "Correct answer: B"
+    // per question. Returns null when the text isn't MCQ-shaped so the
+    // caller can fall back to the plain-text rendering.
+    const parseMcqQuiz = (text) => {
+        if (!text || typeof text !== 'string') return null;
+        const lines = text.split(/\r?\n/);
+
+        const answersIdx = lines.findIndex(l =>
+            /answers?\s*(?:&|and)?\s*explanations?/i.test(l) || /answer\s*key/i.test(l));
+        const mainLines = answersIdx >= 0 ? lines.slice(0, answersIdx) : lines;
+        const answerLines = answersIdx >= 0 ? lines.slice(answersIdx + 1) : [];
+
+        // Answer key: "1. B — explanation" / "1) B: explanation" ...
+        const answers = {};
+        let curAns = null;
+        answerLines.forEach(l => {
+            const m = l.match(/^\s*(?:[-*•]\s*)?(?:\*\*)?\s*(?:Q(?:uestion)?\s*)?(\d{1,2})\s*[\).\:\-]\s*(?:\*\*)?\s*\(?([A-Da-d])\)?\b[\s\.\:\-—]*(.*)$/);
+            if (m) {
+                curAns = parseInt(m[1], 10);
+                answers[curAns] = { letter: m[2].toUpperCase(), explanation: (m[3] || '').trim() };
+            } else if (curAns && l.trim()) {
+                answers[curAns].explanation = (answers[curAns].explanation + ' ' + l.trim()).trim();
+            }
+        });
+
+        // Question blocks
+        const qStart = /^\s*(?:#{1,4}\s*)?(?:\*\*)?\s*(?:Q(?:uestion)?\s*)?(\d{1,2})\s*[\).\:]\s*(?:\*\*)?\s*(.*)$/i;
+        const optLine = /^\s*(?:[-*•]\s*)?(?:\*\*)?\s*\(?([A-D])[\).\:\-]\s*(?:\*\*)?\s*(.+)$/;
+        const blocks = [];
+        let cur = null;
+        mainLines.forEach(l => {
+            const om = l.match(optLine);
+            const qm = om ? null : l.match(qStart);
+            if (qm) {
+                cur = { num: parseInt(qm[1], 10), question: (qm[2] || '').trim(), options: [], inlineAnswer: null };
+                blocks.push(cur);
+            } else if (om && cur) {
+                cur.options.push({ letter: om[1].toUpperCase(), text: om[2].trim() });
+            } else if (cur && /correct\s*answer/i.test(l)) {
+                const cm = l.match(/correct\s*answer[^A-Da-d]*\(?([A-D])\)?/i);
+                if (cm) cur.inlineAnswer = cm[1].toUpperCase();
+            } else if (cur && cur.options.length === 0 && l.trim()) {
+                cur.question = (cur.question + ' ' + l.trim()).trim();
+            }
+        });
+
+        const clean = (s) => String(s || '').replace(/\*\*/g, '').replace(/`/g, '').replace(/\s+/g, ' ').trim();
+        const questions = [];
+        blocks.forEach(b => {
+            if (!b.question || b.options.length < 2) return;
+            let ans = null;
+            let expl = '';
+            const rec = answers[b.num];
+            if (rec) { ans = rec.letter; expl = rec.explanation || ''; }
+            else if (b.inlineAnswer) ans = b.inlineAnswer;
+            if (!ans) return;
+            if (!b.options.some(o => o.letter === ans)) return;
+            expl = clean(expl).replace(/^correct answer[:\s]*/i, '');
+            questions.push({
+                question: clean(b.question),
+                options: b.options.map(o => ({ letter: o.letter, text: clean(o.text) })),
+                answer: ans,
+                explanation: expl
+            });
+        });
+
+        return questions.length >= 2 ? questions : null;
+    };
+    window.parseMcqQuiz = parseMcqQuiz; // exposed for testing
+
+    const renderInteractiveQuiz = (questions, rawText) => {
+        const wrap = document.createElement('div');
+        wrap.className = 'chat-message ai';
+        wrap.style.cssText = 'max-width: 100%; width: 100%; background: transparent; padding: 0;';
+        const card = document.createElement('div');
+        card.className = 'quiz-card';
+        wrap.appendChild(card);
+        chatContainer.appendChild(wrap);
+
+        let idx = 0;
+        let score = 0;
+
+        const renderStep = () => {
+            card.innerHTML = '';
+
+            if (idx >= questions.length) {
+                const done = document.createElement('div');
+                done.className = 'quiz-done';
+                done.innerHTML = `
+                    <div class="quiz-progress">Quiz complete</div>
+                    <div class="quiz-done-score">${score} / ${questions.length}</div>
+                    <p style="margin: 0.4rem 0 0;">${score === questions.length
+                        ? 'Perfect score — exam ready!'
+                        : score >= Math.ceil(questions.length / 2)
+                            ? 'Good effort — review the explanations and retry.'
+                            : 'Keep practicing — retry and read each explanation.'}</p>`;
+                card.appendChild(done);
+                const foot = document.createElement('div');
+                foot.className = 'quiz-footer';
+                const retry = document.createElement('button');
+                retry.className = 'quiz-retry-btn';
+                retry.textContent = 'Retry Quiz';
+                retry.addEventListener('click', () => { idx = 0; score = 0; renderStep(); });
+                const toggle = document.createElement('button');
+                toggle.className = 'quiz-text-toggle';
+                toggle.textContent = 'Show original text';
+                toggle.addEventListener('click', () => {
+                    wrap.className = 'chat-message ai';
+                    wrap.style.cssText = '';
+                    wrap.innerHTML = formatMarkdown(rawText);
+                });
+                foot.appendChild(retry);
+                foot.appendChild(toggle);
+                card.appendChild(foot);
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+                return;
+            }
+
+            const q = questions[idx];
+
+            const prog = document.createElement('div');
+            prog.className = 'quiz-progress';
+            prog.textContent = `Question ${idx + 1} of ${questions.length}`;
+            card.appendChild(prog);
+
+            const qEl = document.createElement('div');
+            qEl.className = 'quiz-question';
+            qEl.textContent = q.question;
+            card.appendChild(qEl);
+
+            const opts = document.createElement('div');
+            opts.className = 'quiz-options';
+            card.appendChild(opts);
+
+            const expl = document.createElement('div');
+            expl.className = 'quiz-explanation';
+            expl.style.display = 'none';
+            card.appendChild(expl);
+
+            const foot = document.createElement('div');
+            foot.className = 'quiz-footer';
+            const scoreEl = document.createElement('span');
+            scoreEl.className = 'quiz-score';
+            scoreEl.textContent = `Score: ${score}`;
+            const nextBtn = document.createElement('button');
+            nextBtn.className = 'quiz-next-btn';
+            nextBtn.textContent = idx === questions.length - 1 ? 'See Results' : 'Next Question';
+            nextBtn.style.display = 'none';
+            nextBtn.addEventListener('click', () => { idx++; renderStep(); });
+            foot.appendChild(scoreEl);
+            foot.appendChild(nextBtn);
+            card.appendChild(foot);
+
+            q.options.forEach(opt => {
+                const b = document.createElement('button');
+                b.className = 'quiz-option';
+                b.textContent = `${opt.letter}. ${opt.text}`;
+                b.addEventListener('click', () => {
+                    const isCorrect = opt.letter === q.answer;
+                    if (isCorrect) score++;
+                    opts.querySelectorAll('button').forEach(x => {
+                        x.disabled = true;
+                        if (x.textContent.startsWith(q.answer + '.')) x.classList.add('correct');
+                    });
+                    if (!isCorrect) b.classList.add('wrong');
+                    if (q.explanation) {
+                        expl.textContent = q.explanation;
+                        expl.style.display = 'block';
+                    }
+                    scoreEl.textContent = `Score: ${score}`;
+                    nextBtn.style.display = 'inline-flex';
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                });
+                opts.appendChild(b);
+            });
+
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        };
+
+        renderStep();
     };
 
     aiSendBtn.addEventListener('click', () => handleAiRequest(aiInput.value, 'chat'));
@@ -651,30 +1179,26 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     window.openCourse = (code, name) => {
-        currentView = 'course';
-        selectedCourseCode = code;
-        selectedCourseName = name;
-        selectedFolder = null;
-        switchTab('courses');
-        renderCourses();
+        goTo('#/course/' + encodeURIComponent(code));
     };
 
     window.openCourseFromLanding = (code, name) => {
-        selectedCourseCode = code;
-        selectedCourseName = name;
-        selectedFolder = null;
-        currentView = 'course';
-        switchTab('courses');
+        goTo('#/course/' + encodeURIComponent(code));
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     window.openFolder = (folderName, courseCode = null, courseName = null) => {
-        if (courseCode) selectedCourseCode = courseCode;
-        if (courseName) selectedCourseName = courseName;
-        currentView = 'folder';
-        selectedFolder = folderName;
-        switchTab('courses');
-        renderCourses();
+        const code = courseCode || selectedCourseCode;
+        if (!code) { goTo('#/courses'); return; }
+        goTo('#/course/' + encodeURIComponent(code) + '/' + encodeURIComponent(folderName));
+    };
+
+    // Jump straight to a specific material (search results): folder route
+    // with a ?file= target that gets scrolled to + highlighted.
+    window.openMaterial = (filename) => {
+        const file = allFiles.find(f => f.rawName === filename);
+        if (!file) return;
+        goTo(buildMaterialHash(file));
     };
 
     const CORE_COURSES = [
@@ -686,8 +1210,48 @@ document.addEventListener("DOMContentLoaded", () => {
         { code: 'WEB',    name: 'Web Technologies' }
     ];
 
+    // Home strips: Recently Added (by git creation date) + Most Downloaded
+    const renderHomeStrips = () => {
+        const raContainer = document.getElementById('recentlyAddedContainer');
+        const raList = document.getElementById('recentlyAddedList');
+        if (raContainer && raList) {
+            const dated = allFiles
+                .filter(f => f.createdAt || f.updatedAt)
+                .sort((a, b) => Date.parse(b.createdAt || b.updatedAt) - Date.parse(a.createdAt || a.updatedAt))
+                .slice(0, 8);
+            if (filesState === 'ready' && dated.length > 0) {
+                raContainer.style.display = 'block';
+                raList.innerHTML = dated.map(f => createResourceHtml(f, { showCourse: true })).join('');
+            } else {
+                raContainer.style.display = 'none';
+            }
+        }
+
+        const mdContainer = document.getElementById('mostDownloadedContainer');
+        const mdList = document.getElementById('mostDownloadedList');
+        if (mdContainer && mdList) {
+            const top = Object.entries(countsMap)
+                .filter(([, n]) => typeof n === 'number' && n > 0)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 6)
+                .map(([name]) => allFiles.find(f => f.rawName === name))
+                .filter(Boolean);
+            if (filesState === 'ready' && top.length > 0) {
+                mdContainer.style.display = 'block';
+                mdList.innerHTML = top.map(f => createResourceHtml(f, { showCourse: true })).join('');
+            } else {
+                mdContainer.style.display = 'none';
+            }
+        }
+    };
+
     const renderLandingCourses = () => {
         if (!landingCoursesGrid) return;
+
+        if (filesState === 'loading') {
+            landingCoursesGrid.innerHTML = skeletonCardsHtml(6);
+            return;
+        }
 
         const coursesMap = {};
         allFiles.forEach(file => {
@@ -738,7 +1302,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // Loading / error states (data comes from /api/files via loadFiles)
         if (filesState === 'loading') {
             if (searchResultsInfo) searchResultsInfo.textContent = 'Loading study materials...';
-            searchResultsContainer.innerHTML = '<div class="no-results state-block" style="grid-column: 1 / -1;"><p class="loading-text">Loading study materials...</p></div>';
+            searchResultsContainer.innerHTML = skeletonCardsHtml(4);
             return;
         }
         if (filesState === 'error') {
@@ -795,27 +1359,49 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        searchResultsContainer.innerHTML = filteredFiles.map(res => createResourceHtml(res, { showCourse: true })).join('');
+        // Group results under course headers; groups are ordered by their
+        // best-scoring file so the most relevant course comes first.
+        const groups = [];
+        const groupMap = {};
+        filteredFiles.forEach(f => {
+            if (!groupMap[f.course.code]) {
+                groupMap[f.course.code] = { info: f.course, files: [] };
+                groups.push(groupMap[f.course.code]);
+            }
+            groupMap[f.course.code].files.push(f);
+        });
+
+        let html = '';
+        groups.forEach(g => {
+            html += `<div class="search-group-header">${g.info.code} · ${g.info.name}<span class="group-count">${g.files.length} item(s)</span></div>`;
+            html += g.files.map(res => createResourceHtml(res, { showCourse: true })).join('');
+        });
+        searchResultsContainer.innerHTML = html;
     };
 
     const renderCourses = () => {
+        // Shared loading / error states for every courses sub-view
+        if (filesState === 'loading') {
+            navigationBar.style.display = currentView === 'all' ? 'none' : 'flex';
+            if (currentView !== 'all' && selectedCourseName) currentPath.textContent = selectedCourseName;
+            coursesContainer.innerHTML = skeletonCardsHtml(6);
+            return;
+        }
+        if (filesState === 'error') {
+            navigationBar.style.display = 'none';
+            coursesContainer.innerHTML = `
+                <div class="no-results state-block">
+                    <p>We couldn't load the materials list. Check your connection and try again.</p>
+                    <button type="button" class="retry-btn" onclick="window.retryLoadFiles()">Retry</button>
+                </div>`;
+            return;
+        }
+
         if (currentView === 'all') {
             navigationBar.style.display = 'none';
             controlsSection.style.display = 'none';
             quickAccessContainer.style.display = 'none';
 
-            if (filesState === 'loading') {
-                coursesContainer.innerHTML = '<div class="no-results state-block"><p class="loading-text">Loading hub...</p></div>';
-                return;
-            }
-            if (filesState === 'error') {
-                coursesContainer.innerHTML = `
-                    <div class="no-results state-block">
-                        <p>We couldn't load the materials list. Check your connection and try again.</p>
-                        <button type="button" class="retry-btn" onclick="window.retryLoadFiles()">Retry</button>
-                    </div>`;
-                return;
-            }
             if (allFiles.length === 0) {
                 coursesContainer.innerHTML = '<div class="no-results">No resources found.</div>';
                 return;
@@ -830,7 +1416,16 @@ document.addEventListener("DOMContentLoaded", () => {
                 coursesMap[file.course.code].folderTypes.add(file.resourceType);
             });
 
-            coursesContainer.innerHTML = '';
+            coursesContainer.innerHTML = `
+                <div class="request-strip">
+                    <div class="request-strip-text">
+                        <h3><i class="bi bi-envelope-paper-fill"></i> Missing something?</h3>
+                        <p>Request a material or share your notes with the cohort.</p>
+                    </div>
+                    <button type="button" class="action-btn request-btn" onclick="window.openRequestForm();">
+                        <i class="bi bi-send-fill"></i> Request a Material
+                    </button>
+                </div>`;
             Object.values(coursesMap).forEach(courseData => {
                 const courseEl = document.createElement('div');
                 courseEl.className = 'course-card';
@@ -893,6 +1488,33 @@ document.addEventListener("DOMContentLoaded", () => {
                 coursesContainer.innerHTML = '<div class="no-results">No folders found in this course.</div>';
                 return;
             }
+
+            // Course dashboard header: quick chips for Syllabus/CDF,
+            // material count, last-updated, and this course's next deadline.
+            const syllabusFile = courseFiles.find(f => f.resourceType === 'Syllabus');
+            const cdfFile = courseFiles.find(f => f.resourceType === 'CDF');
+            const lastUpdated = courseFiles.reduce((mx, f) =>
+                (f.updatedAt && (!mx || Date.parse(f.updatedAt) > Date.parse(mx))) ? f.updatedAt : mx, null);
+            const deadline = (typeof nextDeadlineForCourse === 'function')
+                ? nextDeadlineForCourse(selectedCourseCode) : null;
+
+            const dash = document.createElement('div');
+            dash.className = 'course-dash';
+            dash.innerHTML = `
+                <div class="course-dash-top">
+                    <div>
+                        <h2>${escapeHtml(selectedCourseName || '')}</h2>
+                        <p class="course-dash-meta">${escapeHtml(selectedCourseCode || '')} · ${courseFiles.length} material(s)${lastUpdated ? ` · Last updated ${timeAgo(lastUpdated)}` : ''}</p>
+                    </div>
+                </div>
+                ${(syllabusFile || cdfFile) ? `
+                <div class="course-dash-chips">
+                    ${syllabusFile ? `<button type="button" class="dash-chip" onclick="window.openFolder('Syllabus')"><i class="bi bi-list-task"></i> Syllabus</button>` : ''}
+                    ${cdfFile ? `<button type="button" class="dash-chip" onclick="window.openFolder('CDF')"><i class="bi bi-file-earmark-text-fill"></i> CDF</button>` : ''}
+                </div>` : ''}
+                ${deadline ? `<div class="course-dash-deadline"><i class="bi bi-alarm-fill"></i> Next deadline: <strong>${escapeHtml(String(deadline.text || '').split('\n')[0])}</strong> — ${fmtExamDate(deadline.examDate)} · ${daysLabel(daysUntil(deadline.examDate))}</div>` : ''}
+            `;
+            coursesContainer.appendChild(dash);
 
             folderTypes.forEach(folder => {
                 const folderFiles = courseFiles.filter(f => f.resourceType === folder);
@@ -1020,7 +1642,9 @@ document.addEventListener("DOMContentLoaded", () => {
                         name: file.name,
                         course: courseInfo,
                         resourceType: rType,
-                        cleanName: getCleanName(file.name)
+                        cleanName: getCleanName(file.name),
+                        createdAt: file.createdAt || null,
+                        updatedAt: file.updatedAt || null
                     };
                 });
 
@@ -1047,7 +1671,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 renderSearch();
                 renderCourses();
                 renderQuickAccess();
-                switchTab('home');
+                // Re-apply the current URL route now that data is ready —
+                // this is what makes a cold deep link land in the right view.
+                applyRoute();
+                fetchCounts();
             }
         } catch (error) {
             filesState = 'error';
@@ -1057,11 +1684,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // Immediate render of landing view and core courses
-    renderLandingCourses();
-    switchTab('home');
-
-    loadFiles();
+    // Initial route + data load happen at the END of this script (after
+    // every renderer/helper is defined), so a cold deep link lands in
+    // the right view. See the bottom of this file.
 
     // Pull-to-refresh logic
     let touchStartY = 0;
@@ -1083,6 +1708,17 @@ document.addEventListener("DOMContentLoaded", () => {
     searchInput.addEventListener('input', (e) => {
         searchQuery = e.target.value.toLowerCase();
         renderSearch();
+        renderRecentSearches();
+    });
+
+    searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const q = searchInput.value.trim();
+            if (q) {
+                saveRecentSearch(q);
+                goTo('#/search?q=' + encodeURIComponent(q));
+            }
+        }
     });
 
     filterChips.forEach(chip => {
@@ -1189,6 +1825,64 @@ document.addEventListener("DOMContentLoaded", () => {
         } catch (e) {}
     };
 
+    // === Deadlines & countdown (Round 2) ===
+    // A notice becomes a deadline when it carries an examDate (yyyy-mm-dd).
+    const startOfDay = (d) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; };
+    const daysUntil = (yyyyMmDd) => {
+        const target = startOfDay(new Date(yyyyMmDd + 'T00:00:00'));
+        return Math.round((target - startOfDay(new Date())) / DAY_MS);
+    };
+    const fmtExamDate = (yyyyMmDd) =>
+        new Date(yyyyMmDd + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+    const daysLabel = (d) => d === 0 ? 'Today' : d === 1 ? 'Tomorrow' : `in ${d} days`;
+
+    const upcomingDeadlines = () => getNotices()
+        .filter(n => n && typeof n.examDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(n.examDate) && daysUntil(n.examDate) >= 0)
+        .slice()
+        .sort((a, b) => a.examDate.localeCompare(b.examDate));
+
+    const COURSE_KEYWORDS = {
+        CSC322: ['operating systems', 'csc322'],
+        MTH262: ['statistics', 'mth262'],
+        AIC270: ['programming for artificial intelligence', 'pfai', 'aic270'],
+        AIC372: ['knowledge rep', 'krr', 'aic372'],
+        DAA: ['design and analysis of algorithms', 'algorithms', 'daa'],
+        WEB: ['web technologies', 'csc336']
+    };
+
+    const noticeMatchesCourse = (n, code) => {
+        if (n.course && n.course === code) return true;
+        const text = ' ' + String(n.text || '').toLowerCase() + ' ';
+        return (COURSE_KEYWORDS[code] || []).some(k => text.includes(k));
+    };
+
+    const nextDeadlineForCourse = (code) =>
+        upcomingDeadlines().find(n => noticeMatchesCourse(n, code)) || null;
+
+    const renderCountdown = () => {
+        const box = document.getElementById('countdownContainer');
+        if (!box) return;
+        const ups = upcomingDeadlines().slice(0, 3);
+        if (ups.length === 0) {
+            box.style.display = 'none';
+            box.innerHTML = '';
+            return;
+        }
+        box.style.display = 'block';
+        box.innerHTML = `
+            <div class="countdown-card">
+                <p class="countdown-title"><i class="bi bi-alarm-fill"></i> Upcoming Deadlines</p>
+                ${ups.map(n => `
+                    <div class="countdown-row">
+                        <div>
+                            <div class="countdown-subject">${escapeHtml(String(n.text || '').split('\n')[0])}</div>
+                            <div class="countdown-when">${fmtExamDate(n.examDate)}${n.time ? ' · ' + escapeHtml(n.time) : ''}</div>
+                        </div>
+                        <span class="countdown-days">${daysLabel(daysUntil(n.examDate))}</span>
+                    </div>`).join('')}
+            </div>`;
+    };
+
     const fetchNoticesFromBackend = async () => {
         try {
             const res = await fetch('/api/notices');
@@ -1197,6 +1891,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (Array.isArray(serverNotices) && serverNotices.length > 0) {
                     saveNoticesLocally(serverNotices);
                     renderNotices();
+                    renderCountdown();
                     updateNoticeBadge();
                 }
             }
@@ -1217,18 +1912,48 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
+    let noticeFilter = 'All';
+
+    window.setNoticeFilter = (cat) => {
+        noticeFilter = cat;
+        renderNotices();
+    };
+
     const renderNotices = () => {
         const notices = getNotices();
+        const filterHtml = `
+            <div class="notice-filters">
+                ${['All', 'Exam', 'Class', 'General'].map(c =>
+                    `<button type="button" class="notice-filter-chip ${noticeFilter === c ? 'active' : ''}" onclick="window.setNoticeFilter('${c}')">${c}</button>`).join('')}
+            </div>`;
+
         if (notices.length === 0) {
-            noticesList.innerHTML = `
+            noticesList.innerHTML = filterHtml + `
                 <div class="notice-empty">
                     <i class="bi bi-megaphone"></i>
                     <p>No announcements yet.</p>
                 </div>`;
             return;
         }
-        noticesList.innerHTML = notices.slice().reverse().map((n, revIdx) => {
-            const realIdx = notices.length - 1 - revIdx;
+
+        // Pinned first, then newest first (original array index preserved
+        // so delete targets the right entry).
+        const sorted = notices
+            .map((n, i) => ({ n, i }))
+            .sort((a, b) => ((b.n.pinned ? 1 : 0) - (a.n.pinned ? 1 : 0)) || (b.i - a.i));
+        const visible = sorted.filter(({ n }) =>
+            noticeFilter === 'All' || (n.category || 'General') === noticeFilter);
+
+        if (visible.length === 0) {
+            noticesList.innerHTML = filterHtml + `
+                <div class="notice-empty">
+                    <i class="bi bi-megaphone"></i>
+                    <p>No ${noticeFilter} announcements.</p>
+                </div>`;
+            return;
+        }
+
+        noticesList.innerHTML = filterHtml + visible.map(({ n, i: realIdx }) => {
             const deleteBtn = adminPass
                 ? `<button class="notice-card-delete" onclick="window.deleteNotice(${realIdx})">
                        <i class="bi bi-trash3"></i> Delete
@@ -1239,11 +1964,16 @@ document.addEventListener("DOMContentLoaded", () => {
                 .replace(/</g, '&lt;')
                 .replace(/>/g, '&gt;')
                 .replace(/\n/g, '<br>');
+            const cat = n.category || 'General';
+            const catClass = cat === 'Exam' ? 'exam' : cat === 'Class' ? 'class' : '';
+            const deadlineMeta = n.examDate
+                ? ` · <i class="bi bi-calendar-event" style="margin-right:0.2rem;"></i>${fmtExamDate(n.examDate)}${n.time ? ' ' + escapeHtml(n.time) : ''} (${daysLabel(daysUntil(n.examDate))})`
+                : '';
             return `
-                <div class="notice-card">
-                    <div style="font-size:0.95rem; line-height:1.5;">${safeText}</div>
+                <div class="notice-card ${n.pinned ? 'pinned' : ''}">
+                    <div style="font-size:0.95rem; line-height:1.5;">${n.pinned ? '<i class="bi bi-pin-angle-fill notice-pin-mark"></i>' : ''}<span class="notice-cat ${catClass}">${cat}</span>${safeText}</div>
                     <div class="notice-card-meta">
-                        <span><i class="bi bi-clock" style="margin-right:0.2rem;"></i>${n.date}</span>
+                        <span><i class="bi bi-clock" style="margin-right:0.2rem;"></i>${escapeHtml(n.date || '')}${deadlineMeta}</span>
                         ${deleteBtn}
                     </div>
                 </div>`;
@@ -1259,6 +1989,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const seen = Math.min(parseInt(localStorage.getItem(SEEN_KEY) || '0', 10), notices.length);
         localStorage.setItem(SEEN_KEY, seen);
         renderNotices();
+        renderCountdown();
         updateNoticeBadge();
 
         try {
@@ -1291,21 +2022,40 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    const noticeCategoryEl = document.getElementById('noticeCategory');
+    const noticeExamDateEl = document.getElementById('noticeExamDate');
+    const noticeTimeEl = document.getElementById('noticeTime');
+    const noticePinnedEl = document.getElementById('noticePinned');
+
     if (postNoticeBtn) {
         postNoticeBtn.addEventListener('click', async () => {
             const text = noticeInput.value.trim();
             if (!text) return;
             postNoticeBtn.disabled = true;
 
-            const notices = [...getNotices()];
-            notices.push({
+            const newNotice = {
                 text,
                 date: new Date().toLocaleString('en-PK', { dateStyle: 'medium', timeStyle: 'short' })
-            });
+            };
+            const category = noticeCategoryEl ? noticeCategoryEl.value : 'General';
+            if (category && category !== 'General') newNotice.category = category;
+            else newNotice.category = 'General';
+            const examDate = noticeExamDateEl ? noticeExamDateEl.value : '';
+            if (examDate) newNotice.examDate = examDate;
+            const timeVal = noticeTimeEl ? noticeTimeEl.value.trim() : '';
+            if (timeVal) newNotice.time = timeVal;
+            if (noticePinnedEl && noticePinnedEl.checked) newNotice.pinned = true;
+
+            const notices = [...getNotices()];
+            notices.push(newNotice);
             saveNoticesLocally(notices);
             localStorage.setItem(SEEN_KEY, notices.length);
             noticeInput.value = '';
+            if (noticeExamDateEl) noticeExamDateEl.value = '';
+            if (noticeTimeEl) noticeTimeEl.value = '';
+            if (noticePinnedEl) noticePinnedEl.checked = false;
             renderNotices();
+            renderCountdown();
             updateNoticeBadge();
 
             try {
@@ -1425,4 +2175,16 @@ document.addEventListener("DOMContentLoaded", () => {
             setTimeout(() => notification.remove(), 300);
         }, 3000);
     };
+
+    // === Init: apply the current URL route, then load data ============
+    // (loadFiles re-applies the route once data is ready.)
+    applyRoute();
+    loadFiles();
+
+    // === Service worker (PWA, Round 2) ===
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js').catch(() => { /* offline support is best-effort */ });
+        });
+    }
 });

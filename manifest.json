@@ -1,16 +1,1 @@
-{
-  "name": "FA24-BAI Resources",
-  "short_name": "FA24-BAI",
-  "description": "Course resources for FA24-BAI",
-  "start_url": "./index.html",
-  "display": "standalone",
-  "background_color": "#f0ede4",
-  "theme_color": "#004741",
-  "icons": [
-    {
-      "src": "logo.jpeg",
-      "sizes": "192x192 512x512",
-      "type": "image/jpeg"
-    }
-  ]
-}
+{"background_color":"#f0ede4","description":"Course syllabi, CDFs, lab manuals, lectures, notes and an AI study companion for the FA24-BAI (5th Semester AI) cohort at COMSATS University Islamabad, Attock Campus.","display":"standalone","icons":[{"sizes":"any","src":"favicon.svg","type":"image/svg+xml"},{"sizes":"512x512","src":"logo.jpeg","type":"image/jpeg"}],"name":"FA24-BAI Study Hub","scope":"/","short_name":"Study Hub","start_url":"/","theme_color":"#004741"}
