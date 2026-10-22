@@ -1822,6 +1822,47 @@ document.addEventListener("DOMContentLoaded", () => {
         reader.readAsDataURL(file);
     });
 
+    // Upload panel polish: chosen-file chip + drag & drop onto the dropzone
+    const uploadDrop = document.getElementById('uploadDrop');
+    const uploadFileName = document.getElementById('uploadFileName');
+    if (fileInput && uploadDrop && uploadFileName) {
+        const showChosenFile = () => {
+            const f = fileInput.files && fileInput.files[0];
+            if (f) {
+                const kb = Math.max(1, Math.round(f.size / 1024));
+                const size = kb >= 1024 ? (kb / 1024).toFixed(1) + ' MB' : kb + ' KB';
+                uploadFileName.textContent = '';
+                const icon = document.createElement('i');
+                icon.className = 'bi bi-file-earmark-check-fill';
+                uploadFileName.appendChild(icon);
+                uploadFileName.appendChild(document.createTextNode(' ' + f.name + ' · ' + size));
+                uploadFileName.style.display = 'inline-flex';
+                uploadDrop.classList.add('has-file');
+            } else {
+                uploadFileName.style.display = 'none';
+                uploadDrop.classList.remove('has-file');
+            }
+        };
+        fileInput.addEventListener('change', showChosenFile);
+        ['dragenter', 'dragover'].forEach((ev) => uploadDrop.addEventListener(ev, (e) => {
+            e.preventDefault();
+            uploadDrop.classList.add('dragging');
+        }));
+        ['dragleave', 'drop'].forEach((ev) => uploadDrop.addEventListener(ev, (e) => {
+            e.preventDefault();
+            uploadDrop.classList.remove('dragging');
+        }));
+        uploadDrop.addEventListener('drop', (e) => {
+            const files = e.dataTransfer && e.dataTransfer.files;
+            if (files && files.length) {
+                const dt = new DataTransfer();
+                dt.items.add(files[0]);
+                fileInput.files = dt.files;
+                showChosenFile();
+            }
+        });
+    }
+
     // Favicon bar navigation initialized at start
 
     // === Notices System with Backend Sync ===
