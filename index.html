@@ -22,12 +22,13 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#004741">
     <script>
-        // Set the theme before first paint (stored choice, else OS preference)
+        // Set the theme before first paint (stored choice, else light —
+        // dark is only ever a manual choice, never a default)
         (function () {
             try {
                 var t = localStorage.getItem('fa24bai_theme');
                 if (t !== 'dark' && t !== 'light') {
-                    t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+                    t = 'light';
                 }
                 document.documentElement.setAttribute('data-theme', t);
             } catch (e) { /* light theme is the default */ }
