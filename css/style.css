@@ -426,6 +426,16 @@ button:disabled {
     transition: border-color var(--animation-speed), box-shadow var(--animation-speed), transform var(--animation-speed);
     cursor: pointer;
     position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+/* Keep the "View Course Details" button pinned to the bottom of every
+   course card so buttons line up across a row no matter how much
+   content a card has. */
+.course-card > .action-btn {
+    margin-top: auto;
 }@media (hover: hover) and (pointer: fine) {
 .course-card:hover {
     border-color: var(--accent);
@@ -470,6 +480,7 @@ button:disabled {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
+    padding-bottom: 10px;
 }
 
 .resource-item {

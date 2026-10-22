@@ -1490,7 +1490,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     <div class="resources-list">
                         ${resourcesHtml}
                     </div>
-                    <button class="action-btn" style="width: 100%; margin-top: 10px; padding: 10px; background: #e0e0e0; color: #111; border: none; font-weight: bold; cursor: pointer; border-radius: 6px;" onclick="window.openCourse('${courseData.info.code}', '${courseData.info.name.replace(/'/g, "\\'")}')">View Course Details</button>
+                    <button class="action-btn" style="width: 100%; padding: 10px; background: #e0e0e0; color: #111; border: none; font-weight: bold; cursor: pointer; border-radius: 6px;" onclick="window.openCourse('${courseData.info.code}', '${courseData.info.name.replace(/'/g, "\\'")}')">View Course Details</button>
                 `;
                 coursesContainer.appendChild(courseEl);
             });
