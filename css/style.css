@@ -219,10 +219,10 @@ select {
     box-shadow: var(--shadow);
     transition: opacity 0.2s ease;
     flex-shrink: 0;
-}
-
+}@media (hover: hover) and (pointer: fine) {
 .app-logo:hover {
     opacity: 0.9;
+}
 }
 
 .header-text {
@@ -280,11 +280,11 @@ input[type="file"] {
     background: var(--accent-light);
     cursor: pointer;
     transition: all var(--animation-speed);
-}
-
+}@media (hover: hover) and (pointer: fine) {
 input[type="file"]:hover {
     border-color: var(--accent);
     background: rgba(230, 240, 239, 0.8);
+}
 }
 
 button {
@@ -298,10 +298,10 @@ button {
     transition: opacity var(--animation-speed), background-color var(--animation-speed);
     width: 100%;
     font-size: 0.95rem;
-}
-
+}@media (hover: hover) and (pointer: fine) {
 button:hover {
     opacity: 0.92;
+}
 }
 
 button:active {
@@ -370,11 +370,11 @@ button:disabled {
     width: auto;
     cursor: pointer;
     transition: all var(--animation-speed);
-}
-
+}@media (hover: hover) and (pointer: fine) {
 .filter-chip:hover {
     border-color: var(--accent);
     color: var(--accent);
+}
 }
 
 .filter-chip.active {
@@ -426,12 +426,12 @@ button:disabled {
     transition: border-color var(--animation-speed), box-shadow var(--animation-speed), transform var(--animation-speed);
     cursor: pointer;
     position: relative;
-}
-
+}@media (hover: hover) and (pointer: fine) {
 .course-card:hover {
     border-color: var(--accent);
     box-shadow: var(--hover-shadow);
     transform: translateY(-2px);
+}
 }
 
 .course-header {
@@ -483,11 +483,11 @@ button:disabled {
     gap: 0.75rem;
     transition: border-color var(--animation-speed), background-color var(--animation-speed);
     position: relative;
-}
-
+}@media (hover: hover) and (pointer: fine) {
 .resource-item:hover {
     background-color: var(--accent-light);
     border-color: var(--accent);
+}
 }
 
 .resource-main {
@@ -541,10 +541,10 @@ button:disabled {
     background-color: var(--accent);
     color: var(--card-bg);
     border: 1px solid var(--accent);
-}
-
+}@media (hover: hover) and (pointer: fine) {
 .action-btn.view:hover {
     opacity: 0.9;
+}
 }
 
 /* Three Dots and Roger Menu */
@@ -567,12 +567,12 @@ button:disabled {
     cursor: pointer;
     font-size: 1rem;
     transition: all var(--animation-speed);
-}
-
+}@media (hover: hover) and (pointer: fine) {
 .roger-btn:hover {
     background: var(--card-bg);
     border-color: var(--accent);
     color: var(--accent);
+}
 }
 
 .roger-dropdown {
@@ -610,25 +610,25 @@ button:disabled {
     text-decoration: none;
     font-weight: 500;
     transition: background-color var(--animation-speed);
-}
-
+}@media (hover: hover) and (pointer: fine) {
 .roger-item:hover {
     background: var(--accent-light);
     color: var(--accent);
 }
+}
 
 .roger-item.danger {
     color: #dc2626;
-}
-
+}@media (hover: hover) and (pointer: fine) {
 .roger-item.danger:hover {
     background: #fee2e2;
     color: #b91c1c;
 }
-
+}@media (hover: hover) and (pointer: fine) {
 .action-btn.view:hover {
     background-color: transparent;
     color: var(--accent);
+}
 }
 
 .action-btn.download {
@@ -657,10 +657,10 @@ button:disabled {
     color: #d97706;
     border-color: #fde68a;
     animation: scaleIn var(--animation-speed) ease-out;
-}
-
+}@media (hover: hover) and (pointer: fine) {
 .action-btn.fav:hover {
     background-color: #fef3c7;
+}
 }
 
 /* AI Button */
@@ -669,11 +669,11 @@ button:disabled {
     color: white;
     border: none;
     animation: slideDown var(--animation-speed) ease-out;
-}
-
+}@media (hover: hover) and (pointer: fine) {
 .action-btn.ai-btn:hover {
     box-shadow: 0 2px 8px rgba(0, 71, 65, 0.3);
     transform: translateY(-2px);
+}
 }
 
 .resource-actions {
@@ -753,11 +753,11 @@ button:disabled {
     line-height: 1;
     cursor: pointer;
     transition: all var(--animation-speed);
-}
-
+}@media (hover: hover) and (pointer: fine) {
 .close-btn:hover {
     color: var(--text-color);
     transform: rotate(90deg);
+}
 }
 
 .modal-body {
@@ -792,11 +792,11 @@ button:disabled {
     border: 1px solid transparent;
     cursor: pointer;
     transition: all var(--animation-speed);
-}
-
+}@media (hover: hover) and (pointer: fine) {
 .ai-action-btn:hover {
     border-color: var(--accent);
     background: #ddeae8;
+}
 }
 
 .chat-container {
@@ -883,16 +883,16 @@ button:disabled {
     background: rgba(0, 71, 65, 0.1);
     transform: translate(-50%, -50%);
     transition: width var(--animation-speed), height var(--animation-speed);
-}
-
+}@media (hover: hover) and (pointer: fine) {
 .admin-btn:hover::after {
     width: 200px;
     height: 200px;
 }
-
+}@media (hover: hover) and (pointer: fine) {
 .admin-btn:hover {
     background: rgba(0, 71, 65, 0.1);
     transform: translateY(-2px);
+}
 }
 
 .admin-welcome {
@@ -930,10 +930,10 @@ button:disabled {
 
 #loginAttempts {
     animation: slideDown var(--animation-speed) ease-out;
-}
-
+}@media (hover: hover) and (pointer: fine) {
 .delete-btn:hover {
     opacity: 0.8;
+}
 }
 
 /* Favicon Navigation Bar */
@@ -1005,20 +1005,20 @@ button:disabled {
     background: radial-gradient(circle at center, rgba(0, 71, 65, 0.1) 0%, transparent 70%);
     opacity: 0;
     transition: opacity var(--animation-speed);
-}
-
+}@media (hover: hover) and (pointer: fine) {
 .favicon-item:hover::before {
     opacity: 1;
 }
-
+}@media (hover: hover) and (pointer: fine) {
 .favicon-item:hover {
     opacity: 1;
     background: var(--accent-light);
     color: var(--accent);
 }
-
+}@media (hover: hover) and (pointer: fine) {
 .favicon-item:hover .favicon-icon {
     transform: scale(1.2) translateY(-2px);
+}
 }
 
 /* Active tab state */
@@ -1072,12 +1072,15 @@ button:disabled {
     box-shadow: 0 2px 6px rgba(0, 71, 65, 0.25);
     transition: all var(--animation-speed);
     margin-bottom: 0.15rem;
-}
-
-.nav-upload:hover .upload-pill,
-.nav-upload.active .upload-pill {
+}.nav-upload.active .upload-pill {
     background: #005f57;
     opacity: 0.95;
+}
+@media (hover: hover) and (pointer: fine) {
+.nav-upload:hover .upload-pill {
+    background: #005f57;
+    opacity: 0.95;
+}
 }
 
 /* Don't apply the active bar-line underline to upload */
@@ -1144,12 +1147,12 @@ button:disabled {
     width: auto;
     padding: 0;
     font-weight: 600;
-}
-
+}@media (hover: hover) and (pointer: fine) {
 .notice-card-delete:hover {
     opacity: 0.7;
     transform: none;
     box-shadow: none;
+}
 }
 
 .notice-empty {
@@ -1234,11 +1237,11 @@ button:disabled {
     align-items: center;
     justify-content: center;
     box-shadow: none !important;
-}
-
+}@media (hover: hover) and (pointer: fine) {
 .toggle-password-btn:hover {
     color: var(--accent) !important;
     opacity: 1 !important;
+}
 }
 
 .admin-hint {
@@ -1509,10 +1512,10 @@ button:disabled {
     gap: 0.35rem;
     font-weight: 500;
     transition: background-color var(--animation-speed);
-}
-
+}@media (hover: hover) and (pointer: fine) {
 .back-btn:hover {
     background-color: #005f57;
+}
 }
 
 .current-path-wrap {
@@ -1563,11 +1566,11 @@ button:disabled {
     border: 1px solid #e2eae8;
     gap: 0.85rem;
     transition: border-color var(--animation-speed), background-color var(--animation-speed);
-}
-
+}@media (hover: hover) and (pointer: fine) {
 .folder-card .resource-item:hover {
     background-color: var(--accent-light);
     border-color: var(--accent);
+}
 }
 
 .folder-card .resource-name {
@@ -1599,10 +1602,10 @@ button:disabled {
     color: var(--accent);
     text-decoration: none;
     font-weight: 500;
-}
-
+}@media (hover: hover) and (pointer: fine) {
 .footer-links a:hover {
     text-decoration: underline;
+}
 }
 
 .footer-dot {
@@ -1633,11 +1636,11 @@ button:disabled {
     align-items: center;
     gap: 0.35rem;
     transition: opacity var(--animation-speed);
-}
-
+}@media (hover: hover) and (pointer: fine) {
 .author-link:hover {
     text-decoration: underline;
     opacity: 0.85;
+}
 }
 
 /* === Landing Page & View Switching Styles === */
@@ -1719,11 +1722,11 @@ button:disabled {
     gap: 0.45rem;
     font-weight: 600;
     cursor: pointer;
-}
-
+}@media (hover: hover) and (pointer: fine) {
 .hero-secondary-btn:hover {
     border-color: var(--accent);
     color: var(--accent);
+}
 }
 
 .stats-grid {
@@ -1817,10 +1820,10 @@ button:disabled {
     display: inline-flex;
     align-items: center;
     gap: 0.3rem;
-}
-
+}@media (hover: hover) and (pointer: fine) {
 .view-all-link:hover {
     text-decoration: underline;
+}
 }
 
 /* Search Page Styles */
@@ -1942,10 +1945,10 @@ button:disabled {
     width: auto !important;
     flex-shrink: 0;
     transition: opacity var(--animation-speed);
-}
-
+}@media (hover: hover) and (pointer: fine) {
 .landing-search-btn:hover {
     opacity: 0.92;
+}
 }
 
 @media (max-width: 600px) {
@@ -1971,11 +1974,11 @@ button:disabled {
     cursor: pointer;
     background: var(--card-bg);
     border: 1px dashed var(--border-color);
-}
-
+}@media (hover: hover) and (pointer: fine) {
 .folder-shortcut:hover {
     background: var(--accent-light);
     border-color: var(--accent);
+}
 }
 
 /* "Jump to course" link under search results */
@@ -1992,11 +1995,11 @@ button:disabled {
     font-weight: 600;
     cursor: pointer;
     text-align: left;
-}
-
+}@media (hover: hover) and (pointer: fine) {
 .resource-course-link:hover {
     text-decoration: underline;
     opacity: 1;
+}
 }
 
 /* Loading / error state blocks */
@@ -2039,11 +2042,11 @@ button:disabled {
     cursor: pointer;
     flex-shrink: 0;
     transition: all var(--animation-speed);
-}
-
+}@media (hover: hover) and (pointer: fine) {
 .theme-toggle-btn:hover {
     background: rgba(0, 71, 65, 0.1);
     opacity: 1;
+}
 }
 
 /* === Dark theme (same cream/deep-green identity, inverted) === */
@@ -2108,12 +2111,11 @@ button:disabled {
 [data-theme="dark"] .folder-card .resource-item {
     background-color: rgba(255, 255, 255, 0.04);
     border-color: #275047;
-}
-
-[data-theme="dark"] .resource-item:hover,
-[data-theme="dark"] .folder-card .resource-item:hover {
+}@media (hover: hover) and (pointer: fine) {
+[data-theme="dark"] .resource-item:hover, [data-theme="dark"] .folder-card .resource-item:hover {
     background-color: var(--accent-light);
     border-color: var(--accent);
+}
 }
 
 [data-theme="dark"] .password-input-wrap input {
@@ -2142,10 +2144,10 @@ button:disabled {
 [data-theme="dark"] .notice-empty,
 [data-theme="dark"] .header-subtitle {
     color: #9db8b1;
-}
-
+}@media (hover: hover) and (pointer: fine) {
 [data-theme="dark"] .theme-toggle-btn:hover {
     background: rgba(127, 200, 188, 0.15);
+}
 }
 
 /* === Round 2: routing-era additions (badges, countdown, skeletons,
@@ -2243,6 +2245,12 @@ button:disabled {
 }
 
 /* Request-a-material strip */
+/* The strip lives inside .courses-grid on the Courses view: it must span
+   the full row (banner on top), never squeeze into one column. */
+.courses-grid .request-strip {
+    grid-column: 1 / -1;
+}
+
 .request-strip {
     display: flex;
     justify-content: space-between;
@@ -2287,8 +2295,9 @@ button:disabled {
     background: var(--accent-light); color: var(--accent);
     border: 1px solid var(--border-color); border-radius: 999px;
     font-weight: 600; font-size: 0.85rem; cursor: pointer;
-}
+}@media (hover: hover) and (pointer: fine) {
 .dash-chip:hover { border-color: var(--accent); }
+}
 .course-dash-deadline {
     margin-top: 0.9rem; padding: 0.65rem 0.9rem;
     background: var(--accent-light); border-left: 4px solid var(--accent);
@@ -2315,13 +2324,15 @@ button:disabled {
     background: var(--card-bg); color: var(--text-color);
     border: 1px solid var(--border-color); border-radius: 999px;
     font-size: 0.82rem; font-weight: 500; cursor: pointer;
-}
+}@media (hover: hover) and (pointer: fine) {
 .recent-search-chip:hover { border-color: var(--accent); color: var(--accent); }
+}
 .recent-search-clear {
     width: auto; background: none; border: none; color: #999;
     font-size: 0.78rem; font-weight: 600; cursor: pointer; padding: 0.3rem;
-}
+}@media (hover: hover) and (pointer: fine) {
 .recent-search-clear:hover { color: #dc2626; opacity: 1; }
+}
 
 /* Download count meta */
 .download-count { font-size: 0.72rem; color: #888; margin-left: 0.45rem; font-weight: 600; }
@@ -2369,8 +2380,9 @@ button:disabled {
     border: 1.5px solid var(--border-color);
     font-size: 0.92rem; font-weight: 500; cursor: pointer;
     transition: border-color var(--animation-speed), background var(--animation-speed);
-}
+}@media (hover: hover) and (pointer: fine) {
 .quiz-option:hover:not(:disabled) { border-color: var(--accent); }
+}
 .quiz-option:disabled { cursor: default; opacity: 1; }
 .quiz-option.correct { background: rgba(16, 185, 129, 0.16); border-color: #10b981; color: var(--text-color); font-weight: 700; }
 .quiz-option.wrong { background: rgba(239, 68, 68, 0.14); border-color: #ef4444; color: var(--text-color); font-weight: 700; }
@@ -2398,3 +2410,49 @@ button:disabled {
     .skeleton-line { animation: none; }
     .resource-item.highlight { animation: none; }
 }
+
+
+/* === Floating dock navigation (2026-10-22, Wadi's pick) ===
+   Pill-shaped floating bar; active item = filled pill with icon + label,
+   inactive items icon-only. Upload is a raised round FAB in the centre. */
+.favicon-bar {
+    left: 12px;
+    right: 12px;
+    bottom: calc(10px + env(safe-area-inset-bottom));
+    border: 1.5px solid var(--border-color);
+    border-radius: 999px;
+    padding: 0.45rem 0.5rem;
+    box-shadow: 0 14px 34px rgba(0, 40, 36, 0.22), 0 2px 8px rgba(0, 40, 36, 0.12);
+}
+.favicon-item {
+    border-radius: 999px;
+    min-height: 54px;
+    padding: 0.45rem 0.2rem;
+}
+.favicon-item::before { border-radius: 999px; }
+.favicon-item .favicon-label { display: none; }
+.favicon-item.active {
+    background: var(--accent);
+    color: #ffffff;
+}
+.favicon-item.active .favicon-icon { transform: scale(1.05); color: #ffffff; }
+.favicon-item.active .favicon-label { display: block; color: #ffffff; }
+.favicon-item.active::after { display: none; }
+[data-theme="dark"] .favicon-item.active { color: #0c1f1c; }
+[data-theme="dark"] .favicon-item.active .favicon-icon,
+[data-theme="dark"] .favicon-item.active .favicon-label { color: #0c1f1c; }
+/* Upload: raised centre FAB */
+.nav-upload { overflow: visible; }
+.nav-upload .upload-pill {
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    font-size: 1.5rem;
+    margin-top: -30px;
+    margin-bottom: 0.1rem;
+    background: var(--accent);
+    border: 4px solid var(--bg-color);
+    box-shadow: 0 10px 22px rgba(0, 71, 65, 0.35);
+}
+.nav-upload .favicon-label { display: block; color: var(--accent); opacity: 1; }
+[data-theme="dark"] .nav-upload .upload-pill { color: #0c1f1c; }

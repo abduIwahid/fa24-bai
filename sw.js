@@ -8,11 +8,11 @@
 //     fallback, so previously opened files stay readable offline
 //   - /api/* : network only, never cached (live data + admin actions)
 
-const CACHE_NAME = 'fa24bai-shell-v5';
+const CACHE_NAME = 'fa24bai-shell-v6';
 const SHELL_ASSETS = [
     '/',
     '/index.html',
-    '/css/style.css?v=5',
+    '/css/style.css?v=6',
     '/js/script.js?v=5',
     '/logo.jpeg',
     '/favicon.svg',
