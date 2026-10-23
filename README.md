@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="banner.jpg" alt="FA24-BAI Study Hub — fa24-bai.vercel.app" width="900">
+</p>
+
 # FA24-BAI 5th Semester Study Hub
 
 A modern web portal for the FA24-BAI cohort (BS Artificial Intelligence, 5th semester) to discover, search, and study semester resources — with an integrated Google Gemini AI study companion for instant summaries, practice quizzes, and viva preparation.
