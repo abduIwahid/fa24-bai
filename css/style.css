@@ -3043,3 +3043,13 @@ button:disabled {
     color: var(--text-color);
     opacity: 0.6;
 }
+
+/* ===== Trim dead bottom space (2026-10-23): the large mobile body
+   bottom padding existed for the old fixed bottom nav bar, which no
+   longer exists — it was pure empty space under the footer. ====== */
+@media (max-width: 768px) {
+    body { padding-bottom: 1.2rem; }
+}
+@media (max-width: 480px) {
+    body { padding-bottom: 1.2rem; }
+}
