@@ -150,6 +150,28 @@ ${promptInstruction}`
 
         let modelErrors = [];
 
+        // Helper to query Gemini REST endpoint
+        async function queryGemini(modelName, partsPayload) {
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${encodeURIComponent(cleanKey)}`;
+            const apiRes = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{
+                        role: 'user',
+                        parts: partsPayload
+                    }],
+                    generationConfig: {
+                        temperature: 0.3,
+                        maxOutputTokens: ['summarize', 'quiz', 'viva'].includes(action) ? 2048 : 1024
+                    }
+                })
+            });
+            const data = await apiRes.json();
+            return { ok: apiRes.ok, status: apiRes.status, data };
+        }
+
+
         async function tryModels(models) {
             for (const modelName of models) {
                 try {
