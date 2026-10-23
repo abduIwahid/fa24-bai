@@ -122,6 +122,10 @@ document.addEventListener("DOMContentLoaded", () => {
         if (searchSection) searchSection.style.display = currentTab === 'search' ? 'block' : 'none';
         if (coursesSection) coursesSection.style.display = currentTab === 'courses' ? 'block' : 'none';
         if (bookmarksSection) bookmarksSection.style.display = currentTab === 'bookmarks' ? 'block' : 'none';
+        animateIn(currentTab === 'home' ? landingSection
+            : currentTab === 'search' ? searchSection
+            : currentTab === 'courses' ? coursesSection
+            : currentTab === 'bookmarks' ? bookmarksSection : null);
 
         if (currentTab === 'home') {
             renderLandingCourses();
@@ -138,7 +142,23 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
+    // === View transitions: a quick glass wipe + a soft slide-in =====
+    const flashGlass = () => {
+        const g = document.getElementById('glassFlash');
+        if (!g) return;
+        g.classList.remove('on');
+        void g.offsetWidth;
+        g.classList.add('on');
+    };
+    const animateIn = (el) => {
+        if (!el) return;
+        el.classList.remove('view-enter');
+        void el.offsetWidth;
+        el.classList.add('view-enter');
+    };
+
     const applyRoute = () => {
+        flashGlass();
         const route = parseRoute();
         pendingHighlight = null;
 
@@ -274,6 +294,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         if (uploadSection) {
             uploadSection.style.display = 'block';
+            animateIn(uploadSection);
             setTimeout(() => {
                 const header = document.querySelector('.header');
                 const headerOffset = header ? header.offsetHeight + 12 : 70;
@@ -1469,6 +1490,7 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     const renderCourses = () => {
+        animateIn(coursesContainer);
         // Shared loading / error states for every courses sub-view
         if (filesState === 'loading') {
             navigationBar.style.display = currentView === 'all' ? 'none' : 'flex';
