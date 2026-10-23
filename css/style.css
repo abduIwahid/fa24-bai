@@ -3218,3 +3218,14 @@ body { overflow-x: clip; }
     .header-text h1 { font-size: 0.95rem; }
     .header-menu .menu-item { padding: 5px 4px; font-size: 0.74rem; }
 }
+
+/* === Two-tier phone header (2026-10-23): labels + enlarged wordmark cannot
+   share one line at phone widths without overlapping (verified in audit).
+   Phones get two clean rows inside the pill: branding + buttons on top,
+   labeled nav below. Larger screens keep the single line. === */
+@media (max-width: 640px) {
+    .header { flex-wrap: wrap; row-gap: 4px; }
+    .header-left { order: 0; }
+    .header-right { order: 1; margin-left: auto; }
+    .header-menu { order: 2; flex: 1 1 100%; }
+}
