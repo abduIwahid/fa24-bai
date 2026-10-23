@@ -8,7 +8,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const searchInput = document.getElementById('searchInput');
     const filterChips = document.querySelectorAll('.filter-chip');
     const adminLoginBtn = document.getElementById('adminLoginBtn');
-    const adminWelcome = document.getElementById('adminWelcome');
     const uploadSection = document.getElementById('uploadSection');
 
     const quickAccessContainer = document.getElementById('quickAccessContainer');
@@ -358,12 +357,36 @@ document.addEventListener("DOMContentLoaded", () => {
     const loginError = document.getElementById('loginError');
     const loginAttempts = document.getElementById('loginAttempts');
 
+
+    // Brief "Welcome Admin" pop (Wadi, 2026-10-23): shows for ~2 seconds
+    // with a shrinking loading bar, only at the moment of login — no name,
+    // nothing permanent in the header.
+    const showAdminWelcome = () => {
+        const old = document.getElementById('adminWelcomePop');
+        if (old) old.remove();
+        const pop = document.createElement('div');
+        pop.id = 'adminWelcomePop';
+        pop.style.cssText = 'position:fixed;top:88px;left:50%;transform:translate(-50%,-10px);opacity:0;transition:opacity .25s ease,transform .25s ease;background:#004741;color:#f0ede4;padding:.7rem 1.4rem .85rem;border-radius:999px;box-shadow:0 14px 34px rgba(0,71,65,.28);z-index:3000;font-weight:600;font-size:.95rem;overflow:hidden;';
+        pop.textContent = 'Welcome Admin';
+        const bar = document.createElement('div');
+        bar.style.cssText = 'position:absolute;left:0;bottom:0;height:3px;width:100%;background:#f0ede4;opacity:.85;';
+        pop.appendChild(bar);
+        document.body.appendChild(pop);
+        requestAnimationFrame(() => {
+            pop.style.opacity = '1';
+            pop.style.transform = 'translate(-50%,0)';
+            bar.style.transition = 'width 1.8s linear';
+            bar.style.width = '0';
+        });
+        setTimeout(() => { pop.style.opacity = '0'; pop.style.transform = 'translate(-50%,-10px)'; }, 1850);
+        setTimeout(() => pop.remove(), 2200);
+    };
+
     const updateAdminUI = () => {
         const uploadNavItem = document.getElementById('navUpload');
         const logoutBtn = document.getElementById('adminLogoutBtn');
         if (adminPass) {
             adminLoginBtn.style.display = 'none';
-            adminWelcome.style.display = 'block';
             if (uploadNavItem) uploadNavItem.style.display = '';
             if (logoutBtn) logoutBtn.style.display = '';
             uploadSection.style.display = 'block';
@@ -373,7 +396,6 @@ document.addEventListener("DOMContentLoaded", () => {
             renderQuickAccess();
         } else {
             adminLoginBtn.style.display = '';
-            adminWelcome.style.display = 'none';
             if (uploadNavItem) uploadNavItem.style.display = 'none';
             if (logoutBtn) logoutBtn.style.display = 'none';
             if (uploadSection) uploadSection.style.display = 'none';
@@ -503,7 +525,7 @@ document.addEventListener("DOMContentLoaded", () => {
             updateLoginAttempts();
             closeAdminLoginModal();
             updateAdminUI();
-            showNotification('Admin access granted', 'success');
+            showAdminWelcome();
         };
 
         const denyAccess = () => {
