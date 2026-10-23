@@ -5,6 +5,23 @@ export default async function handler(req, res) {
 
     const { filename, prompt, action, password } = req.body;
 
+    // Lightweight per-IP rate limiting (best effort, in-memory): slows down
+    // password guessing on 'verify' and AI quota abuse on the AI actions.
+    const clientIp = ((req.headers['x-forwarded-for'] || '').split(',')[0] || '').trim() || 'unknown';
+    if (!global.__askRate) global.__askRate = new Map();
+    const nowMs = Date.now();
+    const bucketKey = clientIp + ':' + (action === 'verify' ? 'verify' : 'ai');
+    const hits = (global.__askRate.get(bucketKey) || []).filter(t => nowMs - t < 60000);
+    const limit = action === 'verify' ? 10 : 20;
+    if (hits.length >= limit) {
+        if (action === 'verify') {
+            return res.status(429).json({ success: false, message: 'Too many attempts - please wait a minute and try again.' });
+        }
+        return res.status(200).json({ reply: 'Too many AI requests right now - please wait a minute and try again.' });
+    }
+    hits.push(nowMs);
+    global.__askRate.set(bucketKey, hits);
+
     // Support admin password verification (server-side only, fail closed:
     // if the env var is not configured, nobody gets in)
     if (action === 'verify') {
@@ -36,6 +53,26 @@ export default async function handler(req, res) {
         const folderContext = filename && filename.includes('/')
             ? filename.substring(0, filename.lastIndexOf('/'))
             : '';
+
+        // Shared summary cache: the first student's summary of a file is
+        // stored in the repo and served to everyone after that - one Gemini
+        // call per lecture instead of one per student.
+        let cachePath = null;
+        if (action === 'summarize' && filename) {
+            cachePath = 'ai-cache/' + filename.replace(/[^a-zA-Z0-9]+/g, '_') + '.json';
+            try {
+                const cRes = await fetch(`https://raw.githubusercontent.com/${owner}/${repo}/main/${cachePath}`, {
+                    headers: GITHUB_TOKEN ? { 'Authorization': `Bearer ${GITHUB_TOKEN}` } : {},
+                    signal: AbortSignal.timeout(8000)
+                });
+                if (cRes.ok) {
+                    const cached = await cRes.json();
+                    if (cached && cached.reply) {
+                        return res.status(200).json({ reply: cached.reply, cached: true });
+                    }
+                }
+            } catch (cacheErr) { /* cache is best-effort */ }
+        }
 
         let base64Pdf = null;
 
@@ -209,6 +246,20 @@ ${promptInstruction}`
         }
 
         if (replyText) {
+            if (cachePath && GITHUB_TOKEN) {
+                try {
+                    const ghHeaders = { 'Authorization': `Bearer ${GITHUB_TOKEN}`, 'Content-Type': 'application/json', 'User-Agent': 'StudyHub-AI-Cache' };
+                    const cUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${cachePath}`;
+                    let existingSha = null;
+                    const gRes = await fetch(cUrl, { headers: ghHeaders, signal: AbortSignal.timeout(6000) });
+                    if (gRes.ok) { const j = await gRes.json(); existingSha = j.sha; }
+                    const payload = JSON.stringify({ file: filename, action: 'summarize', createdAt: new Date().toISOString(), reply: replyText }, null, 2);
+                    await fetch(cUrl, {
+                        method: 'PUT', headers: ghHeaders, signal: AbortSignal.timeout(8000),
+                        body: JSON.stringify({ message: `AI summary cache: ${filename}`, content: Buffer.from(payload).toString('base64'), ...(existingSha ? { sha: existingSha } : {}) })
+                    });
+                } catch (cacheWriteErr) { /* never let caching break the answer */ }
+            }
             return res.status(200).json({ reply: replyText });
         }
 
