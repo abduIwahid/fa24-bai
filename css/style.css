@@ -2867,3 +2867,60 @@ button:disabled {
     font-weight: 700;
     color: var(--primary-color);
 }
+
+/* ===== Header v3.1 (2026-10-23): actions pinned to the right corner;
+   on wide screens the menu opens up into an inline nav centered in
+   the header and the hamburger hides. ============================ */
+.header-right {
+    margin-left: auto;
+}
+@media (min-width: 800px) {
+    .hamburger-btn {
+        display: none;
+    }
+    .header-menu {
+        position: static;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        flex: 1 1 auto;
+        order: 1;
+        min-width: 0;
+        max-width: none;
+        padding: 0;
+        background: none;
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
+        animation: none;
+    }
+    .header-right {
+        order: 2;
+    }
+    .header-menu .menu-item {
+        width: auto;
+        padding: 9px 13px;
+        border-radius: 999px;
+        white-space: nowrap;
+    }
+    .header-menu .menu-divider {
+        display: none;
+    }
+    .header-menu .admin-welcome {
+        padding: 0 4px;
+        white-space: nowrap;
+    }
+}
+@media (min-width: 800px) and (max-width: 1099px) {
+    .header-subtitle {
+        display: none;
+    }
+    .header-menu .menu-item {
+        padding: 8px 9px;
+        font-size: 0.9rem;
+    }
+    .header-menu .admin-welcome {
+        display: none !important;
+    }
+}
