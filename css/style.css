@@ -2949,15 +2949,18 @@ button:disabled {
     top: 0;
     z-index: 0;
     border-radius: 10px;
-    background: rgba(0, 71, 65, 0.12);
+    background: rgba(0, 71, 65, 0.10);
     background:
-        linear-gradient(135deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.12)),
-        color-mix(in srgb, var(--primary-color) 16%, transparent);
-    border: 1px solid rgba(0, 71, 65, 0.28);
-    border-color: color-mix(in srgb, var(--primary-color) 35%, transparent);
-    box-shadow: 0 4px 14px rgba(0, 71, 65, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.5);
-    -webkit-backdrop-filter: blur(6px);
-    backdrop-filter: blur(6px);
+        linear-gradient(135deg, rgba(255, 255, 255, 0.38), rgba(255, 255, 255, 0.06) 55%, rgba(255, 255, 255, 0.14)),
+        color-mix(in srgb, var(--primary-color) 20%, transparent);
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    box-shadow:
+        0 0 0 1px rgba(0, 71, 65, 0.12),
+        0 6px 18px rgba(0, 71, 65, 0.16),
+        inset 0 1px 0 rgba(255, 255, 255, 0.65),
+        inset 0 -1px 0 rgba(0, 71, 65, 0.08);
+    -webkit-backdrop-filter: blur(8px) saturate(1.5);
+    backdrop-filter: blur(8px) saturate(1.5);
     opacity: 0;
     pointer-events: none;
     transition:
@@ -2978,13 +2981,16 @@ button:disabled {
     .nav-indicator { transition: none; }
 }
 
-/* ===== Site footer =============================================== */
+/* ===== Site footer (sf- classes: the old template's .footer-*
+   names are taken, so these are deliberately unique) ============= */
 .site-footer {
+    position: static;
+    clear: both;
     margin-top: 3rem;
     border-top: 1px solid var(--border-color);
     background: var(--card-bg);
 }
-.footer-inner {
+.sf-inner {
     max-width: 1200px;
     margin: 0 auto;
     padding: 1.6rem 5% 1.8rem;
@@ -2994,30 +3000,30 @@ button:disabled {
     justify-content: space-between;
     gap: 1rem 2rem;
 }
-.footer-brand {
+.sf-brand {
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
     max-width: 430px;
 }
-.footer-title {
+.sf-title {
     font-size: 1rem;
     font-weight: 800;
     color: var(--primary-color);
 }
-.footer-tag {
+.sf-tag {
     font-size: 0.85rem;
     line-height: 1.45;
     color: var(--text-color);
     opacity: 0.65;
 }
-.footer-links {
+.sf-links {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 0.6rem 1.15rem;
 }
-.footer-links a {
+.sf-links a {
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
@@ -3027,9 +3033,9 @@ button:disabled {
     text-decoration: none;
 }
 @media (hover: hover) {
-    .footer-links a:hover { color: var(--primary-color); }
+    .sf-links a:hover { color: var(--primary-color); }
 }
-.footer-copy {
+.sf-copy {
     width: 100%;
     padding-top: 0.9rem;
     border-top: 1px dashed var(--border-color);
