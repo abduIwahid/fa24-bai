@@ -573,16 +573,19 @@ document.addEventListener("DOMContentLoaded", () => {
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;');
 
-    // "New" (first added ≤14 days ago) / "Updated" (changed ≤14 days ago
-    // and not brand new). Dates come from /api/files (git history).
+    // Freshness badges (Wadi's rule, 2026-10-23): nothing already on the
+    // site carries a badge. From now on, an upload gets a "New" badge for
+    // 24 hours only, then it disappears on its own; "Updated" follows the
+    // same from-now + 24h rule. Dates come from /api/files (git history).
+    const NEW_BADGE_EPOCH = Date.parse('2026-10-23T02:12:00.000Z');
     const dateBadge = (file) => {
         const now = Date.now();
         const created = file.createdAt ? Date.parse(file.createdAt) : null;
         const updated = file.updatedAt ? Date.parse(file.updatedAt) : null;
-        if (created && now - created <= 14 * DAY_MS) {
+        if (created && created > NEW_BADGE_EPOCH && now - created <= DAY_MS) {
             return '<span class="badge-fresh badge-new">New</span>';
         }
-        if (updated && now - updated <= 14 * DAY_MS && (!created || updated - created > DAY_MS)) {
+        if (updated && updated > NEW_BADGE_EPOCH && now - updated <= DAY_MS && (!created || updated - created > 60000)) {
             return '<span class="badge-fresh badge-updated">Updated</span>';
         }
         return '';
