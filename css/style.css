@@ -3147,3 +3147,17 @@ body { zoom: 0.9; }
 @media (max-width: 768px) {
     body { zoom: 1; } /* phones use the viewport initial-scale (75%) instead */
 }
+
+/* === Header fit fix (Wadi, 2026-10-23): at the 75% default zoom the layout
+   width grows past the old 560px breakpoint, so labeled nav overflowed and
+   slid over the logo. Icon-only nav now applies up to 700px. === */
+@media (max-width: 700px) {
+    .header-left { flex-shrink: 0; }
+    .header-subtitle { display: none; }
+    .header-text h1 { font-size: 0.92rem; overflow: visible; text-overflow: clip; }
+    .app-logo { width: 30px; height: 30px; }
+    .header-menu { justify-content: center; }
+    .header-menu .menu-item { padding: 7px 8px; gap: 0; flex: 0 0 auto; }
+    .header-menu .menu-item span { display: none; }
+    .header-menu .menu-item i { font-size: 1.05rem; }
+}
