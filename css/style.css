@@ -3161,3 +3161,18 @@ body { zoom: 0.9; }
     .header-menu .menu-item span { display: none; }
     .header-menu .menu-item i { font-size: 1.05rem; }
 }
+
+/* === Small-screen header fit (responsive audit, 2026-10-23): at ~320-400px
+   layouts the centered icon row overflowed its box and painted over the
+   STUDY HUB wordmark. Slim the pill and every header piece so it truly fits. === */
+@media (max-width: 480px) {
+    .header { margin-left: 6px; margin-right: 6px; padding: 0.35rem 0.5rem; gap: 0.4rem; }
+    .header-left { gap: 0.35rem; }
+    .app-logo { width: 26px; height: 26px; }
+    .header-text h1 { font-size: 0.78rem; letter-spacing: 0; }
+    .header-menu { gap: 2px; }
+    .header-menu .menu-item { padding: 5px 5px; }
+    .header-menu .menu-item i { font-size: 0.98rem; }
+    .header-right { gap: 0.25rem; }
+    .notice-toggle-btn, .theme-toggle-btn { width: 34px; height: 34px; min-width: 34px; }
+}
