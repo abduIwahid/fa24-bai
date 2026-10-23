@@ -3063,3 +3063,15 @@ button:disabled {
 @media (max-width: 480px) {
     .container { min-height: calc(100dvh - 1.7rem); }
 }
+
+/* ===== Footer breathing room + star icon (2026-10-23): the sticky
+   footer's auto margin collapses to zero on long pages, so the gap
+   comes from the content sections' bottom margin instead. ======== */
+.view-section, .upload-section {
+    margin-bottom: 2rem;
+}
+.sf-star .bi-star-fill {
+    color: #f59e0b;
+    font-size: 0.95em;
+    vertical-align: -0.08em;
+}
