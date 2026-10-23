@@ -3140,18 +3140,19 @@ button:disabled {
 
 /* === Nav polish + default zoom (Wadi, 2026-10-23) === */
 .header-menu { position: relative; }
-@media (min-width: 800px) {
+@media (min-width: 861px) {
     .header-menu .menu-item { padding: 7px 11px; font-size: 0.9rem; }
 }
 body { zoom: 0.9; }
 @media (max-width: 768px) {
-    body { zoom: 1; } /* phones use the viewport initial-scale (75%) instead */
+    body { zoom: 0.75; } /* phones: same single CSS-zoom mechanism as desktop (0.9) */
 }
 
-/* === Header fit fix (Wadi, 2026-10-23): at the 75% default zoom the layout
-   width grows past the old 560px breakpoint, so labeled nav overflowed and
-   slid over the logo. Icon-only nav now applies up to 700px. === */
-@media (max-width: 700px) {
+/* === Unified responsive band (Wadi, 2026-10-23): ONE consistent header
+   state from small phones up to 860px — icons-only nav, subtitle hidden.
+   Labels + subtitle switch on together at 861px+, where they truly fit.
+   No half-and-half state at any zoom. === */
+@media (max-width: 860px) {
     .header-left { flex-shrink: 0; }
     .header-subtitle { display: none; }
     .header-text h1 { font-size: 0.92rem; overflow: visible; text-overflow: clip; }
@@ -3176,3 +3177,6 @@ body { zoom: 0.9; }
     .header-right { gap: 0.25rem; }
     .notice-toggle-btn, .theme-toggle-btn { width: 34px; height: 34px; min-width: 34px; }
 }
+
+/* Zoom safety: never allow sideways scroll when zooming in/out */
+body { overflow-x: clip; }
