@@ -3187,3 +3187,34 @@ body { overflow-x: clip; }
 @media (min-width: 861px) and (max-width: 1099px) {
     .header-subtitle { display: block; }
 }
+
+/* === Branding + labeled nav at every size (Wadi, 2026-10-23): logo and
+   the STUDY HUB name bigger and always present; nav items show icon + name
+   on phones too (Home, Courses, Saved, Admin Login); notice/theme buttons
+   a bit smaller with rounder corners. Compact tiers keep one line intact. === */
+.app-logo { width: 46px; height: 46px; border-radius: 10px; }
+.header-text h1 { font-size: 1.38rem; }
+.theme-toggle-btn, .notice-toggle-btn { width: 36px; height: 36px; min-width: 36px; border-radius: 11px; font-size: 0.98rem; }
+@media (hover: hover) and (pointer: fine) {
+    .app-logo { width: 50px; height: 50px; }
+    .header-text h1 { font-size: 1.42rem; }
+}
+@media (max-width: 860px) {
+    .app-logo { width: 34px; height: 34px; border-radius: 9px; }
+    .header-text h1 { font-size: 1.02rem; }
+    .header-menu .menu-item { padding: 6px 8px; gap: 4px; font-size: 0.8rem; }
+    .header-menu .menu-item span { display: inline; }
+    .header-menu .menu-item i { font-size: 0.92rem; }
+    .theme-toggle-btn, .notice-toggle-btn { width: 32px; height: 32px; min-width: 32px; border-radius: 10px; font-size: 0.9rem; }
+}
+@media (max-width: 560px) {
+    .header { gap: 0.4rem; }
+    .header-left { gap: 0.4rem; }
+    .header-menu .menu-item { padding: 5px 5px; gap: 3px; font-size: 0.76rem; }
+    .header-menu .menu-item i { font-size: 0.88rem; }
+}
+@media (max-width: 480px) {
+    .app-logo { width: 32px; height: 32px; }
+    .header-text h1 { font-size: 0.95rem; }
+    .header-menu .menu-item { padding: 5px 4px; font-size: 0.74rem; }
+}
