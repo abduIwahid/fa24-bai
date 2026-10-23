@@ -3180,3 +3180,10 @@ body { zoom: 0.9; }
 
 /* Zoom safety: never allow sideways scroll when zooming in/out */
 body { overflow-x: clip; }
+
+/* === Subtitle consistency (audit re-check, 2026-10-23): an older
+   800-1099px block hid the subtitle while labels were already on.
+   Under the unified scheme, subtitle + labels appear together from 861px. === */
+@media (min-width: 861px) and (max-width: 1099px) {
+    .header-subtitle { display: block; }
+}
