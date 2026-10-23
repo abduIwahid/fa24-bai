@@ -54,12 +54,14 @@ export default async function handler(req, res) {
             ? filename.substring(0, filename.lastIndexOf('/'))
             : '';
 
-        // Shared summary cache: the first student's summary of a file is
-        // stored in the repo and served to everyone after that - one Gemini
-        // call per lecture instead of one per student.
+        // Shared AI cache: the first generated summary / quiz / viva for a
+        // file is stored in the repo and served to everyone after that - one
+        // Gemini call per file per action instead of one per student.
+        // (Summaries keep the original cache name; quiz/viva are suffixed.)
         let cachePath = null;
-        if (action === 'summarize' && filename) {
-            cachePath = 'ai-cache/' + filename.replace(/[^a-zA-Z0-9]+/g, '_') + '.json';
+        if (['summarize', 'quiz', 'viva'].includes(action) && filename) {
+            const base = 'ai-cache/' + filename.replace(/[^a-zA-Z0-9]+/g, '_');
+            cachePath = action === 'summarize' ? base + '.json' : base + '.' + action + '.json';
             try {
                 // Read via the Contents API, not raw.githubusercontent: the raw
                 // CDN caches 404s, so a just-written cache file can look
@@ -104,6 +106,30 @@ export default async function handler(req, res) {
             } catch (fetchErr) {
                 console.warn('Could not load raw PDF for inline data:', fetchErr.message);
             }
+        }
+
+        // Fresh uploads can be invisible to the raw CDN for a while (it
+        // caches 404s); fall back to the strongly-consistent Blobs API.
+        if (!base64Pdf && filename && filename.match(/\.pdf$/i) && GITHUB_TOKEN) {
+            try {
+                const metaRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${filename.split('/').map(encodeURIComponent).join('/')}`, {
+                    headers: { 'Authorization': `Bearer ${GITHUB_TOKEN}`, 'User-Agent': 'StudyHub-AI' },
+                    signal: AbortSignal.timeout(10000)
+                });
+                if (metaRes.ok) {
+                    const meta = await metaRes.json();
+                    if (meta.sha && meta.size > 0 && meta.size < 7 * 1024 * 1024) {
+                        const blobRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/git/blobs/${meta.sha}`, {
+                            headers: { 'Authorization': `Bearer ${GITHUB_TOKEN}`, 'User-Agent': 'StudyHub-AI' },
+                            signal: AbortSignal.timeout(15000)
+                        });
+                        if (blobRes.ok) {
+                            const blob = await blobRes.json();
+                            if (blob.content) base64Pdf = blob.content.replace(/\n/g, '');
+                        }
+                    }
+                }
+            } catch (blobErr) { /* best-effort */ }
         }
 
         // Build prompt instruction
@@ -263,7 +289,7 @@ ${promptInstruction}`
                     const payload = JSON.stringify({ file: filename, action: 'summarize', createdAt: new Date().toISOString(), reply: replyText }, null, 2);
                     await fetch(cUrl, {
                         method: 'PUT', headers: ghHeaders, signal: AbortSignal.timeout(8000),
-                        body: JSON.stringify({ message: `AI summary cache: ${filename}`, content: Buffer.from(payload).toString('base64'), ...(existingSha ? { sha: existingSha } : {}) })
+                        body: JSON.stringify({ message: `AI cache (${action}): ${filename}`, content: Buffer.from(payload).toString('base64'), ...(existingSha ? { sha: existingSha } : {}) })
                     });
                 } catch (cacheWriteErr) { /* never let caching break the answer */ }
             }
