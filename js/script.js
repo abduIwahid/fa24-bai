@@ -65,9 +65,29 @@ document.addEventListener("DOMContentLoaded", () => {
         bookmarks: document.getElementById('navBookmarks'),
     };
 
+    // Sliding glass pill behind the active header nav item — the
+    // highlight glides to the clicked item instead of jumping.
+    const headerMenuEl = document.getElementById('headerMenu');
+    const navIndicator = document.getElementById('navIndicator');
+    const moveNavIndicator = () => {
+        if (!navIndicator || !headerMenuEl) return;
+        const active = headerMenuEl.querySelector('.menu-item.active');
+        if (!active || !active.offsetWidth || !active.offsetHeight) {
+            navIndicator.style.opacity = '0';
+            return;
+        }
+        navIndicator.style.opacity = '1';
+        navIndicator.style.width = active.offsetWidth + 'px';
+        navIndicator.style.height = active.offsetHeight + 'px';
+        navIndicator.style.transform = 'translate(' + active.offsetLeft + 'px,' + active.offsetTop + 'px)';
+    };
+    window.addEventListener('resize', moveNavIndicator);
+    window.addEventListener('load', () => setTimeout(moveNavIndicator, 80));
+
     const setActiveNav = (key) => {
         Object.values(navItems).forEach(el => el && el.classList.remove('active'));
         if (navItems[key]) navItems[key].classList.add('active');
+        moveNavIndicator();
     };
 
     // === Hash routing (Round 2) ======================================
@@ -122,10 +142,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if (searchSection) searchSection.style.display = currentTab === 'search' ? 'block' : 'none';
         if (coursesSection) coursesSection.style.display = currentTab === 'courses' ? 'block' : 'none';
         if (bookmarksSection) bookmarksSection.style.display = currentTab === 'bookmarks' ? 'block' : 'none';
-        animateIn(currentTab === 'home' ? landingSection
-            : currentTab === 'search' ? searchSection
-            : currentTab === 'courses' ? coursesSection
-            : currentTab === 'bookmarks' ? bookmarksSection : null);
 
         if (currentTab === 'home') {
             renderLandingCourses();
@@ -142,23 +158,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
-    // === View transitions: a quick glass wipe + a soft slide-in =====
-    const flashGlass = () => {
-        const g = document.getElementById('glassFlash');
-        if (!g) return;
-        g.classList.remove('on');
-        void g.offsetWidth;
-        g.classList.add('on');
-    };
-    const animateIn = (el) => {
-        if (!el) return;
-        el.classList.remove('view-enter');
-        void el.offsetWidth;
-        el.classList.add('view-enter');
-    };
-
     const applyRoute = () => {
-        flashGlass();
         const route = parseRoute();
         pendingHighlight = null;
 
@@ -294,7 +294,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         if (uploadSection) {
             uploadSection.style.display = 'block';
-            animateIn(uploadSection);
             setTimeout(() => {
                 const header = document.querySelector('.header');
                 const headerOffset = header ? header.offsetHeight + 12 : 70;
@@ -372,6 +371,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (logoutBtn) logoutBtn.style.display = 'none';
             if (uploadSection) uploadSection.style.display = 'none';
         }
+        moveNavIndicator();
     };
 
     const openAdminLoginModal = () => {
@@ -434,6 +434,7 @@ document.addEventListener("DOMContentLoaded", () => {
             e.stopPropagation();
             const isOpen = headerMenu.classList.toggle('open');
             menuBtn.setAttribute('aria-expanded', String(isOpen));
+            if (isOpen) requestAnimationFrame(moveNavIndicator);
         });
         headerMenu.querySelectorAll('.menu-item').forEach(item => {
             item.addEventListener('click', closeHeaderMenu);
@@ -1490,7 +1491,6 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     const renderCourses = () => {
-        animateIn(coursesContainer);
         // Shared loading / error states for every courses sub-view
         if (filesState === 'loading') {
             navigationBar.style.display = currentView === 'all' ? 'none' : 'flex';
