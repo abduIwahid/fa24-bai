@@ -69,7 +69,8 @@ export default async function handler(req, res) {
 Include:
 - Core Overview: Primary purpose and fundamental themes.
 - Key Concepts & Theorems/Formulas: Clear bullet points explaining essential topics.
-- Exam Takeaways: High-yield concepts, key definitions, and critical exam points.`;
+- Exam Takeaways: High-yield concepts, key definitions, and critical exam points.
+Keep the whole summary focused and under ~450 words.`;
         } else if (action === 'quiz') {
             promptInstruction = `Generate 5 high-yield multiple choice practice questions (MCQs) for "${cleanDocName}".
 For each question:
@@ -86,7 +87,12 @@ Provide each question followed by a model answer highlighting the exact keywords
 Provide a direct, academically thorough, and helpful answer.`;
         }
 
-        const systemMessage = `You are an expert academic tutor for students in the FA24-BAI (Artificial Intelligence) program. Provide clear, accurate, and structured study guidance in clean markdown without conversational filler.`;
+        const systemMessage = `You are an expert academic tutor for students in the FA24-BAI (Artificial Intelligence) program. Provide clear, accurate, and structured study guidance without conversational filler.
+
+FORMATTING RULES (strict):
+- Never use LaTeX or math markup: no $$...$$, no $...$, no \text{}, \rightarrow, \frac or any backslash commands.
+- Write formulas in plain text, e.g. O(n log n), T(n) = 2T(n/2) + n, x^2. Use -> for arrows and <= / >= for comparisons.
+- Use ## for section headings and - for bullet points. Be direct and concise; skip any content that does not help the student.`;
 
         const textPromptPart = {
             text: `${systemMessage}
@@ -112,131 +118,71 @@ ${promptInstruction}`
 
         const cleanKey = (GEMINI_API_KEY || '').trim().replace(/^["']|["']$/g, '').trim();
 
-        // Dynamically query Google Generative Language API to discover available models for this key
-        let targetModels = [];
-        try {
-            const listUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(cleanKey)}`;
-            const listRes = await fetch(listUrl);
-            const listData = await listRes.json();
+        // Fast path: known-good models first (no discovery call per request,
+        // which keeps answers quick and saves API quota for a full class).
+        let targetModels = ['gemini-3.8-flash', 'gemini-2.5-flash', 'gemini-2.0-flash'];
 
-            if (!listRes.ok || listData.error) {
-                const apiErrMsg = listData.error ? listData.error.message : `HTTP ${listRes.status}`;
-                console.error('Google ListModels returned error:', apiErrMsg);
-                return res.status(200).json({
-                    reply: 'The AI assistant is not available right now — please try again later.'
-                });
-            }
-
-            if (Array.isArray(listData.models)) {
-                // Strictly filter to conversational Gemini models only (exclude research, embedding, or zero-quota preview models)
+        // Fallback only: discover whatever this key can actually use.
+        async function discoverModels() {
+            try {
+                const listUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(cleanKey)}`;
+                const listRes = await fetch(listUrl);
+                const listData = await listRes.json();
+                if (!listRes.ok || listData.error || !Array.isArray(listData.models)) return [];
                 const contentModels = listData.models
                     .filter(m => Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes('generateContent'))
                     .map(m => m.name.replace(/^models\//, ''))
                     .filter(m => m.startsWith('gemini-') && !m.includes('deep-research') && !m.includes('preview-0'));
-
-                // Prioritize the current recommended flash model first
-                // (older 1.5/2.0 models were retired for newer keys)
-                const preferred = [
-                    'gemini-3.8-flash',
-                    'gemini-2.5-flash',
-                    'gemini-2.0-flash',
-                    'gemini-1.5-flash'
-                ];
-
+                const preferred = ['gemini-3.8-flash', 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+                const out = [];
                 for (const p of preferred) {
                     const match = contentModels.find(m => m === p || m.startsWith(`${p}-`));
-                    if (match && !targetModels.includes(match)) {
-                        targetModels.push(match);
-                    }
+                    if (match && !out.includes(match)) out.push(match);
                 }
-
                 for (const m of contentModels) {
-                    if (m.includes('flash') && !targetModels.includes(m)) {
-                        targetModels.push(m);
-                    }
+                    if (m.includes('flash') && !out.includes(m)) out.push(m);
                 }
+                return out;
+            } catch (e) {
+                return [];
             }
-        } catch (discoverErr) {
-            console.warn('Could not discover models dynamically, falling back to defaults:', discoverErr.message);
         }
 
-        // The provider-recommended model goes first even if discovery did
-        // not surface it for this key — retired models answer with an error
-        // that names it as the replacement.
-        if (!targetModels.includes('gemini-3.8-flash')) {
-            targetModels.unshift('gemini-3.8-flash');
-        }
-
-        if (targetModels.length === 0) {
-            targetModels = ['gemini-3.8-flash', 'gemini-2.5-flash', 'gemini-2.0-flash'];
-        }
-
-        let replyText = null;
         let modelErrors = [];
 
-        // Helper to query Gemini REST endpoint
-        async function queryGemini(modelName, partsPayload) {
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${encodeURIComponent(cleanKey)}`;
-            const apiRes = await fetch(apiUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{
-                        role: 'user',
-                        parts: partsPayload
-                    }],
-                    generationConfig: {
-                        temperature: 0.3,
-                        maxOutputTokens: 2048
+        async function tryModels(models) {
+            for (const modelName of models) {
+                try {
+                    const primaryPayload = base64Pdf ? partsWithPdf : partsTextOnly;
+                    let res = await queryGemini(modelName, primaryPayload);
+                    if (res.ok && res.data.candidates && res.data.candidates[0] && res.data.candidates[0].content) {
+                        const textParts = res.data.candidates[0].content.parts.map(p => p.text).join('\n');
+                        if (textParts) return textParts;
                     }
-                })
-            });
-
-            const data = await apiRes.json();
-            return { ok: apiRes.ok, status: apiRes.status, data };
-        }
-
-        // Try available models
-        for (const modelName of targetModels) {
-            try {
-                // Try multimodal PDF if available, otherwise text
-                const primaryPayload = base64Pdf ? partsWithPdf : partsTextOnly;
-                let res = await queryGemini(modelName, primaryPayload);
-
-                if (res.ok && res.data.candidates && res.data.candidates[0] && res.data.candidates[0].content) {
-                    const textParts = res.data.candidates[0].content.parts.map(p => p.text).join('\n');
-                    if (textParts) {
-                        replyText = textParts;
-                        break;
-                    }
-                }
-
-                // If multimodal PDF payload failed, retry with text only
-                if (base64Pdf && res.data && res.data.error) {
-                    console.warn(`Model ${modelName} PDF payload failed, retrying text-only:`, res.data.error.message);
-                    const resText = await queryGemini(modelName, partsTextOnly);
-                    if (resText.ok && resText.data.candidates && resText.data.candidates[0] && resText.data.candidates[0].content) {
-                        const textParts = resText.data.candidates[0].content.parts.map(p => p.text).join('\n');
-                        if (textParts) {
-                            replyText = textParts;
-                            break;
+                    if (base64Pdf && res.data && res.data.error) {
+                        const resText = await queryGemini(modelName, partsTextOnly);
+                        if (resText.ok && resText.data.candidates && resText.data.candidates[0] && resText.data.candidates[0].content) {
+                            const textParts = resText.data.candidates[0].content.parts.map(p => p.text).join('\n');
+                            if (textParts) return textParts;
                         }
                     }
-                }
-
-                if (res.data && res.data.error) {
-                    const errMsg = res.data.error.message || `Error code ${res.data.error.code}`;
-                    modelErrors.push(`${modelName}: ${errMsg}`);
-                    // Only a genuinely invalid key is fatal — a retired or
-                    // busy model must fall through to the next candidate.
-                    if (errMsg.toLowerCase().includes('api key not valid') || errMsg.toLowerCase().includes('api_key_invalid')) {
-                        break;
+                    if (res.data && res.data.error) {
+                        const errMsg = res.data.error.message || `Error code ${res.data.error.code}`;
+                        modelErrors.push(`${modelName}: ${errMsg}`);
+                        if (errMsg.toLowerCase().includes('api key not valid') || errMsg.toLowerCase().includes('api_key_invalid')) break;
                     }
+                } catch (modelErr) {
+                    modelErrors.push(`${modelName}: ${modelErr.message}`);
                 }
-            } catch (modelErr) {
-                modelErrors.push(`${modelName}: ${modelErr.message}`);
-                console.warn(`Model ${modelName} request exception:`, modelErr.message);
             }
+            return null;
+        }
+
+        let replyText = await tryModels(targetModels);
+        if (!replyText) {
+            const discovered = await discoverModels();
+            const extra = discovered.filter(m => !targetModels.includes(m));
+            if (extra.length) replyText = await tryModels(extra);
         }
 
         if (replyText) {

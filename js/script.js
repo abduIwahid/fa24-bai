@@ -971,14 +971,34 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const formatMarkdown = (str) => {
         if (!str) return '';
-        let escaped = str
+        let s = String(str);
+        // Scrub LaTeX so answers never show raw $$ / \text{} junk
+        s = s.replace(/\$\$([\s\S]*?)\$\$/g, '$1').replace(/\$([^$\n]+)\$/g, '$1');
+        s = s.replace(/\\(?:text|mathrm|mathbf|mathit|operatorname)\{([^{}]*)\}/g, '$1');
+        s = s.replace(/\\frac\{([^{}]*)\}\{([^{}]*)\}/g, '$1/$2');
+        s = s.replace(/\\rightarrow|\\to\b/g, '\u2192').replace(/\\leftarrow/g, '\u2190')
+             .replace(/\\leq/g, '\u2264').replace(/\\geq/g, '\u2265').replace(/\\times/g, '\u00d7')
+             .replace(/\\cdot/g, '\u00b7').replace(/\\pm/g, '\u00b1').replace(/\\infty/g, '\u221e')
+             .replace(/\\approx/g, '\u2248').replace(/\\neq/g, '\u2260');
+        s = s.replace(/\\[a-zA-Z]+/g, '').replace(/[{}]/g, '');
+        let escaped = s
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;');
+        escaped = escaped.split('\n').map(line => {
+            const h = line.match(/^#{1,6}\s+(.*)$/);
+            if (h) return `<div style="font-weight:700;margin:10px 0 4px;">${h[1]}</div>`;
+            if (/^\s*(-{3,}|\*{3,})\s*$/.test(line)) return '<hr style="border:none;border-top:1px solid rgba(0,71,65,0.18);margin:10px 0;">';
+            const b = line.match(/^\s*[-*\u2022]\s+(.*)$/);
+            if (b) return `\u2022 ${b[1]}`;
+            return line;
+        }).join('\n');
         escaped = escaped.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
         escaped = escaped.replace(/\*(.*?)\*/g, '<em>$1</em>');
         escaped = escaped.replace(/`([^`]+)`/g, '<code style="background:rgba(0,0,0,0.06);padding:2px 4px;border-radius:3px;">$1</code>');
         escaped = escaped.replace(/\n/g, '<br>');
+        escaped = escaped.replace(/(<br>)+(<div style="font-weight:700)/g, '$2').replace(/(<\/div>)(<br>)+/g, '$1');
+        escaped = escaped.replace(/(<br>)+(<hr)/g, '$2').replace(/(<hr[^>]*>)(<br>)+/g, '$1');
         return escaped;
     };
 
@@ -1384,24 +1404,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
         landingCoursesGrid.innerHTML = list.map(courseData => {
             const escapedName = courseData.info.name.replace(/'/g, "\\'");
-            const countText = courseData.count > 0
-                ? `${courseData.count} study material(s) organized in ${courseData.folderTypes.size} category folder(s)`
-                : `Syllabus, CDF, lab manuals, and lecture slides`;
+            const filesHtml = courseData.count > 0
+                ? `<div class="course-files-count">${courseData.count} files</div>`
+                : `<div class="course-files-note">Syllabus, CDF, lab manuals, and lecture slides</div>`;
 
             return `
                 <div class="course-card landing-course-card" style="cursor: pointer;" onclick="window.openCourseFromLanding('${courseData.info.code}', '${escapedName}')">
-                    <div class="course-header" style="margin-bottom: 0.75rem;">
-                        <div class="course-info">
-                            <span class="course-code" style="display:inline-block; margin-bottom: 0.35rem;">${courseData.info.code}</span>
-                            <h2 style="font-size: 1.15rem; margin-top: 0.15rem;">${courseData.info.name}</h2>
-                        </div>
+                    <div class="course-info">
+                        <h2 style="font-size: 1.18rem; margin: 0 0 0.3rem 0;">${courseData.info.name}</h2>
+                        <p class="course-code" style="margin: 0;">${courseData.info.code}</p>
                     </div>
-                    <div style="font-size: 0.85rem; color: #666; margin-bottom: 1.1rem; line-height: 1.4;">
-                        ${countText}
-                    </div>
-                    <button type="button" class="action-btn" style="width: 100%; padding: 0.65rem 1rem; background: var(--accent-light); color: var(--accent); border: 1px solid transparent; font-weight: 600; cursor: pointer; border-radius: 6px; font-size: 0.88rem;" onclick="event.stopPropagation(); window.openCourseFromLanding('${courseData.info.code}', '${escapedName}')">
-                        Explore Course &rarr;
-                    </button>
+                    ${filesHtml}
                 </div>
             `;
         }).join('');

@@ -1,7 +1,7 @@
 :root {
     --bg-color: #f0ede4;
     --text-color: #004741;
-    --card-bg: #ffffff;
+    --card-bg: #fdfaf1;
     --accent: #004741;
     --accent-light: #e6f0ef;
     --border-color: #c0d1cf;
@@ -725,7 +725,7 @@ button:disabled {
 .modal-content {
     background: var(--card-bg);
     width: 100%;
-    max-width: 500px;
+    max-width: 620px;
     border-radius: 16px;
     display: flex;
     flex-direction: column;
@@ -1126,7 +1126,7 @@ button:disabled {
 
 /* === Notices Modal === */
 .notices-modal {
-    max-width: 460px !important;
+    max-width: 600px !important;
     height: auto !important;
     max-height: 80vh !important;
 }
@@ -3099,3 +3099,13 @@ button:disabled {
     border-radius: 999px;
     box-shadow: 0 14px 34px rgba(0, 71, 65, 0.13);
 }
+
+/* === Course cards: brag-scene style (2026-10-23) — green accent bar, clean type === */
+.course-card:not(.folder-card) { padding-left: 2.35rem; }
+.course-card:not(.folder-card)::before {
+    content: ''; position: absolute; left: 14px; top: 16px; bottom: 16px;
+    width: 6px; border-radius: 999px; background: var(--accent);
+}
+.course-card:not(.folder-card) .course-header { border-bottom: none; padding-bottom: 0; margin-bottom: 0.6rem; }
+.course-files-count { color: var(--accent); font-weight: 700; font-size: 0.95rem; margin-top: 0.55rem; }
+.course-files-note { color: #666; font-size: 0.85rem; margin-top: 0.55rem; line-height: 1.4; }
