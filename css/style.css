@@ -3045,3 +3045,21 @@ button:disabled {
 @media (max-width: 480px) {
     body { padding-bottom: 1.2rem; }
 }
+
+/* ===== Sticky footer (2026-10-23): on short pages (e.g. an empty
+   Saved list) the footer now sits at the very bottom of the screen
+   instead of floating right under the content. =================== */
+.container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100dvh;
+}
+.site-footer {
+    margin-top: auto;
+}
+@media (max-width: 768px) {
+    .container { min-height: calc(100dvh - 1.8rem); }
+}
+@media (max-width: 480px) {
+    .container { min-height: calc(100dvh - 1.7rem); }
+}
