@@ -3083,3 +3083,19 @@ button:disabled {
 }
 .landing-search-bar { border-radius: 16px; }
 .landing-search-btn { border-radius: 12px; }
+
+/* === Floating glass pill header — like the portfolio (Wadi, 2026-10-23) === */
+.header {
+    top: 12px;
+    margin-top: 12px;
+    margin-left: clamp(8px, 2vw, 24px);
+    margin-right: clamp(8px, 2vw, 24px);
+    padding: 0.45rem 1.1rem;
+    background: var(--card-bg);
+    background: color-mix(in srgb, var(--card-bg) 84%, transparent);
+    -webkit-backdrop-filter: blur(14px) saturate(1.4);
+    backdrop-filter: blur(14px) saturate(1.4);
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    box-shadow: 0 14px 34px rgba(0, 71, 65, 0.13);
+}
