@@ -1641,7 +1641,11 @@ document.addEventListener("DOMContentLoaded", () => {
             quickAccessContainer.style.display = 'none';
             currentPath.textContent = `${selectedCourseName} > ${selectedFolder}`;
 
-            const folderFiles = allFiles.filter(f => f.course.code === selectedCourseCode && f.resourceType === selectedFolder);
+            // Newest uploads first: the latest lecture sits on top, and a
+            // newly added file automatically takes the top spot.
+            const folderFiles = allFiles
+                .filter(f => f.course.code === selectedCourseCode && f.resourceType === selectedFolder)
+                .sort((a, b) => (Date.parse(b.createdAt || b.updatedAt) || 0) - (Date.parse(a.createdAt || a.updatedAt) || 0));
 
             coursesContainer.innerHTML = '';
 
