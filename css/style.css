@@ -3075,3 +3075,11 @@ button:disabled {
     font-size: 0.95em;
     vertical-align: -0.08em;
 }
+
+/* === Wadi fixes (2026-10-23): header breathing room + rounded search bar === */
+.header { padding-left: 1rem; padding-right: 1rem; }
+@media (min-width: 800px) {
+    .header { padding-left: 1.5rem; padding-right: 1.5rem; }
+}
+.landing-search-bar { border-radius: 16px; }
+.landing-search-btn { border-radius: 12px; }
