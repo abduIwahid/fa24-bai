@@ -706,6 +706,20 @@ document.addEventListener("DOMContentLoaded", () => {
     // Course mapping logic
     const getCourseInfo = (filepath) => {
         const lowerName = filepath.toLowerCase();
+        // The course folder in the path ("5th Semester/OS/...") is the
+        // ground truth. Filename substrings mis-file real lectures — e.g.
+        // the WEB lecture "CSS_Cascading_Box_Model_and_Positioning" was
+        // claimed by Operating Systems because "Positioning" contains "os"
+        // and the 'os' check ran before the 'web' check.
+        const segments = lowerName.split('/');
+        const courseFolder = segments.length > 2 ? segments[1] : '';
+        if (courseFolder === 'os') return { name: 'Operating Systems', code: 'CSC322', icon: 'OS' };
+        if (courseFolder === 'web') return { name: 'Web Technologies', code: 'WEB', icon: 'WEB' };
+        if (courseFolder === 'daa') return { name: 'Design and Analysis of Algorithms', code: 'DAA', icon: 'ALG' };
+        if (courseFolder.includes('stat')) return { name: 'Probability & Statistics', code: 'MTH262', icon: 'STAT' };
+        if (courseFolder.includes('pfai') || courseFolder.includes('programming')) return { name: 'Programming for Artificial Intelligence', code: 'AIC270', icon: 'AI' };
+        if (courseFolder.includes('krr') || courseFolder.includes('knowledge')) return { name: 'Knowledge Rep. & Reasoning', code: 'AIC372', icon: 'KRR' };
+        // Fallback for files outside the semester folder structure.
         if (lowerName.includes('pfai') || lowerName.includes('ai270') || lowerName.includes('aic270')) return { name: 'Programming for Artificial Intelligence', code: 'AIC270', icon: 'AI' };
         if (lowerName.includes('krr') || lowerName.includes('kr&r') || lowerName.includes('aic372')) return { name: 'Knowledge Rep. & Reasoning', code: 'AIC372', icon: 'KRR' };
         if (lowerName.includes('os') || lowerName.includes('csc322')) return { name: 'Operating Systems', code: 'CSC322', icon: 'OS' };
