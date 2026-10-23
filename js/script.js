@@ -1304,7 +1304,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const dated = allFiles
                 .filter(f => f.createdAt || f.updatedAt)
                 .sort((a, b) => Date.parse(b.createdAt || b.updatedAt) - Date.parse(a.createdAt || a.updatedAt))
-                .slice(0, 8);
+                .slice(0, 3);
             if (filesState === 'ready' && dated.length > 0) {
                 raContainer.style.display = 'block';
                 raList.innerHTML = dated.map(f => createResourceHtml(f, { showCourse: true })).join('');
@@ -1319,7 +1319,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const top = Object.entries(countsMap)
                 .filter(([, n]) => typeof n === 'number' && n > 0)
                 .sort((a, b) => b[1] - a[1])
-                .slice(0, 6)
+                .slice(0, 3)
                 .map(([name]) => allFiles.find(f => f.rawName === name))
                 .filter(Boolean);
             if (filesState === 'ready' && top.length > 0) {
