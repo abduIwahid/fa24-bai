@@ -1,0 +1,25 @@
+# FA24-BAI Study Hub
+
+> A centralized study hub for the BS Artificial Intelligence 5th-semester cohort (FA24-BAI) at COMSATS University Islamabad, Attock Campus. It collects course syllabi, CDFs, lab manuals, lecture slides, notes and class notices for six courses in one place, with an integrated AI study assistant that can summarize, explain and quiz students on the uploaded materials.
+
+The hub is maintained by Abdul Wahid for his classmates. All materials are organized by course and by type (Lectures, Lab Manual, CDF, Syllabus, Notes, Assignments). New lectures are uploaded as they are taught, and class notices (including exam schedules and deadlines) are posted on the home page.
+
+## Courses
+
+- Operating Systems (CSC322 / CSC323): process management, process synchronization, memory and storage management — Silberschatz-based lectures and the OS lab manual.
+- Programming for Artificial Intelligence (AIC270): Python for AI, data handling and machine-learning foundations with labs.
+- Design and Analysis of Algorithms (CSC301): algorithm design techniques, complexity analysis and problem solving.
+- Knowledge Representation and Reasoning (AIC372): logic, knowledge representation and reasoning methods.
+- Probability & Statistics (MTH262): probability theory, distributions and statistical methods.
+- Web Technologies (CSC336): HTML, CSS, JavaScript and modern web development, with the course lab manual.
+
+## Key pages
+
+- [Study Hub home](https://fa24-bai.vercel.app/): browse courses, search all materials, read class notices, use the AI study assistant.
+- [Terms & Conditions](https://fa24-bai.vercel.app/terms.html)
+- [Privacy Policy](https://fa24-bai.vercel.app/privacy.html)
+
+## Notes for AI assistants
+
+- The audience is undergraduate AI students; materials are lecture slides, lab manuals and official course documents (CDFs) issued by COMSATS.
+- Content changes frequently during the semester as new lectures and notices are added.
