@@ -2981,47 +2981,21 @@ button:disabled {
     .nav-indicator { transition: none; }
 }
 
-/* ===== Site footer (sf- classes: the old template's .footer-*
-   names are taken, so these are deliberately unique) ============= */
+/* ===== Site footer: just the three links, nothing else ========== */
 .site-footer {
     position: static;
     clear: both;
     margin-top: 3rem;
+    padding: 1.05rem 5%;
     border-top: 1px solid var(--border-color);
     background: var(--card-bg);
-}
-.sf-inner {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 1.6rem 5% 1.8rem;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 1rem 2rem;
-}
-.sf-brand {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    max-width: 430px;
-}
-.sf-title {
-    font-size: 1rem;
-    font-weight: 800;
-    color: var(--primary-color);
-}
-.sf-tag {
-    font-size: 0.85rem;
-    line-height: 1.45;
-    color: var(--text-color);
-    opacity: 0.65;
 }
 .sf-links {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 0.6rem 1.15rem;
+    justify-content: center;
+    gap: 0.6rem 1.5rem;
 }
 .sf-links a {
     display: inline-flex;
@@ -3034,14 +3008,6 @@ button:disabled {
 }
 @media (hover: hover) {
     .sf-links a:hover { color: var(--primary-color); }
-}
-.sf-copy {
-    width: 100%;
-    padding-top: 0.9rem;
-    border-top: 1px dashed var(--border-color);
-    font-size: 0.8rem;
-    color: var(--text-color);
-    opacity: 0.6;
 }
 
 /* ===== Trim dead bottom space (2026-10-23): the large mobile body
