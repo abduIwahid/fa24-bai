@@ -49,7 +49,7 @@ export default async function handler(req, res) {
                     fetchHeaders['Authorization'] = `Bearer ${GITHUB_TOKEN}`;
                 }
 
-                const fileResponse = await fetch(url, { headers: fetchHeaders });
+                const fileResponse = await fetch(url, { headers: fetchHeaders, signal: AbortSignal.timeout(15000) });
                 if (fileResponse.ok) {
                     const arrayBuffer = await fileResponse.arrayBuffer();
                     // Check file size under 7MB for inline data transfer
@@ -126,7 +126,7 @@ ${promptInstruction}`
         async function discoverModels() {
             try {
                 const listUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(cleanKey)}`;
-                const listRes = await fetch(listUrl);
+                const listRes = await fetch(listUrl, { signal: AbortSignal.timeout(10000) });
                 const listData = await listRes.json();
                 if (!listRes.ok || listData.error || !Array.isArray(listData.models)) return [];
                 const contentModels = listData.models
@@ -154,6 +154,7 @@ ${promptInstruction}`
         async function queryGemini(modelName, partsPayload) {
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${encodeURIComponent(cleanKey)}`;
             const apiRes = await fetch(apiUrl, {
+                signal: AbortSignal.timeout(25000),
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

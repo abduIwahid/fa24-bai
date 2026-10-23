@@ -8,10 +8,10 @@ A modern web portal for the FA24-BAI cohort (BS Artificial Intelligence, 5th sem
 
 ## Features
 
-- **Landing Page:** Welcoming home portal with an integrated search bar, cohort stats, feature overviews, and direct course preview cards.
+- **Landing Page:** Welcoming home portal under a floating glass pill header (logo, nav, notices and theme toggle on one line at every width), with an integrated search bar, cohort stats, feature overviews, and clean course preview cards with per-course file counts.
 - **Global Search:** Fast search across every material by title and full path, with ranked results, filter chips, and a `/` keyboard shortcut.
 - **Course Explorer:** Structured folder hierarchy for every course — CDFs, Lab Manuals, Syllabi, Lectures, Assignments, and Notes — with breadcrumb navigation and folder shortcuts on every course card.
-- **AI Study Companion:** Powered by Google Gemini. Summarize documents, generate 5-question review quizzes, compile common viva questions, or ask custom questions about a document.
+- **AI Study Companion:** Powered by Google Gemini. Summarize documents, generate 5-question review quizzes, compile common viva questions, or ask custom questions about a document — answers are formatted clean and plain (no raw markdown or LaTeX clutter), with per-request timeouts so a busy model never hangs the reply.
 - **Dark Mode:** A full dark theme in the same cream/deep-green identity, toggle in the header, saved per device.
 - **Recently Viewed:** Your last-opened materials stay one tap away, even after a refresh.
 - **Resource Options Menu:** A three-dots menu on every material to open it, run AI analysis, copy a shareable direct link, or delete it (admin only).
@@ -22,12 +22,11 @@ A modern web portal for the FA24-BAI cohort (BS Artificial Intelligence, 5th sem
 - **Fast by Default:** Semester files and assets are served with long-term immutable caching, and links shared on WhatsApp/social show a proper title, description, and preview image.
 - **Custom 404 Page:** A themed not-found page (with a familiar animated face) that guides lost visitors back home.
 - **Deep Links & Working Back Button:** Every course, folder, search, and material has its own shareable link (`#/course/CSC322`, `#/search?q=...`); browser Back/Forward just work.
-- **New & Updated Badges:** Materials show when they were added or last updated, with a Recently Added strip on the home page.
+- **New & Updated Badges:** Materials show when they were added or last updated, shown right on each material card.
 - **Midterm Countdown:** The home page counts down to the next exams, fed by dated exam notices on the notice board (pinned notices and category filters included).
 - **Interactive Practice Quizzes:** AI quizzes are now tap-to-answer — instant right/wrong marking, explanations, a running score, and a final result with retry.
 - **Bookmarks:** Star any material to save it; all saved items live in the new Saved view.
 - **WhatsApp Share:** One tap shares any material (title + deep link) to WhatsApp.
-- **Most Downloaded:** A live download counter shows which materials the class uses most.
 - **Installable App (PWA):** Add the Study Hub to your home screen; the app shell loads instantly and previously opened materials work from cache.
 
 ---

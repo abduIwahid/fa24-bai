@@ -146,7 +146,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if (currentTab === 'home') {
             renderLandingCourses();
             renderQuickAccess();
-            renderHomeStrips();
             renderCountdown();
         } else if (currentTab === 'search') {
             renderSearch();
@@ -702,7 +701,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const d = await r.json();
             if (d && d.counts && typeof d.counts === 'object') {
                 countsMap = d.counts;
-                if (currentTab === 'home') renderHomeStrips();
+                
                 if (currentTab === 'bookmarks') renderBookmarks();
             }
         } catch (e) { /* counts are decorative — never block the UI */ }
@@ -1340,41 +1339,6 @@ document.addEventListener("DOMContentLoaded", () => {
         { code: 'DAA',    name: 'Design and Analysis of Algorithms' },
         { code: 'WEB',    name: 'Web Technologies' }
     ];
-
-    // Home strips: Recently Added (by git creation date) + Most Downloaded
-    const renderHomeStrips = () => {
-        const raContainer = document.getElementById('recentlyAddedContainer');
-        const raList = document.getElementById('recentlyAddedList');
-        if (raContainer && raList) {
-            const dated = allFiles
-                .filter(f => f.createdAt || f.updatedAt)
-                .sort((a, b) => Date.parse(b.createdAt || b.updatedAt) - Date.parse(a.createdAt || a.updatedAt))
-                .slice(0, 3);
-            if (filesState === 'ready' && dated.length > 0) {
-                raContainer.style.display = 'block';
-                raList.innerHTML = dated.map(f => createResourceHtml(f, { showCourse: true })).join('');
-            } else {
-                raContainer.style.display = 'none';
-            }
-        }
-
-        const mdContainer = document.getElementById('mostDownloadedContainer');
-        const mdList = document.getElementById('mostDownloadedList');
-        if (mdContainer && mdList) {
-            const top = Object.entries(countsMap)
-                .filter(([, n]) => typeof n === 'number' && n > 0)
-                .sort((a, b) => b[1] - a[1])
-                .slice(0, 3)
-                .map(([name]) => allFiles.find(f => f.rawName === name))
-                .filter(Boolean);
-            if (filesState === 'ready' && top.length > 0) {
-                mdContainer.style.display = 'block';
-                mdList.innerHTML = top.map(f => createResourceHtml(f, { showCourse: true })).join('');
-            } else {
-                mdContainer.style.display = 'none';
-            }
-        }
-    };
 
     const renderLandingCourses = () => {
         if (!landingCoursesGrid) return;

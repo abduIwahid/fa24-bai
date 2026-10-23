@@ -3109,3 +3109,31 @@ button:disabled {
 .course-card:not(.folder-card) .course-header { border-bottom: none; padding-bottom: 0; margin-bottom: 0.6rem; }
 .course-files-count { color: var(--accent); font-weight: 700; font-size: 0.95rem; margin-top: 0.55rem; }
 .course-files-note { color: #666; font-size: 0.85rem; margin-top: 0.55rem; line-height: 1.4; }
+
+/* === Header: everything on ONE line, no wrap (Wadi, 2026-10-23) === */
+.header { display: flex; align-items: center; flex-wrap: nowrap; gap: 0.5rem; }
+.header-left { order: 0; }
+.header-menu { order: 1; }
+.header-right { order: 2; }
+@media (max-width: 799px) {
+    .hamburger-btn { display: none; }
+    .header-menu {
+        position: static; display: flex; flex-direction: row; align-items: center; justify-content: center;
+        flex: 1 1 auto; min-width: 0; max-width: none; padding: 0; background: none; border: none;
+        border-radius: 0; box-shadow: none; animation: none; gap: 2px;
+    }
+    .header-menu .menu-item { width: auto; padding: 8px 10px; border-radius: 999px; white-space: nowrap; font-size: 0.88rem; gap: 7px; }
+    .header-menu .menu-item i { width: auto; font-size: 0.98rem; }
+    .header-menu .menu-divider, .header-menu .admin-welcome { display: none; }
+}
+@media (max-width: 560px) {
+    .header { gap: 0.3rem; padding: 0.35rem 0.7rem; }
+    .header-subtitle { display: none; }
+    .header-text h1 { font-size: 0.92rem; }
+    .app-logo { width: 30px; height: 30px; }
+    .header-menu .menu-item { padding: 7px 8px; gap: 0; }
+    .header-menu .menu-item span { display: none; }
+    .header-menu .menu-item i { font-size: 1.05rem; }
+    .theme-toggle-btn { width: 36px; height: 36px; min-width: 36px; }
+    .header-right { gap: 0.3rem; }
+}
