@@ -61,14 +61,21 @@ export default async function handler(req, res) {
         if (action === 'summarize' && filename) {
             cachePath = 'ai-cache/' + filename.replace(/[^a-zA-Z0-9]+/g, '_') + '.json';
             try {
-                const cRes = await fetch(`https://raw.githubusercontent.com/${owner}/${repo}/main/${cachePath}`, {
-                    headers: GITHUB_TOKEN ? { 'Authorization': `Bearer ${GITHUB_TOKEN}` } : {},
-                    signal: AbortSignal.timeout(8000)
-                });
-                if (cRes.ok) {
-                    const cached = await cRes.json();
-                    if (cached && cached.reply) {
-                        return res.status(200).json({ reply: cached.reply, cached: true });
+                // Read via the Contents API, not raw.githubusercontent: the raw
+                // CDN caches 404s, so a just-written cache file can look
+                // missing for minutes. The API read is strongly consistent.
+                if (GITHUB_TOKEN) {
+                    const cRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${cachePath}`, {
+                        headers: { 'Authorization': `Bearer ${GITHUB_TOKEN}`, 'User-Agent': 'StudyHub-AI-Cache' },
+                        signal: AbortSignal.timeout(8000)
+                    });
+                    if (cRes.ok) {
+                        const j = await cRes.json();
+                        const decoded = Buffer.from((j.content || '').replace(/\n/g, ''), 'base64').toString('utf8');
+                        const cached = JSON.parse(decoded);
+                        if (cached && cached.reply) {
+                            return res.status(200).json({ reply: cached.reply, cached: true });
+                        }
                     }
                 }
             } catch (cacheErr) { /* cache is best-effort */ }
