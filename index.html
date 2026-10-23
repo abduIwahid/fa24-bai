@@ -38,7 +38,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css?v=9">
+    <link rel="stylesheet" href="css/style.css?v=10">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 </head>
 
@@ -52,37 +52,43 @@
                     <p class="header-subtitle">Your Learning Companion</p>
                 </div>
             </div>
-            <nav class="favicon-bar header-nav" id="faviconBar" aria-label="Main navigation">
-                <a href="#" class="favicon-item active" id="navHome" title="Home" onclick="window.scrollToHome(); return false;" aria-label="Go to home">
-                    <i class="bi bi-house-fill favicon-icon"></i>
-                    <span class="favicon-label">Home</span>
+            <div class="header-menu" id="headerMenu">
+                <a href="#" class="menu-item active" id="navHome" onclick="window.scrollToHome(); return false;" aria-label="Go to home">
+                    <i class="bi bi-house-fill"></i><span>Home</span>
                 </a>
-                <a href="#" class="favicon-item" id="navNotice" title="Notices" onclick="window.openNotices(); return false;" aria-label="View notices">
-                    <span class="notice-icon-wrap">
-                        <i class="bi bi-megaphone-fill favicon-icon"></i>
-                        <span class="notice-badge" id="noticeBadge" style="display:none;"></span>
-                    </span>
-                    <span class="favicon-label">Notices</span>
+                <a href="#" class="menu-item" id="navCourses" onclick="window.scrollToCourses(); return false;" aria-label="Browse courses">
+                    <i class="bi bi-journal-bookmark-fill"></i><span>Courses</span>
                 </a>
-                <a href="#" class="favicon-item nav-upload" id="navUpload" title="Upload" onclick="window.openUploadPanel(); return false;" aria-label="Upload content">
-                    <span class="upload-pill"><i class="bi bi-plus-lg"></i></span>
-                    <span class="favicon-label">Upload</span>
+                <a href="#/bookmarks" class="menu-item" id="navBookmarks" onclick="window.openBookmarks(); return false;" aria-label="View saved materials">
+                    <i class="bi bi-star-fill"></i><span>Saved</span>
                 </a>
-                <a href="#" class="favicon-item" id="navCourses" title="Courses" onclick="window.scrollToCourses(); return false;" aria-label="Browse courses">
-                    <i class="bi bi-journal-bookmark-fill favicon-icon"></i>
-                    <span class="favicon-label">Courses</span>
+                <a href="#" class="menu-item" id="navUpload" style="display:none;" onclick="window.openUploadPanel(); return false;" aria-label="Upload content">
+                    <i class="bi bi-cloud-arrow-up-fill"></i><span>Upload</span>
                 </a>
-                <a href="#/bookmarks" class="favicon-item" id="navBookmarks" title="Bookmarks" onclick="window.openBookmarks(); return false;" aria-label="View bookmarks">
-                    <i class="bi bi-star-fill favicon-icon"></i>
-                    <span class="favicon-label">Saved</span>
-                </a>
-            </nav>
-            <div class="header-right">
-                <button id="themeToggleBtn" class="theme-toggle-btn" aria-label="Toggle dark mode" title="Toggle dark mode"><i class="bi bi-moon-fill" id="themeToggleIcon"></i></button>
-                <button id="adminLoginBtn" class="admin-btn" aria-label="Admin Login">Admin Login</button>
-                <div id="adminWelcome" class="admin-welcome" role="status" aria-live="polite">
+                <div class="menu-divider"></div>
+                <div id="adminWelcome" class="admin-welcome" role="status" aria-live="polite" style="display:none;">
                     Welcome Admin, Abdul Wahid!
                 </div>
+                <button id="adminLoginBtn" class="menu-item menu-admin" aria-label="Admin Login">
+                    <i class="bi bi-box-arrow-in-right"></i><span>Admin Login</span>
+                </button>
+                <button id="adminLogoutBtn" class="menu-item menu-admin" style="display:none;" aria-label="Admin Logout">
+                    <i class="bi bi-box-arrow-right"></i><span>Logout</span>
+                </button>
+            </div>
+            <div class="header-right">
+                <button id="navNotice" class="theme-toggle-btn notice-toggle-btn" aria-label="View notices" title="Notices" onclick="window.openNotices(); return false;">
+                    <span class="notice-icon-wrap">
+                        <i class="bi bi-megaphone-fill"></i>
+                        <span class="notice-badge" id="noticeBadge" style="display:none;"></span>
+                    </span>
+                </button>
+                <button id="themeToggleBtn" class="theme-toggle-btn" aria-label="Toggle dark mode" title="Toggle dark mode"><i class="bi bi-moon-fill" id="themeToggleIcon"></i></button>
+                <button id="menuBtn" class="hamburger-btn" aria-label="Open menu" aria-expanded="false" aria-controls="headerMenu">
+                    <span class="bar"></span>
+                    <span class="bar"></span>
+                    <span class="bar"></span>
+                </button>
             </div>
         </div>
 
@@ -364,7 +370,7 @@
         </div>
     </div>
 
-    <script src="js/script.js?v=9"></script>
+    <script src="js/script.js?v=10"></script>
 </body>
 
 </html>

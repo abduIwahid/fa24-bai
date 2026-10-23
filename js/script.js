@@ -332,14 +332,24 @@ document.addEventListener("DOMContentLoaded", () => {
     const loginAttempts = document.getElementById('loginAttempts');
 
     const updateAdminUI = () => {
+        const uploadNavItem = document.getElementById('navUpload');
+        const logoutBtn = document.getElementById('adminLogoutBtn');
         if (adminPass) {
             adminLoginBtn.style.display = 'none';
             adminWelcome.style.display = 'block';
+            if (uploadNavItem) uploadNavItem.style.display = '';
+            if (logoutBtn) logoutBtn.style.display = '';
             uploadSection.style.display = 'block';
             renderCourses();
             renderSearch();
             renderLandingCourses();
             renderQuickAccess();
+        } else {
+            adminLoginBtn.style.display = '';
+            adminWelcome.style.display = 'none';
+            if (uploadNavItem) uploadNavItem.style.display = 'none';
+            if (logoutBtn) logoutBtn.style.display = 'none';
+            if (uploadSection) uploadSection.style.display = 'none';
         }
     };
 
@@ -390,6 +400,46 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     adminLoginBtn.addEventListener('click', openAdminLoginModal);
+
+    // === Header hamburger menu ===
+    const menuBtn = document.getElementById('menuBtn');
+    const headerMenu = document.getElementById('headerMenu');
+    const closeHeaderMenu = () => {
+        if (headerMenu) headerMenu.classList.remove('open');
+        if (menuBtn) menuBtn.setAttribute('aria-expanded', 'false');
+    };
+    if (menuBtn && headerMenu) {
+        menuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isOpen = headerMenu.classList.toggle('open');
+            menuBtn.setAttribute('aria-expanded', String(isOpen));
+        });
+        headerMenu.querySelectorAll('.menu-item').forEach(item => {
+            item.addEventListener('click', closeHeaderMenu);
+        });
+        document.addEventListener('click', (e) => {
+            if (headerMenu.classList.contains('open') && !e.target.closest('.header')) closeHeaderMenu();
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeHeaderMenu();
+        });
+    }
+
+    // === Admin logout ===
+    const adminLogoutBtn = document.getElementById('adminLogoutBtn');
+    if (adminLogoutBtn) {
+        adminLogoutBtn.addEventListener('click', () => {
+            adminPass = null;
+            sessionStorage.removeItem('adminPass');
+            updateAdminUI();
+            renderCourses();
+            renderSearch();
+            renderLandingCourses();
+            renderQuickAccess();
+            closeHeaderMenu();
+            showNotification('Logged out', 'info');
+        });
+    }
 
     adminCloseBtn.addEventListener('click', closeAdminLoginModal);
 
