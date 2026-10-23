@@ -121,3 +121,5 @@ Course mapping and resource types are recognized automatically based on path key
 
 Maintained by the FA24-BAI Study Hub Admin.
 Copyright (c) 2026 FA24-BAI. All rights reserved.
+
+<!-- redeploy: env rotation 2026-10-23 -->
