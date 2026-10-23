@@ -2365,47 +2365,14 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
-// ===== Extras (2026-10-23): scroll progress, back-to-top, feedback =====
+// ===== Extra (2026-10-23): scroll progress bar =====
 (function () {
     const bar = document.getElementById('scrollProgress');
-    const toTop = document.getElementById('backToTop');
     function onScroll() {
         const st = window.scrollY || document.documentElement.scrollTop;
         const h = document.documentElement.scrollHeight - window.innerHeight;
         if (bar) bar.style.width = (h > 0 ? Math.min(100, (st / h) * 100) : 0) + '%';
-        if (toTop) toTop.classList.toggle('show', st > 600);
     }
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
-    if (toTop) toTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
-
-    const fbBtn = document.getElementById('feedbackBtn');
-    const fbModal = document.getElementById('feedbackModal');
-    const fbClose = document.getElementById('feedbackCloseBtn');
-    const fbForm = document.getElementById('feedbackForm');
-    if (fbBtn && fbModal) fbBtn.addEventListener('click', () => fbModal.classList.add('active'));
-    if (fbClose && fbModal) fbClose.addEventListener('click', () => fbModal.classList.remove('active'));
-    if (fbForm) fbForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const name = document.getElementById('feedbackName').value.trim();
-        const message = document.getElementById('feedbackMessage').value.trim();
-        if (message.length < 3) { showNotification('Please write a little more detail', 'error'); return; }
-        try {
-            const r = await fetch('/api/feedback', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, message, page: (typeof currentTab !== 'undefined' ? currentTab : 'home') })
-            });
-            const j = await r.json().catch(() => ({}));
-            if (r.ok && j.success) {
-                fbModal.classList.remove('active');
-                fbForm.reset();
-                showNotification('Feedback sent - thank you!', 'success');
-            } else {
-                showNotification(j.message || 'Could not send feedback', 'error');
-            }
-        } catch (err) {
-            showNotification('Could not send feedback - check connection', 'error');
-        }
-    });
 })();
