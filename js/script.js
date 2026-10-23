@@ -83,6 +83,14 @@ document.addEventListener("DOMContentLoaded", () => {
     };
     window.addEventListener('resize', moveNavIndicator);
     window.addEventListener('load', () => setTimeout(moveNavIndicator, 80));
+    // Browser zoom (e.g. Safari's AA setting) changes layout without a
+    // reliable resize event — recalc the glass pill on every signal so it
+    // never detaches from the active item.
+    if (window.visualViewport) window.visualViewport.addEventListener('resize', moveNavIndicator);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => moveNavIndicator());
+    window.addEventListener('orientationchange', () => setTimeout(moveNavIndicator, 120));
+    setTimeout(moveNavIndicator, 400);
+    setTimeout(moveNavIndicator, 1000);
 
     const setActiveNav = (key) => {
         Object.values(navItems).forEach(el => el && el.classList.remove('active'));
