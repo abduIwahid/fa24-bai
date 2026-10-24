@@ -59,9 +59,50 @@ export default async function handler(req, res) {
             const cleanKey2 = (GEMINI_API_KEY || '').trim().replace(/^["']|["']$/g, '').trim();
             const ghHeaders = GITHUB_TOKEN ? { 'Authorization': `Bearer ${GITHUB_TOKEN}`, 'User-Agent': 'StudyHub-Ask' } : { 'User-Agent': 'StudyHub-Ask' };
             const hubDiag = [];
+            async function discoverHubModels() {
+                try {
+                    const listUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(cleanKey2)}`;
+                    const listRes = await fetch(listUrl, { signal: AbortSignal.timeout(10000) });
+                    const listData = await listRes.json();
+                    if (!listRes.ok || listData.error || !Array.isArray(listData.models)) return [];
+                    const contentModels = listData.models
+                        .filter(m => Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes('generateContent'))
+                        .map(m => m.name.replace(/^models\//, ''))
+                        .filter(m => m.startsWith('gemini-') && !m.includes('deep-research') && !m.includes('preview-0'));
+                    const preferred = ['gemini-3.8-flash'];
+                    const out = [];
+                    for (const p of preferred) {
+                        const match = contentModels.find(m => m === p || m.startsWith(`${p}-`));
+                        if (match && !out.includes(match)) out.push(match);
+                    }
+                    for (const m of contentModels) {
+                        if (m.includes('flash') && !out.includes(m)) out.push(m);
+                    }
+                    return out;
+                } catch (e) { return []; }
+            }
             async function askGemini(text, maxTokens, timeoutMs) {
                 const models = ['gemini-3.8-flash', 'gemini-2.5-flash', 'gemini-2.0-flash'];
                 for (const m of models) {
+                    try {
+                        const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${encodeURIComponent(cleanKey2)}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            signal: AbortSignal.timeout(timeoutMs || 20000),
+                            body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text }] }], generationConfig: { temperature: 0.3, maxOutputTokens: maxTokens || 1024 } })
+                        });
+                        const d = await r.json();
+                        if (r.ok && d.candidates && d.candidates[0] && d.candidates[0].content) {
+                            const t = d.candidates[0].content.parts.map(p => p.text || '').join('\n').trim();
+                            if (t) return t;
+                            hubDiag.push({ m, status: r.status, note: 'ok-but-empty-content', finish: (d.candidates[0].finishReason || '') });
+                        } else {
+                            hubDiag.push({ m, status: r.status, err: ((d.error && d.error.message) || 'no-candidates').toString().slice(0, 160) });
+                        }
+                    } catch (e) { hubDiag.push({ m, status: 'exception', err: (e.message || 'fetch-failed').toString().slice(0, 160) }); }
+                }
+                const discovered = await discoverHubModels();
+                for (const m of discovered.filter(dm => !models.includes(dm))) {
                     try {
                         const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${encodeURIComponent(cleanKey2)}`, {
                             method: 'POST',
@@ -103,13 +144,13 @@ export default async function handler(req, res) {
                     const r = await fetch(`https://raw.githubusercontent.com/${owner}/${repo}/main/${enc}`, { signal: AbortSignal.timeout(6000) });
                     if (r.ok) {
                         const j = await r.json();
-                        if (j && j.reply) headByPath[f] = j.reply.slice(0, 220).replace(/\s+/g, ' ');
+                        if (j && j.reply) headByPath[f] = j.reply.slice(0, 160).replace(/\s+/g, ' ');
                     }
                 } catch (e) { /* title-only fallback for this file */ }
             }));
             let picked = [];
             const pickPrompt = `A student asked: "${question}"\n\nCourse material files (numbered), each with the opening of its AI summary:\n${filePaths.map((f, i) => `${i}. ${f}${headByPath[f] ? ' :: ' + headByPath[f] : ''}`).join('\n')}\n\nReply with ONLY a JSON array of the numbers of the up-to-3 files most likely to contain the answer, e.g. [4, 11]. If none seem relevant, reply [].`;
-            const pickText = await askGemini(pickPrompt, 1024, 15000);
+            const pickText = await askGemini(pickPrompt, 1024, 30000);
             if (pickText) {
                 try {
                     const arr = JSON.parse(pickText.slice(pickText.indexOf('['), pickText.lastIndexOf(']') + 1));
@@ -147,10 +188,10 @@ export default async function handler(req, res) {
                 return res.status(200).json({ reply: 'Those materials are still being prepared for Q&A. Please open the document and use its AI Assistant for now.', sources: picked });
             }
             const answerPrompt = `You are an expert academic tutor for FA24-BAI (Artificial Intelligence) students. Answer the student's question using ONLY the course material summaries below. If the summaries do not cover the question, say so honestly and point to the closest topic they do cover.\n\nFORMATTING RULES (strict):\n- Never use LaTeX or math markup (no $$, no $...$, no backslash commands). Write formulas in plain text, e.g. O(n log n), T(n) = 2T(n/2) + n.\n- Use ## for a heading if needed and - for bullet points. Be clear, direct and concise.\n\nQUESTION: ${question}\n\nCOURSE MATERIAL SUMMARIES:\n${summaries.map(sm => `--- Source: ${sm.file} ---\n${sm.text}`).join('\n\n')}`;
-            let answer = await askGemini(answerPrompt, 2048, 25000);
+            let answer = await askGemini(answerPrompt, 2048, 30000);
             if (!answer) {
                 await new Promise(r => setTimeout(r, 2000));
-                answer = await askGemini(answerPrompt, 2048, 25000);
+                answer = await askGemini(answerPrompt, 2048, 30000);
             }
             if (!answer) {
                 const out = { reply: 'The AI is busy right now - please try the question again in a moment.', sources: summaries.map(x => x.file) };
