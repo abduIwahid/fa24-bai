@@ -80,40 +80,44 @@ export default async function handler(req, res) {
                     return out;
                 } catch (e) { return []; }
             }
+            async function attemptHubModel(m, text, maxTokens, timeoutMs) {
+                try {
+                    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${encodeURIComponent(cleanKey2)}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        signal: AbortSignal.timeout(timeoutMs || 20000),
+                        body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text }] }], generationConfig: { temperature: 0.3, maxOutputTokens: maxTokens || 1024 } })
+                    });
+                    const d = await r.json();
+                    if (r.ok && d.candidates && d.candidates[0] && d.candidates[0].content) {
+                        const t = d.candidates[0].content.parts.map(p => p.text || '').join('\n').trim();
+                        if (t) return t;
+                    }
+                } catch (e) { /* try next model */ }
+                return null;
+            }
             async function askGemini(text, maxTokens, timeoutMs) {
-                const models = ['gemini-3.8-flash', 'gemini-2.5-flash', 'gemini-2.0-flash'];
-                for (const m of models) {
-                    try {
-                        const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${encodeURIComponent(cleanKey2)}`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            signal: AbortSignal.timeout(timeoutMs || 20000),
-                            body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text }] }], generationConfig: { temperature: 0.3, maxOutputTokens: maxTokens || 1024 } })
-                        });
-                        const d = await r.json();
-                        if (r.ok && d.candidates && d.candidates[0] && d.candidates[0].content) {
-                            const t = d.candidates[0].content.parts.map(p => p.text || '').join('\n').trim();
-                            if (t) return t;
-                        } else {
-                        }
-                    } catch (e) { /* try next model */ }
+                // Try order: the model that answered last time (the pick call
+                // warms this up for the answer call, and warm serverless
+                // containers keep it across requests), then the known list,
+                // then whatever models the key can actually use (discovery -
+                // the hardcoded names alone go stale as models retire).
+                const tried = new Set();
+                const order = [];
+                if (global.__hubModelHint) order.push(global.__hubModelHint);
+                order.push('gemini-3.8-flash', 'gemini-2.5-flash', 'gemini-2.0-flash');
+                for (const m of order) {
+                    if (tried.has(m)) continue;
+                    tried.add(m);
+                    const t = await attemptHubModel(m, text, maxTokens, timeoutMs);
+                    if (t) { global.__hubModelHint = m; return t; }
                 }
                 const discovered = await discoverHubModels();
-                for (const m of discovered.filter(dm => !models.includes(dm))) {
-                    try {
-                        const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${encodeURIComponent(cleanKey2)}`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            signal: AbortSignal.timeout(timeoutMs || 20000),
-                            body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text }] }], generationConfig: { temperature: 0.3, maxOutputTokens: maxTokens || 1024 } })
-                        });
-                        const d = await r.json();
-                        if (r.ok && d.candidates && d.candidates[0] && d.candidates[0].content) {
-                            const t = d.candidates[0].content.parts.map(p => p.text || '').join('\n').trim();
-                            if (t) return t;
-                        } else {
-                        }
-                    } catch (e) { /* try next model */ }
+                for (const m of discovered) {
+                    if (tried.has(m)) continue;
+                    tried.add(m);
+                    const t = await attemptHubModel(m, text, maxTokens, timeoutMs);
+                    if (t) { global.__hubModelHint = m; return t; }
                 }
                 return null;
             }
