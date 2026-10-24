@@ -55,13 +55,13 @@ export default async function handler(req, res) {
         const GROQ_API_KEY = (process.env.GROQ_API_KEY || '').trim().replace(/^["']|["']$/g, '').trim();
         async function askGroq(text, maxTokens, timeoutMs) {
             if (!GROQ_API_KEY) return null;
-            for (const m of ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant']) {
+            for (const m of ['openai/gpt-oss-120b', 'qwen/qwen3.8-27b', 'openai/gpt-oss-20b']) {
                 try {
                     const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GROQ_API_KEY}` },
                         signal: AbortSignal.timeout(timeoutMs || 20000),
-                        body: JSON.stringify({ model: m, messages: [{ role: 'user', content: text }], temperature: 0.3, max_tokens: maxTokens || 1024 })
+                        body: JSON.stringify({ model: m, messages: [{ role: 'user', content: text }], temperature: 0.3, max_tokens: maxTokens || 1024, ...(m.startsWith('openai/gpt-oss') ? { reasoning_effort: 'low' } : {}) })
                     });
                     const d = await r.json();
                     const t = d && d.choices && d.choices[0] && d.choices[0].message ? (d.choices[0].message.content || '').trim() : '';
