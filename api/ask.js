@@ -58,6 +58,7 @@ export default async function handler(req, res) {
             }
             const cleanKey2 = (GEMINI_API_KEY || '').trim().replace(/^["']|["']$/g, '').trim();
             const ghHeaders = GITHUB_TOKEN ? { 'Authorization': `Bearer ${GITHUB_TOKEN}`, 'User-Agent': 'StudyHub-Ask' } : { 'User-Agent': 'StudyHub-Ask' };
+            const hubDiag = [];
             async function askGemini(text, maxTokens, timeoutMs) {
                 const models = ['gemini-3.8-flash', 'gemini-2.5-flash', 'gemini-2.0-flash'];
                 for (const m of models) {
@@ -72,8 +73,11 @@ export default async function handler(req, res) {
                         if (r.ok && d.candidates && d.candidates[0] && d.candidates[0].content) {
                             const t = d.candidates[0].content.parts.map(p => p.text || '').join('\n').trim();
                             if (t) return t;
+                            hubDiag.push({ m, status: r.status, note: 'ok-but-empty-content', finish: (d.candidates[0].finishReason || '') });
+                        } else {
+                            hubDiag.push({ m, status: r.status, err: ((d.error && d.error.message) || 'no-candidates').toString().slice(0, 160) });
                         }
-                    } catch (e) { /* try next model */ }
+                    } catch (e) { hubDiag.push({ m, status: 'exception', err: (e.message || 'fetch-failed').toString().slice(0, 160) }); }
                 }
                 return null;
             }
@@ -147,7 +151,9 @@ export default async function handler(req, res) {
                 answer = await askGemini(answerPrompt, 2048, 25000);
             }
             if (!answer) {
-                return res.status(200).json({ reply: 'The AI is busy right now - please try the question again in a moment.', sources: summaries.map(x => x.file) });
+                const out = { reply: 'The AI is busy right now - please try the question again in a moment.', sources: summaries.map(x => x.file) };
+                if (req.body && req.body.debug) out._debug = hubDiag;
+                return res.status(200).json(out);
             }
             return res.status(200).json({ reply: answer, sources: summaries.map(x => x.file) });
         }
