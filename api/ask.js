@@ -88,8 +88,23 @@ export default async function handler(req, res) {
             if (!filePaths.length) {
                 return res.status(200).json({ reply: 'The hub Q&A is unavailable right now - please open a document and use its AI Assistant instead.', sources: [] });
             }
+            // Fetch the head of every cached summary in parallel: file names
+            // alone are weak relevance signals (e.g. "ch7(updat).pdf"), the
+            // summary opening lines say what the file actually covers.
+            const headByPath = {};
+            await Promise.all(filePaths.map(async (f) => {
+                try {
+                    const cp = 'ai-cache/' + f.replace(/[^a-zA-Z0-9]+/g, '_') + '.json';
+                    const enc = cp.split('/').map(encodeURIComponent).join('/');
+                    const r = await fetch(`https://raw.githubusercontent.com/${owner}/${repo}/main/${enc}`, { signal: AbortSignal.timeout(6000) });
+                    if (r.ok) {
+                        const j = await r.json();
+                        if (j && j.reply) headByPath[f] = j.reply.slice(0, 220).replace(/\s+/g, ' ');
+                    }
+                } catch (e) { /* title-only fallback for this file */ }
+            }));
             let picked = [];
-            const pickPrompt = `A student asked: "${question}"\n\nCourse material files (numbered):\n${filePaths.map((f, i) => `${i}. ${f}`).join('\n')}\n\nReply with ONLY a JSON array of the numbers of the up-to-3 files most likely to contain the answer, e.g. [4, 11]. If none seem relevant, reply [].`;
+            const pickPrompt = `A student asked: "${question}"\n\nCourse material files (numbered), each with the opening of its AI summary:\n${filePaths.map((f, i) => `${i}. ${f}${headByPath[f] ? ' :: ' + headByPath[f] : ''}`).join('\n')}\n\nReply with ONLY a JSON array of the numbers of the up-to-3 files most likely to contain the answer, e.g. [4, 11]. If none seem relevant, reply [].`;
             const pickText = await askGemini(pickPrompt, 128, 15000);
             if (pickText) {
                 try {
@@ -126,7 +141,11 @@ export default async function handler(req, res) {
                 return res.status(200).json({ reply: 'Those materials are still being prepared for Q&A. Please open the document and use its AI Assistant for now.', sources: picked });
             }
             const answerPrompt = `You are an expert academic tutor for FA24-BAI (Artificial Intelligence) students. Answer the student's question using ONLY the course material summaries below. If the summaries do not cover the question, say so honestly and point to the closest topic they do cover.\n\nFORMATTING RULES (strict):\n- Never use LaTeX or math markup (no $$, no $...$, no backslash commands). Write formulas in plain text, e.g. O(n log n), T(n) = 2T(n/2) + n.\n- Use ## for a heading if needed and - for bullet points. Be clear, direct and concise.\n\nQUESTION: ${question}\n\nCOURSE MATERIAL SUMMARIES:\n${summaries.map(sm => `--- Source: ${sm.file} ---\n${sm.text}`).join('\n\n')}`;
-            const answer = await askGemini(answerPrompt, 1500, 25000);
+            let answer = await askGemini(answerPrompt, 1500, 25000);
+            if (!answer) {
+                await new Promise(r => setTimeout(r, 2000));
+                answer = await askGemini(answerPrompt, 1500, 25000);
+            }
             if (!answer) {
                 return res.status(200).json({ reply: 'The AI is busy right now - please try the question again in a moment.', sources: summaries.map(x => x.file) });
             }
