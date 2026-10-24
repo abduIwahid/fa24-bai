@@ -47,6 +47,30 @@ export default async function handler(req, res) {
         const repo = 'fa24-bai';
         const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 
+        // ---- Groq fallback (text-only) ---------------------------------
+        // Keeps the AI features alive when the Gemini free quota is
+        // exhausted or its models retire: Groq's free tier serves the same
+        // prompts through an OpenAI-compatible endpoint. Completely
+        // inactive until GROQ_API_KEY is set in Vercel env vars.
+        const GROQ_API_KEY = (process.env.GROQ_API_KEY || '').trim().replace(/^["']|["']$/g, '').trim();
+        async function askGroq(text, maxTokens, timeoutMs) {
+            if (!GROQ_API_KEY) return null;
+            for (const m of ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant']) {
+                try {
+                    const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GROQ_API_KEY}` },
+                        signal: AbortSignal.timeout(timeoutMs || 20000),
+                        body: JSON.stringify({ model: m, messages: [{ role: 'user', content: text }], temperature: 0.3, max_tokens: maxTokens || 1024 })
+                    });
+                    const d = await r.json();
+                    const t = d && d.choices && d.choices[0] && d.choices[0].message ? (d.choices[0].message.content || '').trim() : '';
+                    if (r.ok && t) return t;
+                } catch (e) { /* try next model */ }
+            }
+            return null;
+        }
+
         // ---- Hub Q&A (action: 'hubask') --------------------------------
         // Retrieval over the pre-generated AI summaries: pick the most
         // relevant course files for the question, answer from their cached
@@ -149,7 +173,7 @@ export default async function handler(req, res) {
             }));
             let picked = [];
             const pickPrompt = `A student asked: "${question}"\n\nCourse material files (numbered), each with the opening of its AI summary:\n${filePaths.map((f, i) => `${i}. ${f}${headByPath[f] ? ' :: ' + headByPath[f] : ''}`).join('\n')}\n\nReply with ONLY a JSON array of the numbers of the up-to-3 files most likely to contain the answer, e.g. [4, 11]. If none seem relevant, reply [].`;
-            const pickText = await askGemini(pickPrompt, 1024, 30000);
+            const pickText = (await askGemini(pickPrompt, 1024, 30000)) || (await askGroq(pickPrompt, 1024, 30000));
             if (pickText) {
                 try {
                     const arr = JSON.parse(pickText.slice(pickText.indexOf('['), pickText.lastIndexOf(']') + 1));
@@ -185,10 +209,10 @@ export default async function handler(req, res) {
                 return res.status(200).json({ reply: 'Those materials are still being prepared for Q&A. Please open the document and use its AI Assistant for now.', sources: picked });
             }
             const answerPrompt = `You are an expert academic tutor for FA24-BAI (Artificial Intelligence) students. Answer the student's question using ONLY the course material summaries below. If the summaries do not cover the question, say so honestly and point to the closest topic they do cover.\n\nFORMATTING RULES (strict):\n- Never use LaTeX or math markup (no $$, no $...$, no backslash commands). Write formulas in plain text, e.g. O(n log n), T(n) = 2T(n/2) + n.\n- Use ## for a heading if needed and - for bullet points. Be clear, direct and concise.\n\nQUESTION: ${question}\n\nCOURSE MATERIAL SUMMARIES:\n${summaries.map(sm => `--- Source: ${sm.file} ---\n${sm.text}`).join('\n\n')}`;
-            let answer = await askGemini(answerPrompt, 2048, 30000);
+            let answer = (await askGemini(answerPrompt, 2048, 30000)) || (await askGroq(answerPrompt, 2048, 30000));
             if (!answer) {
                 await new Promise(r => setTimeout(r, 2000));
-                answer = await askGemini(answerPrompt, 2048, 30000);
+                answer = (await askGemini(answerPrompt, 2048, 30000)) || (await askGroq(answerPrompt, 2048, 30000));
             }
             if (!answer) {
                 return res.status(200).json({ reply: 'The AI is busy right now - please try the question again in a moment.', sources: summaries.map(x => x.file) });
@@ -425,6 +449,11 @@ ${promptInstruction}`
             const discovered = await discoverModels();
             const extra = discovered.filter(m => !targetModels.includes(m));
             if (extra.length) replyText = await tryModels(extra);
+        }
+        if (!replyText && !base64Pdf) {
+            // Text-only mode only: when a PDF was loaded, a text model that
+            // cannot see it must not invent a summary of it.
+            replyText = await askGroq(textPromptPart.text, ['summarize', 'quiz', 'viva'].includes(action) ? 2048 : 1024, 25000);
         }
 
         if (replyText) {
