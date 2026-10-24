@@ -58,7 +58,6 @@ export default async function handler(req, res) {
             }
             const cleanKey2 = (GEMINI_API_KEY || '').trim().replace(/^["']|["']$/g, '').trim();
             const ghHeaders = GITHUB_TOKEN ? { 'Authorization': `Bearer ${GITHUB_TOKEN}`, 'User-Agent': 'StudyHub-Ask' } : { 'User-Agent': 'StudyHub-Ask' };
-            const hubDiag = [];
             async function discoverHubModels() {
                 try {
                     const listUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(cleanKey2)}`;
@@ -95,11 +94,9 @@ export default async function handler(req, res) {
                         if (r.ok && d.candidates && d.candidates[0] && d.candidates[0].content) {
                             const t = d.candidates[0].content.parts.map(p => p.text || '').join('\n').trim();
                             if (t) return t;
-                            hubDiag.push({ m, status: r.status, note: 'ok-but-empty-content', finish: (d.candidates[0].finishReason || '') });
                         } else {
-                            hubDiag.push({ m, status: r.status, err: ((d.error && d.error.message) || 'no-candidates').toString().slice(0, 160) });
                         }
-                    } catch (e) { hubDiag.push({ m, status: 'exception', err: (e.message || 'fetch-failed').toString().slice(0, 160) }); }
+                    } catch (e) { /* try next model */ }
                 }
                 const discovered = await discoverHubModels();
                 for (const m of discovered.filter(dm => !models.includes(dm))) {
@@ -114,11 +111,9 @@ export default async function handler(req, res) {
                         if (r.ok && d.candidates && d.candidates[0] && d.candidates[0].content) {
                             const t = d.candidates[0].content.parts.map(p => p.text || '').join('\n').trim();
                             if (t) return t;
-                            hubDiag.push({ m, status: r.status, note: 'ok-but-empty-content', finish: (d.candidates[0].finishReason || '') });
                         } else {
-                            hubDiag.push({ m, status: r.status, err: ((d.error && d.error.message) || 'no-candidates').toString().slice(0, 160) });
                         }
-                    } catch (e) { hubDiag.push({ m, status: 'exception', err: (e.message || 'fetch-failed').toString().slice(0, 160) }); }
+                    } catch (e) { /* try next model */ }
                 }
                 return null;
             }
@@ -168,9 +163,7 @@ export default async function handler(req, res) {
                 }).filter(x => x.sc > 0).sort((a, b) => b.sc - a.sc).slice(0, 3).map(x => x.f);
             }
             if (!picked.length) {
-                const out = { reply: 'I could not match that question to any course material yet. Try naming the course or topic (for example "deadlock in OS" or "master theorem in DAA"), or open the document and use its AI Assistant.', sources: [] };
-                if (req.body && req.body.debug) out._debug = hubDiag;
-                return res.status(200).json(out);
+                return res.status(200).json({ reply: 'I could not match that question to any course material yet. Try naming the course or topic (for example "deadlock in OS" or "master theorem in DAA"), or open the document and use its AI Assistant.', sources: [] });
             }
             const summaries = [];
             for (const f of picked) {
@@ -194,9 +187,7 @@ export default async function handler(req, res) {
                 answer = await askGemini(answerPrompt, 2048, 30000);
             }
             if (!answer) {
-                const out = { reply: 'The AI is busy right now - please try the question again in a moment.', sources: summaries.map(x => x.file) };
-                if (req.body && req.body.debug) out._debug = hubDiag;
-                return res.status(200).json(out);
+                return res.status(200).json({ reply: 'The AI is busy right now - please try the question again in a moment.', sources: summaries.map(x => x.file) });
             }
             return res.status(200).json({ reply: answer, sources: summaries.map(x => x.file) });
         }
