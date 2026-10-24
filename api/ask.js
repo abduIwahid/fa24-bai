@@ -127,7 +127,9 @@ export default async function handler(req, res) {
                 }).filter(x => x.sc > 0).sort((a, b) => b.sc - a.sc).slice(0, 3).map(x => x.f);
             }
             if (!picked.length) {
-                return res.status(200).json({ reply: 'I could not match that question to any course material yet. Try naming the course or topic (for example "deadlock in OS" or "master theorem in DAA"), or open the document and use its AI Assistant.', sources: [] });
+                const out = { reply: 'I could not match that question to any course material yet. Try naming the course or topic (for example "deadlock in OS" or "master theorem in DAA"), or open the document and use its AI Assistant.', sources: [] };
+                if (req.body && req.body.debug) out._debug = hubDiag;
+                return res.status(200).json(out);
             }
             const summaries = [];
             for (const f of picked) {
