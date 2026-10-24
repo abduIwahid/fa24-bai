@@ -105,7 +105,7 @@ export default async function handler(req, res) {
             }));
             let picked = [];
             const pickPrompt = `A student asked: "${question}"\n\nCourse material files (numbered), each with the opening of its AI summary:\n${filePaths.map((f, i) => `${i}. ${f}${headByPath[f] ? ' :: ' + headByPath[f] : ''}`).join('\n')}\n\nReply with ONLY a JSON array of the numbers of the up-to-3 files most likely to contain the answer, e.g. [4, 11]. If none seem relevant, reply [].`;
-            const pickText = await askGemini(pickPrompt, 128, 15000);
+            const pickText = await askGemini(pickPrompt, 1024, 15000);
             if (pickText) {
                 try {
                     const arr = JSON.parse(pickText.slice(pickText.indexOf('['), pickText.lastIndexOf(']') + 1));
@@ -141,10 +141,10 @@ export default async function handler(req, res) {
                 return res.status(200).json({ reply: 'Those materials are still being prepared for Q&A. Please open the document and use its AI Assistant for now.', sources: picked });
             }
             const answerPrompt = `You are an expert academic tutor for FA24-BAI (Artificial Intelligence) students. Answer the student's question using ONLY the course material summaries below. If the summaries do not cover the question, say so honestly and point to the closest topic they do cover.\n\nFORMATTING RULES (strict):\n- Never use LaTeX or math markup (no $$, no $...$, no backslash commands). Write formulas in plain text, e.g. O(n log n), T(n) = 2T(n/2) + n.\n- Use ## for a heading if needed and - for bullet points. Be clear, direct and concise.\n\nQUESTION: ${question}\n\nCOURSE MATERIAL SUMMARIES:\n${summaries.map(sm => `--- Source: ${sm.file} ---\n${sm.text}`).join('\n\n')}`;
-            let answer = await askGemini(answerPrompt, 1500, 25000);
+            let answer = await askGemini(answerPrompt, 2048, 25000);
             if (!answer) {
                 await new Promise(r => setTimeout(r, 2000));
-                answer = await askGemini(answerPrompt, 1500, 25000);
+                answer = await askGemini(answerPrompt, 2048, 25000);
             }
             if (!answer) {
                 return res.status(200).json({ reply: 'The AI is busy right now - please try the question again in a moment.', sources: summaries.map(x => x.file) });
