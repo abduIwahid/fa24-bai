@@ -3277,3 +3277,18 @@ body { overflow-x: clip; }
     .container { max-width: 100% !important; }
     * { color: #000 !important; background: #fff !important; box-shadow: none !important; }
 }
+
+/* === Hub Q&A (2026-10-24) === */
+.hub-qa-card { background: var(--card-bg); border: 1px solid rgba(0, 71, 65, 0.16); border-radius: 16px; padding: 22px; margin: 26px 0 6px; }
+.hub-qa-card h3 { color: var(--primary-color); font-weight: 800; margin-bottom: 6px; }
+.hub-qa-card p { opacity: .85; margin-bottom: 14px; }
+.hub-qa-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.hub-qa-row input { flex: 1 1 260px; min-height: 46px; padding: 10px 14px; border-radius: 12px; border: 1px solid rgba(0, 71, 65, 0.25); background: transparent; color: inherit; font-size: 1rem; }
+.hub-qa-btn { min-height: 46px; padding: 10px 22px; border-radius: 12px; font-weight: 700; }
+.hub-qa-result { margin-top: 16px; border-top: 1px dashed rgba(0, 71, 65, 0.25); padding-top: 14px; line-height: 1.65; }
+.hub-qa-h { font-weight: 800; color: var(--primary-color); margin: 10px 0 4px; }
+.hub-qa-li { margin-left: 6px; }
+.hub-qa-sources { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.hub-qa-sources span { font-weight: 700; opacity: .8; }
+.hub-qa-chip { border: 1px solid rgba(0, 71, 65, 0.3); background: transparent; color: inherit; border-radius: 999px; padding: 6px 12px; font-size: .85rem; cursor: pointer; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hub-qa-chip:hover { background: var(--primary-color); color: #fff; }

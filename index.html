@@ -38,7 +38,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css?v=32">
+    <link rel="stylesheet" href="css/style.css?v=33">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 </head>
 
@@ -170,6 +170,16 @@
                         <i class="bi bi-funnel"></i> Browse All Materials
                     </button>
                 </div>
+            </div>
+
+            <div class="hub-qa-card">
+                <h3><i class="bi bi-chat-dots-fill"></i> Ask the Hub</h3>
+                <p>Ask anything from your course materials — the AI answers from the actual lecture files and names its sources.</p>
+                <div class="hub-qa-row">
+                    <input type="text" id="hubQaInput" placeholder="e.g. What is a deadlock? Explain the master theorem..." autocomplete="off">
+                    <button type="button" class="action-btn hub-qa-btn" id="hubQaBtn"><i class="bi bi-stars"></i> Ask</button>
+                </div>
+                <div class="hub-qa-result" id="hubQaResult" style="display:none;"></div>
             </div>
 
             <div id="countdownContainer" style="display: none;"></div>
@@ -368,7 +378,7 @@
     </div>
 
 
-<script src="js/script.js?v=21"></script>
+<script src="js/script.js?v=22"></script>
 </body>
 
 </html>

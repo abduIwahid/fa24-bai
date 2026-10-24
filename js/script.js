@@ -2376,3 +2376,47 @@ document.addEventListener("DOMContentLoaded", () => {
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// ===== Hub Q&A (2026-10-24): ask across all course materials =====
+(function () {
+    var input = document.getElementById('hubQaInput');
+    var btn = document.getElementById('hubQaBtn');
+    var box = document.getElementById('hubQaResult');
+    if (!input || !btn || !box) return;
+    function esc(t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+    function fmt(t) {
+        return esc(t)
+            .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+            .replace(/^##\s?(.*)$/gm, '<div class="hub-qa-h">$1</div>')
+            .replace(/^-\s?(.*)$/gm, '<div class="hub-qa-li">&bull; $1</div>')
+            .replace(/\n{2,}/g, '<br><br>').replace(/\n/g, '<br>');
+    }
+    async function ask() {
+        var q = input.value.trim();
+        if (q.length < 3) { input.focus(); return; }
+        btn.disabled = true;
+        box.style.display = 'block';
+        box.innerHTML = '<div class="hub-qa-loading">Searching your course materials...</div>';
+        try {
+            var r = await fetch('/api/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'hubask', question: q }) });
+            var d = await r.json();
+            var html = '<div class="hub-qa-answer">' + fmt(d.reply || 'No answer came back - please try again.') + '</div>';
+            if (Array.isArray(d.sources) && d.sources.length) {
+                html += '<div class="hub-qa-sources"><span>Sources:</span>' + d.sources.map(function (f) {
+                    var url = 'https://raw.githubusercontent.com/abduIwahid/fa24-bai/main/' + f.split('/').map(encodeURIComponent).join('/');
+                    var name = f.split('/').pop();
+                    return '<button type="button" class="hub-qa-chip" data-url="' + url + '"><i class="bi bi-file-earmark-pdf"></i> ' + esc(name) + '</button>';
+                }).join('') + '</div>';
+            }
+            box.innerHTML = html;
+            box.querySelectorAll('.hub-qa-chip').forEach(function (ch) {
+                ch.addEventListener('click', function () { window.open(ch.getAttribute('data-url'), '_blank', 'noopener'); });
+            });
+        } catch (e) {
+            box.innerHTML = '<div class="hub-qa-answer">Something went wrong reaching the AI - please try again.</div>';
+        }
+        btn.disabled = false;
+    }
+    btn.addEventListener('click', ask);
+    input.addEventListener('keydown', function (e) { if (e.key === 'Enter') ask(); });
+})();

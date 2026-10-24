@@ -47,6 +47,92 @@ export default async function handler(req, res) {
         const repo = 'fa24-bai';
         const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 
+        // ---- Hub Q&A (action: 'hubask') --------------------------------
+        // Retrieval over the pre-generated AI summaries: pick the most
+        // relevant course files for the question, answer from their cached
+        // summaries, and name the sources.
+        if (action === 'hubask') {
+            const question = ((req.body && req.body.question) || prompt || '').toString().trim().slice(0, 500);
+            if (question.length < 3) {
+                return res.status(200).json({ reply: 'Please type a question first.' });
+            }
+            const cleanKey2 = (GEMINI_API_KEY || '').trim().replace(/^["']|["']$/g, '').trim();
+            const ghHeaders = GITHUB_TOKEN ? { 'Authorization': `Bearer ${GITHUB_TOKEN}`, 'User-Agent': 'StudyHub-Ask' } : { 'User-Agent': 'StudyHub-Ask' };
+            async function askGemini(text, maxTokens, timeoutMs) {
+                const models = ['gemini-3.8-flash', 'gemini-2.5-flash', 'gemini-2.0-flash'];
+                for (const m of models) {
+                    try {
+                        const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${encodeURIComponent(cleanKey2)}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            signal: AbortSignal.timeout(timeoutMs || 20000),
+                            body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text }] }], generationConfig: { temperature: 0.3, maxOutputTokens: maxTokens || 1024 } })
+                        });
+                        const d = await r.json();
+                        if (r.ok && d.candidates && d.candidates[0] && d.candidates[0].content) {
+                            const t = d.candidates[0].content.parts.map(p => p.text || '').join('\n').trim();
+                            if (t) return t;
+                        }
+                    } catch (e) { /* try next model */ }
+                }
+                return null;
+            }
+            let filePaths = [];
+            try {
+                const treeRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/git/trees/main?recursive=1`, { headers: ghHeaders, signal: AbortSignal.timeout(10000) });
+                if (treeRes.ok) {
+                    const tree = await treeRes.json();
+                    filePaths = (tree.tree || []).filter(i => i.type === 'blob' && /\.pdf$/i.test(i.path)).map(i => i.path);
+                }
+            } catch (e) { /* handled below */ }
+            if (!filePaths.length) {
+                return res.status(200).json({ reply: 'The hub Q&A is unavailable right now - please open a document and use its AI Assistant instead.', sources: [] });
+            }
+            let picked = [];
+            const pickPrompt = `A student asked: "${question}"\n\nCourse material files (numbered):\n${filePaths.map((f, i) => `${i}. ${f}`).join('\n')}\n\nReply with ONLY a JSON array of the numbers of the up-to-3 files most likely to contain the answer, e.g. [4, 11]. If none seem relevant, reply [].`;
+            const pickText = await askGemini(pickPrompt, 128, 15000);
+            if (pickText) {
+                try {
+                    const arr = JSON.parse(pickText.slice(pickText.indexOf('['), pickText.lastIndexOf(']') + 1));
+                    picked = arr.filter(n => Number.isInteger(n) && filePaths[n]).slice(0, 3).map(n => filePaths[n]);
+                } catch (e) { /* keyword fallback below */ }
+            }
+            if (!picked.length) {
+                const stop = new Set(['what','is','the','a','an','of','in','on','for','to','and','or','explain','define','how','does','do','are','was','were','with','from','that','this','it','its','by','at','as','be','can','give','me','about']);
+                const words = question.toLowerCase().split(/[^a-z0-9]+/).filter(w => w.length >= 3 && !stop.has(w));
+                picked = filePaths.map(f => {
+                    const name = f.toLowerCase();
+                    let sc = 0;
+                    for (const w of words) if (name.includes(w)) sc += 1;
+                    return { f, sc };
+                }).filter(x => x.sc > 0).sort((a, b) => b.sc - a.sc).slice(0, 3).map(x => x.f);
+            }
+            if (!picked.length) {
+                return res.status(200).json({ reply: 'I could not match that question to any course material yet. Try naming the course or topic (for example "deadlock in OS" or "master theorem in DAA"), or open the document and use its AI Assistant.', sources: [] });
+            }
+            const summaries = [];
+            for (const f of picked) {
+                try {
+                    const cp = 'ai-cache/' + f.replace(/[^a-zA-Z0-9]+/g, '_') + '.json';
+                    const cRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${cp}`, { headers: ghHeaders, signal: AbortSignal.timeout(8000) });
+                    if (cRes.ok) {
+                        const j = await cRes.json();
+                        const cached = JSON.parse(Buffer.from((j.content || '').replace(/\n/g, ''), 'base64').toString('utf8'));
+                        if (cached && cached.reply) summaries.push({ file: f, text: cached.reply.slice(0, 6000) });
+                    }
+                } catch (e) { /* skip file */ }
+            }
+            if (!summaries.length) {
+                return res.status(200).json({ reply: 'Those materials are still being prepared for Q&A. Please open the document and use its AI Assistant for now.', sources: picked });
+            }
+            const answerPrompt = `You are an expert academic tutor for FA24-BAI (Artificial Intelligence) students. Answer the student's question using ONLY the course material summaries below. If the summaries do not cover the question, say so honestly and point to the closest topic they do cover.\n\nFORMATTING RULES (strict):\n- Never use LaTeX or math markup (no $$, no $...$, no backslash commands). Write formulas in plain text, e.g. O(n log n), T(n) = 2T(n/2) + n.\n- Use ## for a heading if needed and - for bullet points. Be clear, direct and concise.\n\nQUESTION: ${question}\n\nCOURSE MATERIAL SUMMARIES:\n${summaries.map(sm => `--- Source: ${sm.file} ---\n${sm.text}`).join('\n\n')}`;
+            const answer = await askGemini(answerPrompt, 1500, 25000);
+            if (!answer) {
+                return res.status(200).json({ reply: 'The AI is busy right now - please try the question again in a moment.', sources: summaries.map(x => x.file) });
+            }
+            return res.status(200).json({ reply: answer, sources: summaries.map(x => x.file) });
+        }
+
         const cleanDocName = filename
             ? filename.split('/').pop().replace(/\.[^/.]+$/, '').replace(/_/g, ' ')
             : 'Course Document';
