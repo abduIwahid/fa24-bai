@@ -1683,11 +1683,11 @@ button:disabled {
 }
 
 .hero-title {
-    font-size: 1.85rem;
+    font-size: clamp(1.9rem, 6vw, 2.6rem);
     font-weight: 700;
     color: var(--text-color);
     margin: 0.25rem 0 0.65rem 0;
-    line-height: 1.25;
+    line-height: 1.15;
 }
 
 .hero-desc {
@@ -1887,7 +1887,7 @@ button:disabled {
     }
 
     .hero-title {
-        font-size: 1.45rem;
+        font-size: 2.05rem;
     }
 
     .hero-desc {
@@ -2728,7 +2728,7 @@ button:disabled {
 /* Bigger logo + punchy display wordmark */
 .app-logo { width: 54px; height: 54px; border-radius: 12px; }
 .header-text h1 {
-    font-family: 'Anton', 'Arial Narrow', 'Helvetica Neue', sans-serif;
+    font-family: 'Archivo Black', 'Arial Narrow', 'Helvetica Neue', sans-serif;
     font-size: 1.6rem;
     font-weight: 400;
     letter-spacing: 0.8px;
@@ -2738,7 +2738,7 @@ button:disabled {
 }
 .header-subtitle { font-size: 0.72rem; margin-top: 1px; }
 .hero-title {
-    font-family: 'Anton', 'Arial Narrow', 'Helvetica Neue', sans-serif;
+    font-family: 'Archivo Black', 'Arial Narrow', 'Helvetica Neue', sans-serif;
     font-weight: 400;
     letter-spacing: 0.6px;
     text-transform: uppercase;
