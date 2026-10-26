@@ -1,4 +1,28 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="14" fill="#004741"/>
-  <path d="M18 44V20h14v4.5H23.5v7H30v4.5h-6.5V44H18zm17 0l7.5-24h5.2l7.5 24H50l-1.6-5.4h-7.6L39.2 44H35zm9.6-9.6h5.2L47.2 26h-.2l-2.4 8.4z" fill="#ffffff"/>
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Study Hub — Official Logo (Book Stack)
+  Brand colours: Deep Green #004741 · Cream #F0EDE4 · Sage #8FAE9F · Spark Gold #FFD166
+  Geometry is the approved Round-1 "Book Stack" mark — do not alter proportions.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="480" viewBox="0 0 480 480" role="img" aria-labelledby="sh-title sh-desc">
+  <title id="sh-title">Study Hub logo</title>
+  <desc id="sh-desc">Three stacked books in sage and cream with a gold spark, on a deep green rounded tile.</desc>
+
+  <!-- Tile -->
+  <rect id="tile" x="30" y="30" width="420" height="420" rx="96" fill="#004741"/>
+
+  <g id="book-stack">
+    <!-- Bottom book (sage, tilted -4 degrees) -->
+    <rect id="book-bottom" x="118" y="306" width="244" height="50" rx="10" fill="#8FAE9F" transform="rotate(-4 240 331)"/>
+    <!-- Middle book (cream) -->
+    <rect id="book-middle" x="110" y="242" width="260" height="54" rx="10" fill="#F0EDE4"/>
+    <!-- Top book (sage, tilted +3 degrees) -->
+    <rect id="book-top" x="126" y="182" width="228" height="50" rx="10" fill="#8FAE9F" transform="rotate(3 240 207)"/>
+    <!-- Spine detail on the lower books -->
+    <path id="spine-detail" d="M 240 296 L 240 356" stroke="#004741" stroke-width="6" opacity="0.35"/>
+  </g>
+
+  <!-- Spark (gold, four-point star) -->
+  <path id="spark" transform="translate(240 128) scale(0.55)" fill="#FFD166"
+        d="M 0 -60 C 6 -18, 18 -6, 60 0 C 18 6, 6 18, 0 60 C -6 18, -18 6, -60 0 C -18 -6, -6 -18, 0 -60 Z"/>
 </svg>
