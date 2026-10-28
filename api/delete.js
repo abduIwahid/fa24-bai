@@ -53,10 +53,51 @@ export default async function handler(req, res) {
             const err = await delRes.json();
             throw new Error(err.message || "Delete failed");
         }
+
+        await syncFilesJson({
+            'Authorization': `Bearer ${GITHUB_TOKEN}`,
+            'Content-Type': 'application/json',
+            'User-Agent': 'Vercel-Upload-App'
+        }, owner, repo, (list) => list.filter(e => e.name !== filename));
         
         return res.status(200).json({ message: 'Deleted successfully' });
     } catch(e) {
         console.error(e);
         return res.status(500).json({ message: e.message });
+    }
+}
+
+// --- files.json maintenance -------------------------------------------
+// The materials list is served to students from the STATIC files.json
+// (see vercel.json rewrite of /api/files), so it never depends on the
+// GitHub API at page-load time. Keep it in sync on every upload/delete.
+// Best-effort: a failure here must never fail the upload/delete itself.
+async function syncFilesJson(ghHeaders, owner, repo, mutate) {
+    try {
+        const url = `https://api.github.com/repos/${owner}/${repo}/contents/files.json`;
+        let list = [];
+        let sha = null;
+        const getRes = await fetch(url, { headers: ghHeaders });
+        if (getRes.ok) {
+            const data = await getRes.json();
+            sha = data.sha;
+            try {
+                list = JSON.parse(Buffer.from(data.content, 'base64').toString('utf8'));
+            } catch (e) { list = []; }
+        }
+        if (!Array.isArray(list)) list = [];
+        const next = mutate(list);
+        const putRes = await fetch(url, {
+            method: 'PUT',
+            headers: ghHeaders,
+            body: JSON.stringify({
+                message: 'Update files.json (materials list)',
+                content: Buffer.from(JSON.stringify(next, null, 1)).toString('base64'),
+                ...(sha ? { sha } : {})
+            })
+        });
+        if (!putRes.ok) console.warn('files.json sync failed:', putRes.status);
+    } catch (e) {
+        console.warn('files.json sync error:', e.message);
     }
 }
