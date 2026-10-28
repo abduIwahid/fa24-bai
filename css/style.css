@@ -3306,7 +3306,7 @@ body { overflow-x: clip; }
     height: 42px;
     flex: none;
     font-family: 'Archivo Black', 'Arial Narrow', 'Helvetica Neue', sans-serif;
-    font-size: 20px;
+    font-size: 18px;
     line-height: 1;
     letter-spacing: .4px;
     color: var(--text-color);
@@ -3317,5 +3317,5 @@ body { overflow-x: clip; }
     display: block;
 }
 @media (max-width: 768px) {
-    .site-wordmark { height: 36px; font-size: 17px; letter-spacing: .2px; }
+    .site-wordmark { height: 36px; font-size: 15px; letter-spacing: .2px; }
 }
