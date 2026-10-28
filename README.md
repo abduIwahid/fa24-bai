@@ -12,10 +12,10 @@ A modern web portal for the FA24-BAI cohort (BS Artificial Intelligence, 5th sem
 
 ## Features
 
-- **Landing Page:** Welcoming home portal under a single-line header (logo, nav, notices and theme toggle aligned on one horizontal line at every width), with an integrated search bar, cohort stats, feature overviews, and clean course preview cards with per-course file counts.
+- **Landing Page:** Welcoming home portal under the Study Hub header (open-book logo with the stacked STUDY/HUB wordmark, nav, notices and theme toggle), with an integrated search bar, cohort stats, feature overviews, and clean course preview cards with per-course file counts.
 - **Global Search:** Fast search across every material by title and full path, with ranked results, filter chips, and a `/` keyboard shortcut.
-- **Course Explorer:** Structured folder hierarchy for every course — CDFs, Lab Manuals, Syllabi, Lectures, Assignments, and Notes — with breadcrumb navigation and folder shortcuts on every course card.
-- **AI Study Companion:** Powered by Google Gemini. Summarize documents, generate 5-question review quizzes, compile common viva questions, or ask custom questions about a document — answers are formatted clean and plain (no raw markdown or LaTeX clutter), with per-request timeouts so a busy model never hangs the reply. Summaries are cached per file in the repository — the first summary generated for a document is shared with every student who asks afterwards, so repeat views come back in about two seconds.
+- **Course Explorer:** Structured folder hierarchy for every course — CDFs, Lab Manuals, Syllabi, Lectures, Assignments, Notes, Books, and exam papers — with breadcrumb navigation and folder shortcuts on every course card.
+- **AI Study Companion:** Powered by Google Gemini. Summarize documents, generate 5-question review quizzes, compile common viva questions, or ask custom questions about a document — answers are formatted clean and plain (no raw markdown or LaTeX clutter), with per-request timeouts so a busy model never hangs the reply. Summaries are cached per file in the repository — the first summary generated for a document is shared with every student who asks afterwards, so repeat views come back in about two seconds. The Ask the Hub chat answers course questions from the same material, with a Groq-powered fallback so it stays available when the primary model is busy.
 - **Dark Mode:** A full dark theme in the same cream/deep-green identity, toggle in the header, saved per device.
 - **Recently Viewed:** Your last-opened materials stay one tap away, even after a refresh.
 - **Resource Options Menu:** A three-dots menu on every material to open it, run AI analysis, copy a shareable direct link, or delete it (admin only).
@@ -23,7 +23,7 @@ A modern web portal for the FA24-BAI cohort (BS Artificial Intelligence, 5th sem
 - **Notice Board:** Cohort announcement board for academic alerts and deadline reminders.
 - **Request a Material:** Anything missing? Request it through the [request form](https://docs.google.com/forms/d/e/1FAIpQLSe8ZaXjapeO1vaGv1k4KDVo2ziVLxygVu6pjrCC5igZB2ExGA/viewform) and the Admin will upload it.
 - **Admin Management:** Password-protected uploads and deletions, verified server-side only (fail-closed), committed straight to GitHub via the REST API.
-- **Fast by Default:** Semester files and assets are served with long-term immutable caching, and links shared on WhatsApp/social show a proper title, description, and preview image.
+- **Fast by Default:** Course PDFs are served with short, freshness-friendly cache headers (one hour, with stale-while-revalidate) so a replaced file shows up quickly instead of going stale, and links shared on WhatsApp/social show a proper title, description, and preview image.
 - **Reading Comfort:** A scroll progress bar at the top, a skip-to-content link for keyboard users, and a print stylesheet so notes print clean.
 - **Custom 404 Page:** A themed not-found page (with a familiar animated face) that guides lost visitors back home.
 - **Deep Links & Working Back Button:** Every course, folder, search, and material has its own shareable link (`#/course/CSC322`, `#/search?q=...`); browser Back/Forward just work.
@@ -54,22 +54,21 @@ A modern web portal for the FA24-BAI cohort (BS Artificial Intelligence, 5th sem
 | Layer | Implementation |
 |---|---|
 | Frontend | Vanilla HTML5, CSS3, JavaScript (ES6+), Bootstrap Icons — no build step |
-| Typography | Helvetica ('Helvetica Neue', Helvetica, Arial, sans-serif) |
+| Typography | Archivo Black (display / headings) · Helvetica ('Helvetica Neue', Helvetica, Arial, sans-serif) for body text |
 | Backend | Vercel Serverless Functions (`/api`) |
-| AI Integration | Google Gemini API (document analysis) |
-| Document Storage | This GitHub repository, accessed via the GitHub Contents and Tree APIs |
+| AI Integration | Google Gemini API (document analysis) · Groq API (Ask the Hub fallback) |
+| Document Storage | This GitHub repository (GitHub Contents API). The materials list itself is a static `files.json` in the repo root, kept in sync by the upload/delete endpoints, so page loads make no live GitHub API calls |
 | Hosting | Vercel |
 
 ### API Endpoints
 
 | Endpoint | Method | Payload / Query | Description |
 |---|---|---|---|
-| `/api/files` | GET | None | Lists all repository resource file paths |
+| `/api/files` | GET | None | Serves the static materials list (`files.json`, via a rewrite) |
 | `/api/ask` | POST | `filename`, `action` (`summarize`, `quiz`, `viva`), `prompt`, `password` (admin verification) | Generates AI analysis, or validates the admin key server-side |
 | `/api/upload` | POST | `filename`, `contentBase64`, `password`, `folder` | Commits a new resource to the repository (supports overwriting) |
 | `/api/delete` | POST | `filename`, `password` | Deletes a resource from the repository |
 | `/api/notices` | GET / POST | `password` (POST only) | Reads the notice board, or posts a new announcement (admin only); notices can carry an exam date, category, and pin |
-| `/api/count` | GET / POST | — | Download counts per material |
 
 All admin endpoints fail closed: if `ADMIN_PASSWORD` is not configured on the server, they refuse every request. The AI endpoint is also rate-limited per IP (20 AI requests and 10 admin login attempts per minute) to keep shared quotas safe during exam-week rushes.
 
@@ -93,6 +92,7 @@ When deploying to [Vercel](https://vercel.com), configure the following environm
 | `GEMINI_API_KEY` | Yes | API key from Google AI Studio for the AI study features |
 | `GITHUB_TOKEN` | Yes | GitHub Personal Access Token with repository read/write permissions |
 | `ADMIN_PASSWORD` | Yes | Master authorization key for admin upload/delete operations — keep it secret and rotate it if it is ever exposed |
+| `GROQ_API_KEY` | No | Enables the Groq fallback models for the Ask the Hub chat |
 
 ### 3. Local Development
 
