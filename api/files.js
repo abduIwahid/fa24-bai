@@ -7,6 +7,18 @@ export default async function handler(req, res) {
     const owner = 'abduIwahid';
     const repo = 'fa24-bai';
 
+    // In-memory cache (survives across warm invocations of this function
+    // instance). The materials list changes rarely, so serving an hour-old
+    // copy is fine — and it keeps GitHub's API quota from being burned by
+    // repeat traffic: previously every cold CDN cache cost 1 tree call +
+    // one commits call PER FILE, and a GitHub rate-limit then took the
+    // whole list down for everyone.
+    const now = Date.now();
+    if (handlerCache.data && (now - handlerCache.at) < 60 * 60 * 1000) {
+        res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
+        return res.status(200).json(handlerCache.data);
+    }
+
     try {
         const headers = { 'User-Agent': 'Vercel-Upload-App' };
 
@@ -19,7 +31,14 @@ export default async function handler(req, res) {
         const response = await fetch(treeUrl, { headers });
 
         if (!response.ok) {
-            const err = await response.json();
+            const err = await response.json().catch(() => ({}));
+            // Resilience: if GitHub is rate-limiting (or down) and we have
+            // ANY earlier copy in memory, serve the stale list instead of
+            // failing the whole page for every student.
+            if (handlerCache.data) {
+                res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=86400');
+                return res.status(200).json(handlerCache.data);
+            }
             return res.status(response.status).json({ message: err.message || 'Error fetching from GitHub' });
         }
 
@@ -33,10 +52,9 @@ export default async function handler(req, res) {
         // --- Round 2: attach per-file created/updated dates ---------------
         // Derived from the commit history of each path (one commits call per
         // file returns newest-first, so [0] = last updated, [last] = first
-        // added). This needs the token (unauthenticated quota is far too
-        // small), is fully best-effort — any failure simply returns the
-        // files without dates — and the whole response is CDN-cached so
-        // GitHub is only consulted on a cold cache.
+        // added). Fully best-effort — any failure simply returns the files
+        // without dates. Only runs on a genuine refresh (see cache above),
+        // not on every request.
         if (GITHUB_TOKEN) {
             try {
                 await attachDates(pdfs, headers, owner, repo);
@@ -45,15 +63,24 @@ export default async function handler(req, res) {
             }
         }
 
+        handlerCache = { at: Date.now(), data: pdfs };
+
         // Let Vercel's CDN absorb repeat traffic: fresh for an hour,
         // stale-while-revalidate for a day after that.
         res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
         return res.status(200).json(pdfs);
     } catch (error) {
         console.error("Fetch error:", error);
+        if (handlerCache.data) {
+            res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=86400');
+            return res.status(200).json(handlerCache.data);
+        }
         return res.status(500).json({ message: 'Internal Server Error' });
     }
 }
+
+// Module-level cache shared by all invocations on a warm instance.
+let handlerCache = { at: 0, data: null };
 
 // Fetch commit dates for every path with bounded concurrency.
 async function attachDates(files, headers, owner, repo) {
