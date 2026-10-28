@@ -720,42 +720,6 @@ document.addEventListener("DOMContentLoaded", () => {
         bookmarksContainer.innerHTML = files.map(f => createResourceHtml(f, { showCourse: true })).join('');
     };
 
-    // === Download counts (Round 2) — /api/count, throttled per session ===
-    let countsMap = {};
-    const countedThisSession = new Set();
-
-    const fetchCounts = async () => {
-        try {
-            const r = await fetch('/api/count');
-            if (!r.ok) return;
-            const d = await r.json();
-            if (d && d.counts && typeof d.counts === 'object') {
-                countsMap = d.counts;
-                
-                if (currentTab === 'bookmarks') renderBookmarks();
-            }
-        } catch (e) { /* counts are decorative — never block the UI */ }
-    };
-
-    const incrementCount = (filename) => {
-        if (countedThisSession.has(filename)) return;
-        countedThisSession.add(filename);
-        countsMap[filename] = (countsMap[filename] || 0) + 1; // optimistic
-        const payload = JSON.stringify({ name: filename });
-        try {
-            if (navigator.sendBeacon) {
-                const blob = new Blob([payload], { type: 'application/json' });
-                if (navigator.sendBeacon('/api/count', blob)) return;
-            }
-            fetch('/api/count', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: payload,
-                keepalive: true
-            }).catch(() => {});
-        } catch (e) { /* ignore */ }
-    };
-
     // === Recent searches (Round 2) ===
     const RECENT_SEARCHES_KEY = 'fa24bai_recent_searches';
     let recentSearches = [];
@@ -911,13 +875,12 @@ document.addEventListener("DOMContentLoaded", () => {
         const attrRawName = res.rawName.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
         const menuId = 'menu-' + Math.random().toString(36).substring(2, 9);
         const fav = isBookmarked(res.rawName);
-        const dlCount = countsMap[res.rawName] || 0;
 
         return `
             <div class="resource-item" data-file="${attrRawName}">
                 <div class="resource-main">
                     <div class="resource-name">${res.cleanName}${dateBadge(res)}</div>
-                    <div><span class="resource-type-badge">${res.resourceType}</span>${dlCount > 0 ? `<span class="download-count"><i class="bi bi-download"></i> ${dlCount}</span>` : ''}</div>
+                    <div><span class="resource-type-badge">${res.resourceType}</span></div>
                     ${opts.showCourse ? `<button type="button" class="resource-course-link" onclick="window.openFolder('${res.resourceType}', '${res.course.code}', '${res.course.name.replace(/'/g, "\\'")}')">${res.course.code} · ${res.course.name} &rarr;</button>` : ''}
                 </div>
                 <div class="resource-actions">
@@ -956,7 +919,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     window.trackView = (filename) => {
         addRecent(filename);
-        incrementCount(filename);
     };
 
     window.deleteFile = async (filename) => {
@@ -1796,7 +1758,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 // Re-apply the current URL route now that data is ready —
                 // this is what makes a cold deep link land in the right view.
                 applyRoute();
-                fetchCounts();
             }
         } catch (error) {
             filesState = 'error';
