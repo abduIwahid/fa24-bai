@@ -1,28 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Study Hub — Logo, full-bleed variant (Book Stack)
-  The green tile fills the whole frame: use wherever the logo sits on a light
-  background (site header). Master with margins: study-hub-logo.svg
-  Brand colours: Deep Green #004741 · Cream #F0EDE4 · Sage #8FAE9F · Spark Gold #FFD166
+  Study Hub — Logo, full-bleed variant (Open Book, restored 2026-10-28)
+  The sage tile fills the whole frame: use wherever the logo sits on a light
+  background (site header). Brand colours: Sage #3E5F56 · White pages.
 -->
-<svg xmlns="http://www.w3.org/2000/svg" width="480" height="480" viewBox="0 0 480 480" role="img" aria-labelledby="shf-title shf-desc">
-  <title id="shf-title">Study Hub logo (full-bleed)</title>
-  <desc id="shf-desc">Three stacked books in sage and cream with a gold spark, on a deep green tile that fills the frame.</desc>
-  <g transform="translate(-34.2857 -34.2857) scale(1.142857)">
-    <!-- Tile -->
-    <rect id="tile" x="30" y="30" width="420" height="420" rx="96" fill="#004741"/>
-    <g id="book-stack">
-      <!-- Bottom book (sage, tilted -4 degrees) -->
-      <rect id="book-bottom" x="118" y="306" width="244" height="50" rx="10" fill="#8FAE9F" transform="rotate(-4 240 331)"/>
-      <!-- Middle book (cream) -->
-      <rect id="book-middle" x="110" y="242" width="260" height="54" rx="10" fill="#F0EDE4"/>
-      <!-- Top book (sage, tilted +3 degrees) -->
-      <rect id="book-top" x="126" y="182" width="228" height="50" rx="10" fill="#8FAE9F" transform="rotate(3 240 207)"/>
-      <!-- Spine detail on the lower books -->
-      <path id="spine-detail" d="M 240 296 L 240 356" stroke="#004741" stroke-width="6" opacity="0.35"/>
-    </g>
-    <!-- Spark (gold, four-point star) -->
-    <path id="spark" transform="translate(240 128) scale(0.55)" fill="#FFD166"
-          d="M 0 -60 C 6 -18, 18 -6, 60 0 C 18 6, 6 18, 0 60 C -6 18, -18 6, -60 0 C -18 -6, -6 -18, 0 -60 Z"/>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" fill="#3E5F56"/>
+  <!-- cover -->
+  <path fill="#ffffff" d="M11 18.5 V45 C11 48 13.2 48.9 16 49.4 C22 50.4 27.5 51.2 32 53 C36.5 51.2 42 50.4 48 49.4 C50.8 48.9 53 48 53 45 V18.5 C46 16.4 38.5 17.2 32 20.6 C25.5 17.2 18 16.4 11 18.5 Z"/>
+  <!-- pages (sage keyline traces the page edges + spine) -->
+  <path fill="#ffffff" stroke="#3E5F56" stroke-width="1.3" d="M13.4 21.5 V44.8 C19 45.5 24.8 46.4 30.7 48.4 V23.2 C25.2 20.5 19.2 19.9 13.4 21.5 Z M50.6 21.5 V44.8 C45 45.5 39.2 46.4 33.3 48.4 V23.2 C38.8 20.5 44.8 19.9 50.6 21.5 Z"/>
 </svg>
