@@ -1,28 +1,42 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Study Hub — Official Logo (Book Stack)
-  Brand colours: Deep Green #004741 · Cream #F0EDE4 · Sage #8FAE9F · Spark Gold #FFD166
-  Geometry is the approved Round-1 "Book Stack" mark — do not alter proportions.
+  Study Hub — Logo (Open Book, realistic) — FINAL, approved by Wadi 2026-10-28
+  Deep-green tile #004741 · Sage cover #8FAE9F · Cream pages #F3EDDA
+  Master file. Full-bleed variant for the site header: logo-full.svg in the repo.
 -->
-<svg xmlns="http://www.w3.org/2000/svg" width="480" height="480" viewBox="0 0 480 480" role="img" aria-labelledby="sh-title sh-desc">
-  <title id="sh-title">Study Hub logo</title>
-  <desc id="sh-desc">Three stacked books in sage and cream with a gold spark, on a deep green rounded tile.</desc>
-
-  <!-- Tile -->
-  <rect id="tile" x="30" y="30" width="420" height="420" rx="96" fill="#004741"/>
-
-  <g id="book-stack">
-    <!-- Bottom book (sage, tilted -4 degrees) -->
-    <rect id="book-bottom" x="118" y="306" width="244" height="50" rx="10" fill="#8FAE9F" transform="rotate(-4 240 331)"/>
-    <!-- Middle book (cream) -->
-    <rect id="book-middle" x="110" y="242" width="260" height="54" rx="10" fill="#F0EDE4"/>
-    <!-- Top book (sage, tilted +3 degrees) -->
-    <rect id="book-top" x="126" y="182" width="228" height="50" rx="10" fill="#8FAE9F" transform="rotate(3 240 207)"/>
-    <!-- Spine detail on the lower books -->
-    <path id="spine-detail" d="M 240 296 L 240 356" stroke="#004741" stroke-width="6" opacity="0.35"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" fill="#004741"/>
+  <!-- soft shadow under the book -->
+  <path fill="#002E29" opacity="0.5" d="M10 51.5 C20 49.8 44 49.8 54 51.5 C44 54.6 20 54.6 10 51.5 Z"/>
+  <!-- cover -->
+  <path fill="#8FAE9F" d="M32 24 C24.8 19.8 17 18.8 9.8 20.4 V49.4 C17 47.8 24.8 48.8 32 53 C39.2 48.8 47 47.8 54.2 49.4 V20.4 C47 18.8 39.2 19.8 32 24 Z"/>
+  <!-- page block lines along the bottom edge (stacked leaves) -->
+  <g stroke="#DCD4BE" stroke-width="0.9" fill="none" opacity="0.85">
+    <path d="M13.5 47.6 C20 46.2 26 47 32 49.9 C38 47 44 46.2 50.5 47.6"/>
+    <path d="M13.5 49.3 C20 47.9 26 48.7 32 51.6 C38 48.7 44 47.9 50.5 49.3"/>
   </g>
-
-  <!-- Spark (gold, four-point star) -->
-  <path id="spark" transform="translate(240 128) scale(0.55)" fill="#FFD166"
-        d="M 0 -60 C 6 -18, 18 -6, 60 0 C 18 6, 6 18, 0 60 C -6 18, -18 6, -60 0 C -18 -6, -6 -18, 0 -60 Z"/>
+  <!-- left page -->
+  <path fill="#F3EDDA" d="M32 20.8 C25.8 17.2 19 16.2 12.8 17.8 V46.4 C19 44.8 25.8 45.8 32 49.2 Z"/>
+  <!-- right page, bottom corner cut for the curl -->
+  <path fill="#F3EDDA" d="M32 20.8 C38.2 17.2 45 16.2 51.2 17.8 V46.4 C45 44.8 38.2 45.8 32 49.2 Z"/>
+  <!-- page shading: gentle fall toward the gutter -->
+  <path fill="#004741" opacity="0.07" d="M32 20.8 C29 19 26 17.9 23 17.3 C25.8 19.6 28.6 23 29.8 27 L29.8 46.6 C30.5 47.5 31.2 48.4 32 49.2 Z"/>
+  <path fill="#004741" opacity="0.07" d="M32 20.8 C35 19 38 17.9 41 17.3 C38.2 19.6 35.4 23 34.2 27 L34.2 46.6 C33.5 47.5 32.8 48.4 32 49.2 Z"/>
+  <!-- gutter shadow -->
+  <path fill="#004741" opacity="0.16" d="M30.6 21.4 C31.1 21.1 31.6 20.9 32 20.8 C32.4 20.9 32.9 21.1 33.4 21.4 L33.4 47.6 C32.9 48.1 32.4 48.7 32 49.2 C31.6 48.7 31.1 48.1 30.6 47.6 Z"/>
+  <!-- curl shadow + folded corner (page underside) -->
+  <!-- a second leaf peeking at the top of each page -->
+  <g stroke="#E7DFC9" stroke-width="1.1" fill="none">
+    <path d="M14.8 20.6 C20.4 19.2 26 20 31 22.6"/>
+    <path d="M33 22.6 C38 20 43.6 19.2 49.2 20.6"/>
+  </g>
+  <!-- text lines -->
+  <g stroke="#004741" stroke-width="1.35" stroke-linecap="round" fill="none" opacity="0.42">
+    <path d="M18.6 26.2 C21.6 25.5 24.7 25.8 27.6 27"/>
+    <path d="M18.6 31.4 C21.6 30.7 24.7 31 27.6 32.2"/>
+    <path d="M18.6 36.6 C21.6 35.9 24.7 36.2 27.6 37.4"/>
+    <path d="M36.4 27 C39.3 25.8 42.4 25.5 45.4 26.2"/>
+    <path d="M36.4 32.2 C39.3 31 42.4 30.7 45.4 31.4"/>
+    <path d="M36.4 37.4 C39.3 36.2 42.4 35.9 45.4 36.6"/>
+  </g>
 </svg>
