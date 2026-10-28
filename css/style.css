@@ -3295,3 +3295,20 @@ body { overflow-x: clip; }
 
 /* Screen-reader-only heading (visible wordmark removed from header by design) */
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+/* Header wordmark (2026-10-28): STUDY / HUB stacked beside the logo, matched to its height */
+.site-wordmark {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    font-family: 'Archivo Black', 'Archivo', sans-serif;
+    font-size: 19px;
+    line-height: 1.05;
+    letter-spacing: .4px;
+    color: var(--text-color);
+    user-select: none;
+    white-space: nowrap;
+}
+@media (max-width: 480px) {
+    .site-wordmark { font-size: 16px; letter-spacing: .2px; }
+}
