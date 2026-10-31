@@ -2310,10 +2310,14 @@ button:disabled {
 .dash-chip:hover { border-color: var(--accent); }
 .folder-dl-btn { margin-left: auto; align-self: center; white-space: nowrap; flex-shrink: 0; }
 .folder-dl-btn:disabled { opacity: 0.65; cursor: wait; }
-.modal-content.confirm-modal { height: auto; max-width: 420px; }
+.modal-content.confirm-modal { height: auto; max-height: none; max-width: 420px; }
+@media (max-width: 480px) {
+    .dl-confirm-actions { flex-wrap: nowrap; }
+    .dl-confirm-actions .dl-btn { flex: 1; justify-content: center; }
+}
 .dl-file-name { font-weight: 600; color: var(--text-color); word-break: break-word; }
 .dl-confirm-actions { display: flex; gap: 0.75rem; justify-content: flex-end; flex-wrap: wrap; }
-.dl-btn { min-height: 44px; padding: 0.6rem 1.1rem; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 0.35rem; }
+.dl-btn { width: auto; min-height: 44px; padding: 0.6rem 1.1rem; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 0.35rem; }
 .dl-btn-cancel { background: transparent; color: var(--text-color); border: 1px solid var(--border-color); }
 .dl-btn-confirm { background: var(--accent); color: #fff; border: 1px solid var(--accent); }
 .dl-btn:disabled { opacity: 0.65; cursor: wait; }

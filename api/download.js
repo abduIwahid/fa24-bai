@@ -34,7 +34,11 @@ export default async function handler(req, res) {
         }
 
         const base = file.split('/').pop().replace(/"/g, '');
-        res.setHeader('Content-Type', fileRes.headers.get('content-type') || 'application/octet-stream');
+        // Always octet-stream (never the real document type): a browser
+        // cannot render this type inline, so every browser — including
+        // mobile Safari, which previews PDFs even when they are sent as
+        // attachments — saves the file to the device instead of opening it.
+        res.setHeader('Content-Type', 'application/octet-stream');
         const len = fileRes.headers.get('content-length');
         if (len) res.setHeader('Content-Length', len);
         res.setHeader('Content-Disposition', `attachment; filename="${base}"`);
