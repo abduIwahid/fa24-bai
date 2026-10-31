@@ -67,15 +67,17 @@ export default async function handler(req, res) {
             return res.status(response.status).json({ message: err.message });
         }
 
+        const byteSize = Buffer.from(contentBase64, 'base64').length;
         await syncFilesJson(ghHeaders, owner, repo, (list) => {
             const now = new Date().toISOString();
             const existing = list.find(e => e.name === path);
             if (existing) {
                 existing.updatedAt = now;
+                existing.size = byteSize;
                 if (!existing.createdAt) existing.createdAt = now;
                 return list;
             }
-            list.push({ name: path, updatedAt: now, createdAt: now });
+            list.push({ name: path, updatedAt: now, createdAt: now, size: byteSize });
             return list;
         });
 
