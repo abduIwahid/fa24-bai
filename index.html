@@ -138,6 +138,17 @@
         </div>
     </div>
 
+    <div id="dlProgress" style="display: none; position: fixed; left: 50%; transform: translateX(-50%); bottom: 18px; z-index: 1200; width: calc(100% - 32px); max-width: 430px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; box-shadow: 0 12px 32px rgba(0,0,0,0.22); padding: 14px 16px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+            <div id="dlProgressName" style="font-weight: 600; font-size: 0.9rem; color: var(--text-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">File</div>
+            <button type="button" id="dlProgressCancel" style="width: auto; min-height: 32px; padding: 2px 10px; background: transparent; background-color: transparent; color: #dc2626; border: 1px solid var(--border-color); border-radius: 6px; font-weight: 600; cursor: pointer; flex-shrink: 0;">Cancel</button>
+        </div>
+        <div style="height: 8px; background: var(--border-color); border-radius: 99px; overflow: hidden; margin-top: 10px;">
+            <div id="dlProgressBar" style="height: 100%; width: 0%; background: var(--accent); border-radius: 99px; transition: width 0.15s linear;"></div>
+        </div>
+        <div id="dlProgressMeta" style="margin-top: 8px; font-size: 0.8rem; color: #666;">Starting…</div>
+    </div>
+
         <div class="upload-section" id="uploadSection" style="display: none;">
             <div class="upload-head">
                 <span class="upload-head-icon"><i class="bi bi-cloud-arrow-up-fill"></i></span>
@@ -394,7 +405,7 @@
     </div>
 
 
-<script src="js/script.js?v=27"></script>
+<script src="js/script.js?v=28"></script>
 </body>
 
 </html>
