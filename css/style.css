@@ -2308,6 +2308,8 @@ button:disabled {
     font-weight: 600; font-size: 0.85rem; cursor: pointer;
 }@media (hover: hover) and (pointer: fine) {
 .dash-chip:hover { border-color: var(--accent); }
+.folder-dl-btn { margin-left: auto; align-self: center; white-space: nowrap; flex-shrink: 0; }
+.folder-dl-btn:disabled { opacity: 0.65; cursor: wait; }
 }
 .course-dash-deadline {
     margin-top: 0.9rem; padding: 0.65rem 0.9rem;
