@@ -881,7 +881,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <div class="resource-item" data-file="${attrRawName}">
                 <div class="resource-main">
                     <div class="resource-name">${res.cleanName}${dateBadge(res)}</div>
-                    <div><span class="resource-type-badge">${res.resourceType}</span></div>
+                    <div><span class="resource-type-badge">${res.resourceType}</span>${res.size ? `<span style="font-size: 0.78rem; color: #666; margin-left: 7px;">${fmtSize(res.size)}</span>` : ''}<span class="dl-badge-slot">${downloadedBadge(res)}</span></div>
                     ${opts.showCourse ? `<button type="button" class="resource-course-link" onclick="window.openFolder('${res.resourceType}', '${res.course.code}', '${res.course.name.replace(/'/g, "\\'")}')">${res.course.code} · ${res.course.name} &rarr;</button>` : ''}
                 </div>
                 <div class="resource-actions">
@@ -986,6 +986,30 @@ document.addEventListener("DOMContentLoaded", () => {
         ? (bytes / (1024 * 1024)).toFixed(1) + ' MB'
         : Math.max(1, Math.round(bytes / 1024)) + ' KB';
 
+    // Downloaded markers: remembered on this device only
+    // (localStorage) and shown as a small badge on files the student
+    // has already downloaded, so the same file is not fetched twice.
+    const DL_STORE_KEY = 'fa24bai-downloaded-v1';
+    const DL_BADGE_HTML = '<span style="font-size: 0.72rem; color: var(--accent); font-weight: 600; margin-left: 7px;"><i class="bi bi-check-circle-fill"></i> Downloaded</span>';
+    const loadDownloaded = () => {
+        try { return new Set(JSON.parse(localStorage.getItem(DL_STORE_KEY) || '[]')); }
+        catch (e) { return new Set(); }
+    };
+    const downloadedFiles = loadDownloaded();
+    const downloadedBadge = (res) => downloadedFiles.has(res.rawName) ? DL_BADGE_HTML : '';
+    const markDownloaded = (rawNames) => {
+        let changed = false;
+        (rawNames || []).forEach(n => {
+            if (!downloadedFiles.has(n)) { downloadedFiles.add(n); changed = true; }
+        });
+        if (!changed) return;
+        try { localStorage.setItem(DL_STORE_KEY, JSON.stringify([...downloadedFiles])); } catch (e) { /* private mode */ }
+        document.querySelectorAll('.resource-item').forEach(item => {
+            const slot = item.querySelector('.dl-badge-slot');
+            if (slot && !slot.innerHTML && downloadedFiles.has(item.dataset.file)) slot.innerHTML = DL_BADGE_HTML;
+        });
+    };
+
     const showDlCard = (name) => {
         dlCardSeq++;
         dlCardName.textContent = name;
@@ -996,15 +1020,22 @@ document.addEventListener("DOMContentLoaded", () => {
         dlCard.style.display = 'block';
     };
 
-    const updateDlCard = (loaded, total) => {
+    const updateDlCard = (loaded, total, estimated = false) => {
         if (total > 0) {
-            const pct = Math.min(100, Math.floor((loaded / total) * 100));
+            // The bar is exactly proportional: 0% = empty, 50% = half,
+            // 100% = full, and it moves as the bytes arrive.
+            let pct = (loaded / total) * 100;
+            if (estimated) pct = Math.min(99, pct);
+            else pct = Math.min(100, pct);
             dlCardBar.style.width = pct + '%';
-            dlCardMeta.textContent = `${pct}% · ${fmtSize(loaded)} of ${fmtSize(total)} · ${fmtSize(total - loaded)} left`;
+            dlCardBar.style.opacity = '1';
+            const shownPct = Math.floor(pct);
+            const left = Math.max(0, total - loaded);
+            dlCardMeta.textContent = `${shownPct}% · ${fmtSize(loaded)} of ${fmtSize(total)} · ${fmtSize(left)} left`;
         } else {
-            // Streamed ZIPs have no upfront total: show received size.
-            dlCardBar.style.width = '100%';
-            dlCardBar.style.opacity = '0.5';
+            // No total known at all: keep the bar empty and report the
+            // received size honestly instead of faking a percentage.
+            dlCardBar.style.width = '0%';
             dlCardMeta.textContent = `Downloading… ${fmtSize(loaded)} received`;
         }
     };
@@ -1021,7 +1052,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     dlCardCancel.addEventListener('click', () => { if (dlController) dlController.abort(); });
 
-    const runDownload = async ({ url, options, filename, saveHandle }) => {
+    const runDownload = async ({ url, options, filename, saveHandle, markNames, expectedTotal }) => {
         const controller = new AbortController();
         dlController = controller;
         showDlCard(filename);
@@ -1029,7 +1060,12 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
             const response = await fetch(url, { ...(options || {}), signal: controller.signal });
             if (!response.ok || !response.body) throw new Error('Download request failed');
-            const total = parseInt(response.headers.get('Content-Length') || '0', 10) || 0;
+            const headerTotal = parseInt(response.headers.get('Content-Length') || '0', 10) || 0;
+            // ZIPs are built while streaming, so they carry no
+            // Content-Length; fall back to the known total size of the
+            // files inside (estimated — capped at 99% until done).
+            const total = headerTotal || expectedTotal || 0;
+            const estimated = !headerTotal && !!expectedTotal;
             if (saveHandle) writable = await saveHandle.createWritable();
             const reader = response.body.getReader();
             const chunks = [];
@@ -1040,10 +1076,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 loaded += value.length;
                 if (writable) await writable.write(value);
                 else chunks.push(value);
-                updateDlCard(loaded, total);
+                updateDlCard(loaded, total, estimated);
             }
             if (writable) {
                 await writable.close();
+                markDownloaded(markNames);
                 finishDlCard(`Saved · ${fmtSize(loaded)}`);
                 return;
             }
@@ -1055,6 +1092,7 @@ document.addEventListener("DOMContentLoaded", () => {
             a.click();
             a.remove();
             setTimeout(() => URL.revokeObjectURL(blobUrl), 4000);
+            markDownloaded(markNames);
             finishDlCard(`Download complete · ${fmtSize(loaded)}`);
         } catch (e) {
             if (writable) { try { await writable.abort(); } catch (ignore) { /* already closed */ } }
@@ -1079,7 +1117,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const base = filename.split('/').pop();
         openDownloadConfirm({
             title: 'Download File',
-            text: 'Do you want to download this file to your device?',
+            text: file && file.size
+                ? `Do you want to download this file (${fmtSize(file.size)}) to your device?`
+                : 'Do you want to download this file to your device?',
             name: file ? file.cleanName : base,
             action: async () => {
                 if (dlController) { showNotification('Please wait for the current download to finish', 'info'); return; }
@@ -1088,7 +1128,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 await runDownload({
                     url: '/api/download?file=' + encodeURIComponent(filename),
                     filename: base,
-                    saveHandle: handle
+                    saveHandle: handle,
+                    markNames: [filename],
+                    expectedTotal: file && file.size ? file.size : 0
                 });
             }
         });
@@ -1098,9 +1140,12 @@ document.addEventListener("DOMContentLoaded", () => {
     window.confirmFolderZip = () => {
         if (!currentFolderFiles.length) return;
         const zipName = `${selectedCourseCode} ${selectedFolder}.zip`;
+        const zipTotal = currentFolderFiles.reduce((sum, f) => sum + (f.size || 0), 0);
         openDownloadConfirm({
             title: 'Download All Files',
-            text: `Do you want to download all ${currentFolderFiles.length} file(s) in this folder as one ZIP file?`,
+            text: zipTotal > 0
+                ? `Do you want to download all ${currentFolderFiles.length} file(s) in this folder as one ZIP file? The files total about ${fmtSize(zipTotal)}.`
+                : `Do you want to download all ${currentFolderFiles.length} file(s) in this folder as one ZIP file?`,
             name: zipName,
             action: async () => {
                 if (dlController) { showNotification('Please wait for the current download to finish', 'info'); return; }
@@ -1117,7 +1162,9 @@ document.addEventListener("DOMContentLoaded", () => {
                         })
                     },
                     filename: zipName,
-                    saveHandle: handle
+                    saveHandle: handle,
+                    markNames: currentFolderFiles.map(f => f.rawName),
+                    expectedTotal: zipTotal
                 });
             }
         });
@@ -1934,7 +1981,8 @@ document.addEventListener("DOMContentLoaded", () => {
                         resourceType: rType,
                         cleanName: getCleanName(file.name),
                         createdAt: file.createdAt || null,
-                        updatedAt: file.updatedAt || null
+                        updatedAt: file.updatedAt || null,
+                        size: typeof file.size === 'number' ? file.size : null
                     };
                 });
 
