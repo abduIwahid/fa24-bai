@@ -53,6 +53,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let selectedCourseCode = null;
     let selectedCourseName = null;
     let selectedFolder = null;
+    let currentFolderFiles = [];
 
     // === Navigation State & Handlers ===
     const navItems = {
@@ -893,6 +894,9 @@ document.addEventListener("DOMContentLoaded", () => {
                             <a href="${viewUrl}" target="_blank" class="roger-item" onclick="window.trackView('${escapedRawName}'); window.closeAllRogerMenus();">
                                 <i class="bi bi-box-arrow-up-right"></i> Open Resource
                             </a>
+                            <a href="/api/download?file=${encodeURIComponent(res.rawName)}" class="roger-item" onclick="window.closeAllRogerMenus();">
+                                <i class="bi bi-download"></i> Download
+                            </a>
                             <button type="button" class="roger-item" onclick="window.openAI('${escapedRawName}'); window.closeAllRogerMenus();">
                                 <i class="bi bi-chat-left-dots"></i> AI Assistant
                             </button>
@@ -919,6 +923,40 @@ document.addEventListener("DOMContentLoaded", () => {
 
     window.trackView = (filename) => {
         addRecent(filename);
+    };
+
+    // Download every file in the currently open folder as one ZIP.
+    window.downloadFolderZip = async (btn) => {
+        if (!currentFolderFiles.length) return;
+        const original = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Preparing ZIP…';
+        try {
+            const response = await fetch('/api/download-zip', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    files: currentFolderFiles.map(f => f.rawName),
+                    name: `${selectedCourseCode} ${selectedFolder}`
+                })
+            });
+            if (!response.ok) throw new Error('ZIP request failed');
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${selectedCourseCode} ${selectedFolder}.zip`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 4000);
+            showNotification('Your ZIP download has started', 'success');
+        } catch (e) {
+            showNotification('ZIP download failed. Please try downloading the files one by one.', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = original;
+        }
     };
 
     window.deleteFile = async (filename) => {
@@ -1640,6 +1678,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const folderFiles = allFiles
                 .filter(f => f.course.code === selectedCourseCode && f.resourceType === selectedFolder)
                 .sort((a, b) => (Date.parse(b.createdAt || b.updatedAt) || 0) - (Date.parse(a.createdAt || a.updatedAt) || 0));
+            currentFolderFiles = folderFiles;
 
             coursesContainer.innerHTML = '';
 
@@ -1656,6 +1695,9 @@ document.addEventListener("DOMContentLoaded", () => {
                         <h2>${selectedFolder}</h2>
                         <p class="course-code">${folderFiles.length} item(s)</p>
                     </div>
+                    <button type="button" class="action-btn view folder-dl-btn" onclick="window.downloadFolderZip(this)">
+                        <i class="bi bi-file-zip"></i> Download All (ZIP)
+                    </button>
                 </div>
                 <div class="folder-resources-grid">
                     ${folderFiles.map(res => createResourceHtml(res)).join('')}
