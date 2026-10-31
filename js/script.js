@@ -894,9 +894,9 @@ document.addEventListener("DOMContentLoaded", () => {
                             <a href="${viewUrl}" target="_blank" class="roger-item" onclick="window.trackView('${escapedRawName}'); window.closeAllRogerMenus();">
                                 <i class="bi bi-box-arrow-up-right"></i> Open Resource
                             </a>
-                            <a href="/api/download?file=${encodeURIComponent(res.rawName)}" class="roger-item" onclick="window.closeAllRogerMenus();">
+                            <button type="button" class="roger-item" onclick="window.confirmDownload('${escapedRawName}'); window.closeAllRogerMenus();">
                                 <i class="bi bi-download"></i> Download
-                            </a>
+                            </button>
                             <button type="button" class="roger-item" onclick="window.openAI('${escapedRawName}'); window.closeAllRogerMenus();">
                                 <i class="bi bi-chat-left-dots"></i> AI Assistant
                             </button>
@@ -925,38 +925,143 @@ document.addEventListener("DOMContentLoaded", () => {
         addRecent(filename);
     };
 
-    // Download every file in the currently open folder as one ZIP.
-    window.downloadFolderZip = async (btn) => {
-        if (!currentFolderFiles.length) return;
-        const original = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Preparing ZIP…';
-        try {
-            const response = await fetch('/api/download-zip', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    files: currentFolderFiles.map(f => f.rawName),
-                    name: `${selectedCourseCode} ${selectedFolder}`
-                })
-            });
-            if (!response.ok) throw new Error('ZIP request failed');
-            const blob = await response.blob();
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${selectedCourseCode} ${selectedFolder}.zip`;
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-            setTimeout(() => URL.revokeObjectURL(url), 4000);
-            showNotification('Your ZIP download has started', 'success');
-        } catch (e) {
-            showNotification('ZIP download failed. Please try downloading the files one by one.', 'error');
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = original;
+    // === Download confirmation + save flow ==========================
+    // Clicking Download first asks for confirmation (the file name is
+    // shown, with Yes / No). Only a Yes starts the real download, and
+    // the file is saved to the device — it is never displayed in the
+    // browser (display happens only through Open). Where the platform
+    // offers a save picker (window.showSaveFilePicker, desktop
+    // Chrome/Edge) the user picks the exact folder on their device;
+    // everywhere else the browser saves to its own Downloads location.
+    const dlModal = document.getElementById('downloadConfirmModal');
+    const dlTitle = document.getElementById('dlConfirmTitle');
+    const dlText = document.getElementById('dlConfirmText');
+    const dlName = document.getElementById('dlConfirmName');
+    const dlYesBtn = document.getElementById('dlConfirmYes');
+    let dlPendingAction = null;
+
+    const closeDownloadConfirm = () => {
+        dlModal.classList.remove('active');
+        document.body.style.overflow = 'auto';
+        dlPendingAction = null;
+    };
+
+    const openDownloadConfirm = ({ title, text, name, action }) => {
+        dlTitle.textContent = title;
+        dlText.textContent = text;
+        dlName.textContent = name;
+        dlPendingAction = action;
+        dlYesBtn.disabled = false;
+        dlYesBtn.innerHTML = '<i class="bi bi-download"></i> Yes, Download';
+        dlModal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    };
+
+    document.getElementById('dlConfirmCancel').addEventListener('click', closeDownloadConfirm);
+    document.getElementById('dlConfirmClose').addEventListener('click', closeDownloadConfirm);
+    dlModal.addEventListener('click', (e) => { if (e.target === dlModal) closeDownloadConfirm(); });
+    dlYesBtn.addEventListener('click', async () => {
+        const action = dlPendingAction;
+        closeDownloadConfirm();
+        if (action) {
+            try { await action(); } catch (e) { /* each action reports its own errors */ }
         }
+    });
+
+    const fetchBlobOrThrow = async (url, options) => {
+        const response = await fetch(url, options);
+        if (!response.ok) throw new Error('Download request failed');
+        return response.blob();
+    };
+
+    // Save a blob to the device: native save picker when available so
+    // the user chooses where the file goes; plain download otherwise.
+    // A user-cancelled picker is silent — never an error.
+    const saveBlobToDevice = async (blob, suggestedName) => {
+        if (typeof window.showSaveFilePicker === 'function') {
+            try {
+                const handle = await window.showSaveFilePicker({ suggestedName });
+                const writable = await handle.createWritable();
+                await writable.write(blob);
+                await writable.close();
+                return 'saved';
+            } catch (e) {
+                if (e && e.name === 'AbortError') return 'cancelled';
+                // Picker failed (e.g. gesture expired): fall through to
+                // the plain download so the user still gets the file.
+            }
+        }
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = suggestedName;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 4000);
+        return 'started';
+    };
+
+    // Single file: confirm first, then download to the device.
+    window.confirmDownload = (filename) => {
+        const file = allFiles.find(f => f.rawName === filename);
+        const base = filename.split('/').pop();
+        openDownloadConfirm({
+            title: 'Download File',
+            text: 'Do you want to download this file to your device?',
+            name: file ? file.cleanName : base,
+            action: async () => {
+                try {
+                    if (typeof window.showSaveFilePicker === 'function') {
+                        const blob = await fetchBlobOrThrow('/api/download?file=' + encodeURIComponent(filename));
+                        const result = await saveBlobToDevice(blob, base);
+                        if (result === 'saved') showNotification('File saved to your device', 'success');
+                        else if (result === 'started') showNotification('Your download has started', 'success');
+                        return;
+                    }
+                    // No save picker: the server sends the file as an
+                    // attachment, so the browser saves it directly.
+                    const a = document.createElement('a');
+                    a.href = '/api/download?file=' + encodeURIComponent(filename);
+                    a.download = base;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    showNotification('Your download has started', 'success');
+                } catch (e) {
+                    showNotification('Download failed. Please try again.', 'error');
+                }
+            }
+        });
+    };
+
+    // Whole folder: confirm first, then one ZIP to the device.
+    window.confirmFolderZip = () => {
+        if (!currentFolderFiles.length) return;
+        const zipName = `${selectedCourseCode} ${selectedFolder}.zip`;
+        openDownloadConfirm({
+            title: 'Download All Files',
+            text: `Do you want to download all ${currentFolderFiles.length} file(s) in this folder as one ZIP file?`,
+            name: zipName,
+            action: async () => {
+                try {
+                    showNotification('Preparing your ZIP…', 'info');
+                    const blob = await fetchBlobOrThrow('/api/download-zip', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            files: currentFolderFiles.map(f => f.rawName),
+                            name: `${selectedCourseCode} ${selectedFolder}`
+                        })
+                    });
+                    const result = await saveBlobToDevice(blob, zipName);
+                    if (result === 'saved') showNotification('ZIP saved to your device', 'success');
+                    else if (result === 'started') showNotification('Your ZIP download has started', 'success');
+                } catch (e) {
+                    showNotification('ZIP download failed. Please try downloading the files one by one.', 'error');
+                }
+            }
+        });
     };
 
     window.deleteFile = async (filename) => {
@@ -1695,7 +1800,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         <h2>${selectedFolder}</h2>
                         <p class="course-code">${folderFiles.length} item(s)</p>
                     </div>
-                    <button type="button" class="action-btn view folder-dl-btn" onclick="window.downloadFolderZip(this)">
+                    <button type="button" class="action-btn view folder-dl-btn" onclick="window.confirmFolderZip()">
                         <i class="bi bi-file-zip"></i> Download All (ZIP)
                     </button>
                 </div>
