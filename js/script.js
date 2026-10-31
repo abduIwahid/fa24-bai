@@ -968,41 +968,112 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    const fetchBlobOrThrow = async (url, options) => {
-        const response = await fetch(url, options);
-        if (!response.ok) throw new Error('Download request failed');
-        return response.blob();
+    // === Download progress card =====================================
+    // Downloads stream through fetch so the page can show live
+    // progress: percent done, MB of total MB, MB left, and a Cancel
+    // button. Where a save picker exists, the location is chosen
+    // first and the stream writes straight into that file; otherwise
+    // the finished blob is saved as a normal browser download.
+    const dlCard = document.getElementById('dlProgress');
+    const dlCardName = document.getElementById('dlProgressName');
+    const dlCardBar = document.getElementById('dlProgressBar');
+    const dlCardMeta = document.getElementById('dlProgressMeta');
+    const dlCardCancel = document.getElementById('dlProgressCancel');
+    let dlController = null;
+    let dlCardSeq = 0;
+
+    const fmtSize = (bytes) => bytes >= 1024 * 1024
+        ? (bytes / (1024 * 1024)).toFixed(1) + ' MB'
+        : Math.max(1, Math.round(bytes / 1024)) + ' KB';
+
+    const showDlCard = (name) => {
+        dlCardSeq++;
+        dlCardName.textContent = name;
+        dlCardBar.style.width = '0%';
+        dlCardBar.style.opacity = '1';
+        dlCardMeta.textContent = 'Starting…';
+        dlCardCancel.style.display = '';
+        dlCard.style.display = 'block';
     };
 
-    // Save a blob to the device: native save picker when available so
-    // the user chooses where the file goes; plain download otherwise.
-    // A user-cancelled picker is silent — never an error.
-    const saveBlobToDevice = async (blob, suggestedName) => {
-        if (typeof window.showSaveFilePicker === 'function') {
-            try {
-                const handle = await window.showSaveFilePicker({ suggestedName });
-                const writable = await handle.createWritable();
-                await writable.write(blob);
-                await writable.close();
-                return 'saved';
-            } catch (e) {
-                if (e && e.name === 'AbortError') return 'cancelled';
-                // Picker failed (e.g. gesture expired): fall through to
-                // the plain download so the user still gets the file.
-            }
+    const updateDlCard = (loaded, total) => {
+        if (total > 0) {
+            const pct = Math.min(100, Math.floor((loaded / total) * 100));
+            dlCardBar.style.width = pct + '%';
+            dlCardMeta.textContent = `${pct}% · ${fmtSize(loaded)} of ${fmtSize(total)} · ${fmtSize(total - loaded)} left`;
+        } else {
+            // Streamed ZIPs have no upfront total: show received size.
+            dlCardBar.style.width = '100%';
+            dlCardBar.style.opacity = '0.5';
+            dlCardMeta.textContent = `Downloading… ${fmtSize(loaded)} received`;
         }
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = suggestedName;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        setTimeout(() => URL.revokeObjectURL(url), 4000);
-        return 'started';
     };
 
-    // Single file: confirm first, then download to the device.
+    const finishDlCard = (message) => {
+        const seq = dlCardSeq;
+        dlCardBar.style.width = '100%';
+        dlCardBar.style.opacity = '1';
+        dlCardMeta.textContent = message;
+        dlCardCancel.style.display = 'none';
+        dlController = null;
+        setTimeout(() => { if (dlCardSeq === seq) dlCard.style.display = 'none'; }, 4500);
+    };
+
+    dlCardCancel.addEventListener('click', () => { if (dlController) dlController.abort(); });
+
+    const runDownload = async ({ url, options, filename, saveHandle }) => {
+        const controller = new AbortController();
+        dlController = controller;
+        showDlCard(filename);
+        let writable = null;
+        try {
+            const response = await fetch(url, { ...(options || {}), signal: controller.signal });
+            if (!response.ok || !response.body) throw new Error('Download request failed');
+            const total = parseInt(response.headers.get('Content-Length') || '0', 10) || 0;
+            if (saveHandle) writable = await saveHandle.createWritable();
+            const reader = response.body.getReader();
+            const chunks = [];
+            let loaded = 0;
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                loaded += value.length;
+                if (writable) await writable.write(value);
+                else chunks.push(value);
+                updateDlCard(loaded, total);
+            }
+            if (writable) {
+                await writable.close();
+                finishDlCard(`Saved · ${fmtSize(loaded)}`);
+                return;
+            }
+            const blobUrl = URL.createObjectURL(new Blob(chunks, { type: 'application/octet-stream' }));
+            const a = document.createElement('a');
+            a.href = blobUrl;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(blobUrl), 4000);
+            finishDlCard(`Download complete · ${fmtSize(loaded)}`);
+        } catch (e) {
+            if (writable) { try { await writable.abort(); } catch (ignore) { /* already closed */ } }
+            finishDlCard(e && e.name === 'AbortError' ? 'Download cancelled' : 'Download failed. Please try again.');
+        }
+    };
+
+    // Ask where to save BEFORE streaming (keeps the user gesture
+    // valid). 'abort' = user cancelled the picker: stop silently.
+    const pickSaveHandle = async (suggestedName) => {
+        if (typeof window.showSaveFilePicker !== 'function') return null;
+        try {
+            return await window.showSaveFilePicker({ suggestedName });
+        } catch (e) {
+            return (e && e.name === 'AbortError') ? 'abort' : null;
+        }
+    };
+
+    // Single file: confirm first, then download with progress.
     window.confirmDownload = (filename) => {
         const file = allFiles.find(f => f.rawName === filename);
         const base = filename.split('/').pop();
@@ -1011,31 +1082,19 @@ document.addEventListener("DOMContentLoaded", () => {
             text: 'Do you want to download this file to your device?',
             name: file ? file.cleanName : base,
             action: async () => {
-                try {
-                    if (typeof window.showSaveFilePicker === 'function') {
-                        const blob = await fetchBlobOrThrow('/api/download?file=' + encodeURIComponent(filename));
-                        const result = await saveBlobToDevice(blob, base);
-                        if (result === 'saved') showNotification('File saved to your device', 'success');
-                        else if (result === 'started') showNotification('Your download has started', 'success');
-                        return;
-                    }
-                    // No save picker: the server sends the file as an
-                    // attachment, so the browser saves it directly.
-                    const a = document.createElement('a');
-                    a.href = '/api/download?file=' + encodeURIComponent(filename);
-                    a.download = base;
-                    document.body.appendChild(a);
-                    a.click();
-                    a.remove();
-                    showNotification('Your download has started', 'success');
-                } catch (e) {
-                    showNotification('Download failed. Please try again.', 'error');
-                }
+                if (dlController) { showNotification('Please wait for the current download to finish', 'info'); return; }
+                const handle = await pickSaveHandle(base);
+                if (handle === 'abort') return;
+                await runDownload({
+                    url: '/api/download?file=' + encodeURIComponent(filename),
+                    filename: base,
+                    saveHandle: handle
+                });
             }
         });
     };
 
-    // Whole folder: confirm first, then one ZIP to the device.
+    // Whole folder: confirm first, then one ZIP with progress.
     window.confirmFolderZip = () => {
         if (!currentFolderFiles.length) return;
         const zipName = `${selectedCourseCode} ${selectedFolder}.zip`;
@@ -1044,22 +1103,22 @@ document.addEventListener("DOMContentLoaded", () => {
             text: `Do you want to download all ${currentFolderFiles.length} file(s) in this folder as one ZIP file?`,
             name: zipName,
             action: async () => {
-                try {
-                    showNotification('Preparing your ZIP…', 'info');
-                    const blob = await fetchBlobOrThrow('/api/download-zip', {
+                if (dlController) { showNotification('Please wait for the current download to finish', 'info'); return; }
+                const handle = await pickSaveHandle(zipName);
+                if (handle === 'abort') return;
+                await runDownload({
+                    url: '/api/download-zip',
+                    options: {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             files: currentFolderFiles.map(f => f.rawName),
                             name: `${selectedCourseCode} ${selectedFolder}`
                         })
-                    });
-                    const result = await saveBlobToDevice(blob, zipName);
-                    if (result === 'saved') showNotification('ZIP saved to your device', 'success');
-                    else if (result === 'started') showNotification('Your ZIP download has started', 'success');
-                } catch (e) {
-                    showNotification('ZIP download failed. Please try downloading the files one by one.', 'error');
-                }
+                    },
+                    filename: zipName,
+                    saveHandle: handle
+                });
             }
         });
     };
