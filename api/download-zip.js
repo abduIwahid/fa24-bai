@@ -64,7 +64,8 @@ export default async function handler(req, res) {
         const zipBase = String(name || 'Study Hub Files').replace(/[^\w\- ]+/g, '').trim() || 'Study Hub Files';
         res.setHeader('Content-Type', 'application/zip');
         res.setHeader('Content-Disposition', `attachment; filename="${zipBase}.zip"`);
-        res.setHeader('Cache-Control', 'private, no-store');
+        res.setHeader('Content-Encoding', 'identity');
+        res.setHeader('Cache-Control', 'private, no-store, no-transform');
         res.setHeader('X-Files-Included', String(added));
 
         // PDFs are already compressed — STORE keeps this fast and light.

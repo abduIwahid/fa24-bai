@@ -42,7 +42,10 @@ export default async function handler(req, res) {
         const len = fileRes.headers.get('content-length');
         if (len) res.setHeader('Content-Length', len);
         res.setHeader('Content-Disposition', `attachment; filename="${base}"`);
-        res.setHeader('Cache-Control', 'private, no-store');
+        // No compression: a gzipped stream loses its Content-Length,
+        // and without a total the client cannot show download percent.
+        res.setHeader('Content-Encoding', 'identity');
+        res.setHeader('Cache-Control', 'private, no-store, no-transform');
 
         Readable.fromWeb(fileRes.body).pipe(res);
     } catch (error) {
