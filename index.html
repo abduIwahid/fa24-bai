@@ -38,7 +38,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css?v=41">
+    <link rel="stylesheet" href="css/style.css?v=42">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <meta name="google-site-verification" content="V9W5eQmNGsddSR0k1tUxfbeawcnBWbiBXadOwRLmBoE" />
 </head>
@@ -117,6 +117,23 @@
                     </button>
                 </form>
                 <div id="loginAttempts" style="text-align: center; font-size: 0.8rem; color: #888;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="downloadConfirmModal">
+        <div class="modal-content confirm-modal">
+            <div class="modal-header">
+                <h3 id="dlConfirmTitle">Download File</h3>
+                <button class="close-btn" id="dlConfirmClose" aria-label="Close">&times;</button>
+            </div>
+            <div class="modal-body" style="gap: 1rem;">
+                <p style="margin: 0; color: #666; font-size: 0.92rem;" id="dlConfirmText">Do you want to download this file?</p>
+                <p class="dl-file-name" id="dlConfirmName" style="margin: 0;"></p>
+                <div class="dl-confirm-actions">
+                    <button type="button" class="dl-btn dl-btn-cancel" id="dlConfirmCancel">No, Cancel</button>
+                    <button type="button" class="dl-btn dl-btn-confirm" id="dlConfirmYes"><i class="bi bi-download"></i> Yes, Download</button>
+                </div>
             </div>
         </div>
     </div>
@@ -377,7 +394,7 @@
     </div>
 
 
-<script src="js/script.js?v=25"></script>
+<script src="js/script.js?v=26"></script>
 </body>
 
 </html>
