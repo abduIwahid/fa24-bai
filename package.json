@@ -5,6 +5,7 @@
   "main": "index.js",
   "dependencies": {
     "@google/generative-ai": "^0.21.0",
+    "jszip": "^3.10.1",
     "pdf-parse": "^1.1.1"
   }
 }

@@ -1,5 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "api/download-zip.js": {
+      "maxDuration": 60
+    }
+  },
   "headers": [
     {
       "headers": [
